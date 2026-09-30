@@ -42,8 +42,11 @@ RUN mkdir -p /build/out_wasm && \
       -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue"]' \
       -s MODULARIZE=1 -s EXPORT_NAME="FAACModule" \
       -o /build/out_wasm/faac.js && \
-    cp /build/faad2_build/faad.js /build/out_wasm/ && \
-    cp /build/faad2_build/faad.wasm /build/out_wasm/
+    emcc -O2 /build/faad2_build/libfaad.a -I/build/faad2_src/include \
+      -s EXPORTED_FUNCTIONS='["_NeAACDecOpen","_NeAACDecGetCurrentConfiguration","_NeAACDecSetConfiguration","_NeAACDecInit","_NeAACDecDecode","_NeAACDecClose","_malloc","_free"]' \
+      -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue"]' \
+      -s MODULARIZE=1 -s EXPORT_NAME="FAADModule" \
+      -o /build/out_wasm/faad.js
 
 # Development stage
 FROM node:20-slim AS app
