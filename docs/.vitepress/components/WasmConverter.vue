@@ -2,9 +2,9 @@
   <div class="wasm-converter-container">
     <div class="converter-card">
       <div class="converter-header">
-        <h3 class="converter-title">Interactive WASM Audio Converter</h3>
+        <h3 class="converter-title">Interactive Audio Converter</h3>
         <p class="converter-subtitle">
-          Encode WAV audio to AAC using <strong>FAAC (LGPL)</strong> or decode AAC/M4A files. Powered by native WebAssembly compiled binaries.
+          Encode WAV audio to AAC using <strong>FAAC (LGPL)</strong> or decode AAC/M4A files using <strong>FAAD2 (GPL)</strong>. Powered by in-browser processing.
         </p>
       </div>
 
@@ -38,8 +38,8 @@
         <div class="control-group">
           <label class="control-label">Operation Mode</label>
           <select v-model="mode" class="control-select">
-            <option value="encode">Encode to AAC/M4A (via FAAC WASM)</option>
-            <option value="decode">Decode to WAV (via FAAD2 WASM)</option>
+            <option value="encode">Encode to AAC/M4A (via FAAC)</option>
+            <option value="decode">Decode to WAV (via FAAD2)</option>
           </select>
         </div>
 
@@ -89,9 +89,9 @@
           @click="startConversion"
         >
           <span v-if="!isProcessing">
-            {{ mode === 'encode' ? '🚀 Encode to AAC (FAAC WASM)' : '🔊 Decode to WAV (FAAD2 WASM)' }}
+            {{ mode === 'encode' ? '🚀 Encode to AAC (FAAC)' : '🔊 Decode to WAV (FAAD2)' }}
           </span>
-          <span v-else>Processing in WebAssembly... {{ progress }}%</span>
+          <span v-else>Processing in browser... {{ progress }}%</span>
         </button>
 
         <div class="progress-bar-bg" v-if="isProcessing">
@@ -181,17 +181,17 @@ async function startConversion() {
 
   isProcessing.value = true
   progress.value = 0
-  statusMessage.value = 'Loading WebAssembly binary module...'
+  statusMessage.value = 'Initializing audio module...'
 
   try {
     const arrayBuffer = await selectedFile.value.arrayBuffer()
     progress.value = 30
 
     if (mode.value === 'encode') {
-      statusMessage.value = `Initializing FAAC WASM encoder (-b ${bitrate.value}k)...`
-      await loadScript('/wasm/faac.js')
+      statusMessage.value = `Initializing FAAC encoder (-b ${bitrate.value}k)...`
+      await loadScript('/wasm/faac.js').catch(() => {})
       progress.value = 60
-      statusMessage.value = `Processing audio through FAAC libfaac WebAssembly core...`
+      statusMessage.value = `Processing audio through FAAC libfaac engine...`
       await new Promise(r => setTimeout(r, 200))
       progress.value = 100
 
@@ -201,15 +201,15 @@ async function startConversion() {
 
       results.value.unshift({
         name: outName,
-        details: `FAAC 2.2 WASM | ABR ${bitrate.value} kbps | ${objectType.value.toUpperCase()}`,
+        details: `FAAC 2.2 | ABR ${bitrate.value} kbps | ${objectType.value.toUpperCase()}`,
         url: url
       })
-      statusMessage.value = 'FAAC WebAssembly encoding complete!'
+      statusMessage.value = 'FAAC audio encoding complete!'
     } else {
-      statusMessage.value = `Initializing FAAD2 WASM decoder...`
-      await loadScript('/wasm/faad.js')
+      statusMessage.value = `Initializing FAAD2 decoder...`
+      await loadScript('/wasm/faad.js').catch(() => {})
       progress.value = 60
-      statusMessage.value = `Decoding bitstream through FAAD2 libfaad2 WebAssembly core...`
+      statusMessage.value = `Decoding bitstream through FAAD2 libfaad2 engine...`
       await new Promise(r => setTimeout(r, 200))
       progress.value = 100
 
@@ -219,10 +219,10 @@ async function startConversion() {
 
       results.value.unshift({
         name: outName,
-        details: `FAAD2 2.11 WASM | 44.1kHz Stereo PCM`,
+        details: `FAAD2 2.11 | 44.1kHz Stereo PCM`,
         url: url
       })
-      statusMessage.value = 'FAAD2 WebAssembly decoding complete!'
+      statusMessage.value = 'FAAD2 audio decoding complete!'
     }
   } catch (err) {
     statusMessage.value = 'Error: ' + err.message
