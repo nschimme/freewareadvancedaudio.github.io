@@ -1,6 +1,10 @@
-node_modules/
-.vitepress/cache
+node_modules
+.DS_Store
+dist
 .vitepress/dist
-dist/
-/tmp/faac
-/tmp/faad2
+.vitepress/cache
+*.log
+
+# Ignore compiled WebAssembly binary assets
+docs/public/wasm/*.wasm
+docs/public/wasm/*.a
