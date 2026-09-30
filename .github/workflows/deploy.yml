@@ -26,26 +26,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image & extract WASM assets
+      - name: Build site via Docker and extract static output
         run: |
-          docker build -t freeware-audio-site --target app .
+          docker build -t freeware-audio-site --target site-builder .
           container_id=$(docker create freeware-audio-site)
-          mkdir -p docs/public/wasm
-          docker cp $container_id:/app/docs/public/wasm/. docs/public/wasm/
+          mkdir -p docs/.vitepress/dist
+          docker cp $container_id:/app/docs/.vitepress/dist/. docs/.vitepress/dist/
           docker rm $container_id
-          ls -la docs/public/wasm/
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build VitePress site
-        run: npm run docs:build
+          ls -la docs/.vitepress/dist/
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3

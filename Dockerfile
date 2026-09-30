@@ -1,5 +1,5 @@
-# Multi-stage Dockerfile for Freeware Advanced Audio WASM build & web server
-FROM emscripten/emsdk:3.1.6 as builder
+# Multi-stage Dockerfile for Freeware Advanced Audio build & web server
+FROM emscripten/emsdk:3.1.6 AS builder
 
 WORKDIR /build
 
@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN git clone https://github.com/FreewareAdvancedAudio/faac.git /build/faac_src \
     && git clone https://github.com/FreewareAdvancedAudio/faad2.git /build/faad2_src
 
-# Create Meson cross file for Emscripten FAAC build
+# Create Meson cross file for Emscripten FAAC build with cpu_family
 RUN echo "[binaries]" > /build/emscripten.cross && \
     echo "c = 'emcc'" >> /build/emscripten.cross && \
     echo "cpp = 'em++'" >> /build/emscripten.cross && \
@@ -20,6 +20,7 @@ RUN echo "[binaries]" > /build/emscripten.cross && \
     echo "strip = 'emstrip'" >> /build/emscripten.cross && \
     echo "[host_machine]" >> /build/emscripten.cross && \
     echo "system = 'emscripten'" >> /build/emscripten.cross && \
+    echo "cpu_family = 'wasm32'" >> /build/emscripten.cross && \
     echo "cpu = 'wasm32'" >> /build/emscripten.cross && \
     echo "endian = 'little'" >> /build/emscripten.cross
 
@@ -44,7 +45,7 @@ RUN mkdir -p /build/out_wasm && \
     cp /build/faad2_build/faad.wasm /build/out_wasm/
 
 # Development stage
-FROM node:20-slim as app
+FROM node:20-slim AS app
 
 WORKDIR /app
 
@@ -61,3 +62,8 @@ COPY --from=builder /build/out_wasm/ /app/docs/public/wasm/
 EXPOSE 5173 4173
 
 CMD ["npm", "run", "docs:dev", "--", "--host", "0.0.0.0"]
+
+# Static site builder stage for production deployment
+FROM app AS site-builder
+
+RUN npm run docs:build
