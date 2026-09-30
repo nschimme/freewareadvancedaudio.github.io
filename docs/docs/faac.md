@@ -1,33 +1,34 @@
-# FAAC Encoder Overview & Licensing
+# FAAC Encoder Technical Specification & Licensing
 
-**FAAC (Freeware Advanced Audio Coder)** is an open-source MPEG-2 and MPEG-4 AAC audio encoder library (`libfaac`) and command-line utility (`faac`).
+`faac` is an open-source MPEG-2 and MPEG-4 AAC audio encoder library (`libfaac`) and standalone CLI tool.
 
 <span class="badge-lgpl">LGPL v2.1+ Licensed</span>
 
 ---
 
-## The FAAC 2.0+ Renaissance
+## Technical Specifications
 
-Historically, early FAAC 1.x releases contained legacy reference code and were evaluated as having mixed quality relative to proprietary alternatives.
-
-Starting with **FAAC 2.0+**, the encoder was **completely rewritten** from scratch:
-1. **Clean Codebase**: Removed all legacy ISO reference code.
-2. **LGPL v2.1+ License**: Fully compliant free and open-source software license.
-3. **Improved Quality & Efficiency**: Refactored psychoacoustic models, rate control algorithms, and SBR support.
-4. **Fast Performance**: Lightweight C library with 3-5x throughput advantages on modern architectures.
-
----
-
-## Supported Object Types & Profiles
-
-- **AAC-LC (Low Complexity)**: The default standard AAC profile widely compatible with portable players, web streaming, and mobile operating systems.
-- **HE-AAC v1 (High-Efficiency AAC / SBR)**: Spectral Band Replication targeting lower bitrates (e.g. 32-96 kbps) for speech and streaming.
+- **Codebase Architecture**: Written in portable C11/C99. Free of ISO MPEG reference code.
+- **Audio Object Types**:
+  - **AAC-LC (Low Complexity)**: ISO/IEC 14496-3 Low Complexity profile.
+  - **HE-AAC v1 (SBR)**: Spectral Band Replication targeting 32–96 kbps.
+- **Sample Rates**: 8 kHz to 96 kHz.
+- **Channel Configurations**: Mono, Stereo, 5.1, and multi-channel up to 64 discrete channels.
+- **Rate Control**:
+  - **ABR (`-b <kbps>`)**: Average Bitrate mode (Default at 128 kbps).
+  - **VBR (`-q <quality>`)**: Quantization quality mode (1..5000).
+  - **CBR (`-b <kbps> --cbr`)**: Constant Bitrate mode utilizing a 6144-bit per channel decoder input bit reservoir model.
+  - **Capped VBR (`-q <q> --cap-rate <kbps>`)**: Constant quality bounded by a maximum per-frame bitrate ceiling.
 
 ---
 
-## Supported Input & Output Formats
+## Software Integration & Ecosystem Users
 
-- **Inputs**: WAV (PCM), RAW PCM (8, 16, 24, 32-bit fixed/float), multi-channel up to 8 channels.
-- **Outputs**:
-  - **MP4 / M4A / M4B**: Includes iTunes metadata tags (`--artist`, `--title`, `--album`, cover art).
-  - **ADTS (.aac)**: Transport stream format for broadcasting and streaming.
+FAAC is integrated into software applications, media frameworks, and embedded environments:
+
+- **[fre:ac](https://www.freac.org/)**: Cross-platform audio converter and CD ripper using `libfaac` for AAC output.
+- **[Thingino](https://thingino.com/)**: Open-source embedded Linux firmware for IP cameras utilizing `libfaac` for real-time RTSP/AAC audio encoding.
+- **[Audiobook Boss](https://github.com/Allmight97/audiobook-boss)**: Automated audiobook management and M4B processing tool.
+- **[FFmpeg](https://ffmpeg.org/)**: Supports AAC encoding via external `libfaac` linkage.
+- **[CDex](https://cdex.mu/)**: Windows CD ripping application.
+- **[Avidemux](https://avidemux.sourceforge.net/)**: Video editing and encoding suite.
