@@ -1,6 +1,6 @@
-# FAAC Command Line Interface (CLI) Guide
+# FAAC CLI Reference
 
-The `faac` command-line utility provides flexible audio encoding options.
+`faac` syntax:
 
 ```bash
 faac [options] [-o outfile] infiles...
@@ -8,46 +8,34 @@ faac [options] [-o outfile] infiles...
 
 ---
 
-## Rate Control Modes
-
-FAAC supports VBR, ABR, and CBR rate control mechanisms:
-
-### 1. Average Bitrate (ABR) - Recommended
+## Rate Control
 
 ```bash
-# Encode at average 128 kbps (default)
+# Average Bitrate (ABR, default 128 kbps)
 faac -b 128 input.wav -o output.m4a
 
-# High quality stereo ABR at 192 kbps
-faac -b 192 input.wav -o output.m4a
-```
+# Constant Quality (VBR, 1..5000)
+faac -q 100 input.wav -o output.m4a
 
-### 2. Constant Quality (VBR)
-
-```bash
-# VBR quality mode (1..5000, default 100)
-faac -q 120 input.wav -o output.m4a
-```
-
-### 3. Constant Bitrate (CBR)
-
-```bash
-# Enforce strict constant bitrate with frame buffer stuffing
+# Constant Bitrate (CBR)
 faac -b 128 --cbr input.wav -o output.m4a
+
+# Capped VBR
+faac -q 100 --cap-rate 192 input.wav -o output.m4a
 ```
 
 ---
 
-## Object Types & Profiles
+## Object Types
 
 ```bash
-# Auto mode (selects LC or HE-AAC v1 based on sample rate/bitrate)
+# Auto (Selects LC or HE-AAC v1 based on sample rate & bitrate)
 faac --object-type auto -b 64 input.wav -o output.m4a
 
-# Explicit Low Complexity (AAC-LC)
+# Low Complexity (AAC-LC)
 faac --object-type lc -b 160 input.wav -o output.m4a
 
-# Explicit HE-AAC v1 (SBR)
+# HE-AAC v1 (SBR)
 faac --object-type he-aac-v1 -b 48 input.wav -o output.m4a
 ```
 
@@ -57,9 +45,9 @@ faac --object-type he-aac-v1 -b 48 input.wav -o output.m4a
 
 ```bash
 faac -b 128 \
-  --artist "Artist Name" \
-  --title "Track Title" \
-  --album "Album Title" \
+  --artist "Artist" \
+  --title "Title" \
+  --album "Album" \
   --year "2026" \
   --cover-art cover.jpg \
   input.wav -o output.m4a
