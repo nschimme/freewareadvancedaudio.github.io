@@ -3,9 +3,10 @@ FROM emscripten/emsdk:3.1.6 AS builder
 
 WORKDIR /build
 
-# Install build dependencies
+# Install build dependencies and modern Meson via pip
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git meson ninja-build cmake nodejs npm \
+    git ninja-build cmake nodejs npm python3-pip python3-setuptools \
+    && pip3 install --no-cache-dir meson \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone FAAC and FAAD2 repositories from GitHub organization
