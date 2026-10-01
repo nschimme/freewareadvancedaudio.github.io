@@ -38,7 +38,7 @@ FAAC and FAAD2 are integrated into major open-source media frameworks, audio con
 
 - **[fre:ac](https://www.freac.org/)**: Free audio converter and CD ripper using FAAC and FAAD2.
 - **[Thingino](https://thingino.com/)**: Open-source IP camera firmware utilizing FAAC for efficient live audio encoding.
-- **[Audiobook Boss](https://github.com/AudiobookBoss)**: Open-source audiobook management tools using FAAC for M4A/AAC conversion.
+- **[Audiobook Boss](https://github.com/Allmight97/audiobook-boss)**: Open-source audiobook management tools using FAAC for M4A/AAC conversion.
 - **[FFmpeg](https://ffmpeg.org/)**: Provides native support for `libfaac` and `libfaad2` via `--enable-libfaac` / `--enable-libfaad`.
 - **[VLC Media Player](https://www.videolan.org/vlc/)**: Utilizes FAAD2 for fast, cross-platform AAC decoding.
 - **[GStreamer](https://gstreamer.freedesktop.org/)**: Plug-and-play GStreamer elements (`faac`, `faad`) for audio pipeline processing.
