@@ -1,6 +1,14 @@
 <template>
   <div class="visualizer-container">
-    <div class="rack-bezel">
+    <div
+      class="rack-bezel"
+      @mousemove="handlePointerMove"
+      @mouseleave="handlePointerLeave"
+      @touchstart.passive="handlePointerMove"
+      @touchmove.passive="handlePointerMove"
+      @touchend="handlePointerLeave"
+      @click="handlePointerClick"
+    >
       <div class="display-window">
         <!-- 90s Hardware Stereo Equalizer Display -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="equalizer-svg">
@@ -29,7 +37,7 @@
               <stop offset="50%" stop-color="#f43f5e"/>
               <stop offset="100%" stop-color="#f59e0b"/>
             </linearGradient>
-            <filter id="glow" width="140%" height="140%" x="-20%" y="-20%">
+            <filter id="glow" width="160%" height="160%" x="-30%" y="-30%">
               <feGaussianBlur stdDeviation="8"/>
               <feComposite in="SourceGraphic"/>
             </filter>
@@ -47,43 +55,117 @@
             <line x1="0" y1="420" x2="512" y2="420"/>
           </g>
 
-          <!-- Animated Spectrum Equalizer Bars (Smooth Slower Rhythm) -->
+          <!-- Interactive Spectrum Equalizer Bars -->
           <g opacity="0.9" class="eq-bars">
-            <rect class="bar bar-1" fill="url(#bar-cyan)" width="28" height="120" x="48" y="300" rx="4"/>
-            <rect class="bar bar-2" fill="url(#bar-cyan)" width="28" height="200" x="88" y="220" rx="4"/>
-            <rect class="bar bar-3" fill="url(#bar-purple)" width="28" height="260" x="128" y="160" rx="4"/>
-            <rect class="bar bar-4" fill="url(#bar-purple)" width="28" height="320" x="168" y="100" rx="4"/>
-            <rect class="bar bar-5" fill="url(#bar-pink)" width="28" height="360" x="208" y="60" rx="4"/>
-            <rect class="bar bar-6" fill="url(#bar-pink)" width="28" height="330" x="248" y="90" rx="4"/>
-            <rect class="bar bar-7" fill="url(#bar-purple)" width="28" height="280" x="288" y="140" rx="4"/>
-            <rect class="bar bar-8" fill="url(#bar-purple)" width="28" height="230" x="328" y="190" rx="4"/>
-            <rect class="bar bar-9" fill="url(#bar-cyan)" width="28" height="160" x="368" y="260" rx="4"/>
-            <rect class="bar bar-10" fill="url(#bar-cyan)" width="28" height="110" x="408" y="310" rx="4"/>
-            <rect class="bar bar-11" fill="url(#bar-cyan)" width="28" height="70" x="448" y="350" rx="4"/>
+            <rect
+              v-for="(bar, index) in barScales"
+              :key="index"
+              :class="['bar', `bar-${index + 1}`, barGradientClass(index)]"
+              :fill="barGradientUrl(index)"
+              width="28"
+              :height="barBaseHeights[index]"
+              :x="48 + index * 40"
+              :y="500 - barBaseHeights[index]"
+              rx="4"
+              :style="{ transform: `scaleY(${bar})`, transformOrigin: `${48 + index * 40 + 14}px 500px` }"
+            />
           </g>
 
-          <!-- Traveling Glowing Sine Wave -->
+          <!-- Seamless Looping Oscilloscope Sine Wave modulated by interaction -->
           <path
             fill="none"
             stroke="url(#wave)"
             stroke-linecap="round"
-            stroke-width="10"
-            d="M-400 256c50 0 80-186 140-186s90 372 150 372 90-186 142-186 80-186 140-186 90 372 150 372 90-186 142-186 80-186 140-186"
+            :stroke-width="isInteractive ? 11 : 8"
+            d="M -120 256
+               c 16.56 -80, 43.44 -80, 60 0 c 16.56 80, 43.44 80, 60 0
+               c 16.56 -80, 43.44 -80, 60 0 c 16.56 80, 43.44 80, 60 0
+               c 16.56 -80, 43.44 -80, 60 0 c 16.56 80, 43.44 80, 60 0
+               c 16.56 -80, 43.44 -80, 60 0 c 16.56 80, 43.44 80, 60 0
+               c 16.56 -80, 43.44 -80, 60 0 c 16.56 80, 43.44 80, 60 0
+               c 16.56 -80, 43.44 -80, 60 0 c 16.56 80, 43.44 80, 60 0"
             filter="url(#glow)"
-            class="traveling-wave"
+            :class="['looping-sine-wave', { 'wave-boost': isInteractive }]"
+            :style="{ animationDuration: waveSpeed + 's' }"
           />
         </svg>
 
         <!-- 90s Hardware VFD Indicators -->
         <div class="vfd-indicators">
-          <span class="vfd-tag">STEREO L/R</span>
-          <span class="vfd-tag highlight">DSP HIGH-FIDELITY</span>
+          <span class="vfd-tag" :class="{ highlight: isInteractive }">
+            {{ isInteractive ? 'INTERACTIVE DSP' : 'STEREO L/R' }}
+          </span>
+          <span class="vfd-tag highlight">
+            {{ activeFreqTag }}
+          </span>
           <span class="vfd-tag">48 kHz / 16-BIT</span>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<script setup>
+import { ref } from 'vue'
+
+const barBaseHeights = [120, 200, 260, 320, 360, 330, 280, 230, 160, 110, 70]
+const barScales = ref([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+const isInteractive = ref(false)
+const activeFreqTag = ref('DSP HIGH-FIDELITY')
+const waveSpeed = ref(3)
+
+function barGradientUrl(index) {
+  if (index < 2 || index >= 8) return 'url(#bar-cyan)'
+  if (index >= 4 && index <= 5) return 'url(#bar-pink)'
+  return 'url(#bar-purple)'
+}
+
+function barGradientClass(index) {
+  return `bar-grad-${index}`
+}
+
+function handlePointerMove(e) {
+  isInteractive.value = true
+  const rect = e.currentTarget.getBoundingClientRect()
+  const x = Math.max(0, Math.min(rect.width, (e.touches ? e.touches[0].clientX : e.clientX) - rect.left))
+  const y = Math.max(0, Math.min(rect.height, (e.touches ? e.touches[0].clientY : e.clientY) - rect.top))
+
+  const normalizedX = x / rect.width
+  const normalizedY = 1 - (y / rect.height)
+
+  // Modulate wave speed according to cursor X
+  waveSpeed.value = 0.8 + (1 - normalizedX) * 3
+
+  // Modulate frequency band label
+  const freqBands = ['31 Hz (SUB)', '125 Hz (BASS)', '500 Hz (MID)', '2 kHz (PRESENCE)', '8 kHz (TREBLE)', '16 kHz (AIR)']
+  const bandIndex = Math.floor(normalizedX * freqBands.length)
+  activeFreqTag.value = `BOOST: ${freqBands[Math.min(bandIndex, freqBands.length - 1)]}`
+
+  // Calculate interactive scale for each equalizer bar based on proximity to pointer X
+  barScales.value = barBaseHeights.map((_, index) => {
+    const barXRatio = index / (barBaseHeights.length - 1)
+    const distance = Math.abs(normalizedX - barXRatio)
+    const boost = Math.max(0, 1 - distance * 2.5) * (0.4 + normalizedY * 0.8)
+    return 0.7 + boost
+  })
+}
+
+function handlePointerLeave() {
+  isInteractive.value = false
+  activeFreqTag.value = 'DSP HIGH-FIDELITY'
+  waveSpeed.value = 3
+  barScales.value = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+}
+
+function handlePointerClick() {
+  // Fun pulse burst on click/tap
+  barScales.value = barScales.value.map(s => Math.min(1.4, s * 1.3))
+  activeFreqTag.value = '⚡ FAAC 2.2 PEAK 0 dB'
+  setTimeout(() => {
+    if (!isInteractive.value) handlePointerLeave()
+  }, 1000)
+}
+</script>
 
 <style scoped>
 .visualizer-container {
@@ -103,6 +185,17 @@
     inset 0 1px 2px rgba(255, 255, 255, 0.1);
   width: 100%;
   max-width: 440px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.rack-bezel:hover {
+  border-color: #06b6d4;
+  box-shadow:
+    0 20px 40px -5px rgba(6, 182, 212, 0.25),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
 .display-window {
@@ -121,7 +214,7 @@
 
 /* Slower, Smooth 90s Equalizer Bar Animations */
 .bar {
-  transform-origin: bottom;
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
   animation: eq-bounce-slow 4s ease-in-out infinite alternate;
 }
 
@@ -139,30 +232,32 @@
 
 @keyframes eq-bounce-slow {
   0% {
-    transform: scaleY(0.55);
+    opacity: 0.85;
   }
-  35% {
-    transform: scaleY(0.92);
-  }
-  70% {
-    transform: scaleY(0.68);
+  50% {
+    opacity: 1;
   }
   100% {
-    transform: scaleY(0.85);
+    opacity: 0.9;
   }
 }
 
-/* Moving Wave Animation */
-.traveling-wave {
-  animation: wave-travel 8s linear infinite;
+/* Seamless Oscilloscope Looping Wave Animation */
+.looping-sine-wave {
+  animation: wave-loop linear infinite;
+  transition: stroke-width 0.2s ease, filter 0.2s ease;
 }
 
-@keyframes wave-travel {
+.looping-sine-wave.wave-boost {
+  filter: drop-shadow(0 0 12px #06b6d4);
+}
+
+@keyframes wave-loop {
   0% {
-    transform: translateX(0);
+    transform: translateX(0px);
   }
   100% {
-    transform: translateX(-432px);
+    transform: translateX(-120px);
   }
 }
 
@@ -181,10 +276,11 @@
 
 .vfd-tag {
   color: rgba(148, 163, 184, 0.6);
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.85);
   padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
 }
 
 .vfd-tag.highlight {
