@@ -14,9 +14,6 @@ hero:
     - theme: alt
       text: "C API & Docs"
       link: "/docs/faac"
-    - theme: alt
-      text: "GitHub Org"
-      link: "https://github.com/FreewareAdvancedAudio"
 
 features:
   - icon: "🛠️"

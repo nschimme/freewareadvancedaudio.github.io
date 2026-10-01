@@ -55,3 +55,23 @@
   align-items: center;
   width: 100%;
 }
+
+/* Mobile responsive adjustments for Hero Visualizer slot */
+@media (max-width: 959px) {
+  .VPHero {
+    padding-top: 1rem !important;
+  }
+
+  .VPHero .container {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+
+  .VPHero .image {
+    margin: 0 auto 1.5rem auto !important;
+  }
+
+  .VPHero .main {
+    margin-top: 0 !important;
+  }
+}

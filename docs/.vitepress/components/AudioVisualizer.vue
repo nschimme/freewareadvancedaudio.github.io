@@ -104,15 +104,15 @@
           </text>
         </svg>
 
-        <!-- 90s Hardware VFD Indicators -->
+        <!-- Codec Hardware VFD Feature Indicators -->
         <div class="vfd-indicators">
           <span class="vfd-tag" :class="{ highlight: isInteractive }">
-            {{ isInteractive ? 'INTERACTIVE DSP' : 'STEREO L/R' }}
+            {{ isInteractive ? 'CODEC FEATURES' : 'FAAC / FAAD2' }}
           </span>
           <span class="vfd-tag highlight">
             {{ activeFreqTag }}
           </span>
-          <span class="vfd-tag">48 kHz / 16-BIT</span>
+          <span class="vfd-tag">LGPL v2.1+ / GPL v2+</span>
         </div>
       </div>
     </div>
@@ -126,7 +126,7 @@ const barBaseHeights = [120, 200, 260, 320, 360, 330, 280, 230, 160, 110, 70]
 const barScales = ref([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 const animatedHeights = ref([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 const isInteractive = ref(false)
-const activeFreqTag = ref('DSP HIGH-FIDELITY')
+const activeFreqTag = ref('AAC-LC & HE-AAC')
 const waveYScale = ref(1)
 const logoSinePath = ref('M40 256c50 0 80-186 140-186s90 372 150 372 90-186 142-186')
 
@@ -179,10 +179,17 @@ function handlePointerMove(e) {
 
   waveYScale.value = 0.8 + normalizedY * 0.6
 
-  // Modulate frequency band label
-  const freqBands = ['31 Hz (SUB)', '125 Hz (BASS)', '500 Hz (MID)', '2 kHz (PRESENCE)', '8 kHz (TREBLE)', '16 kHz (AIR)']
-  const bandIndex = Math.floor(normalizedX * freqBands.length)
-  activeFreqTag.value = `BOOST: ${freqBands[Math.min(bandIndex, freqBands.length - 1)]}`
+  // Highlight codec features based on interaction
+  const codecFeatures = [
+    'AAC-LC & HE-AAC',
+    'ABR MODE (-b)',
+    'LGPL v2.1+ ENCODER',
+    'GPL v2+ DECODER',
+    '7.1 SURROUND SOUND',
+    'ISO/IEC 14496-3'
+  ]
+  const bandIndex = Math.floor(normalizedX * codecFeatures.length)
+  activeFreqTag.value = codecFeatures[Math.min(bandIndex, codecFeatures.length - 1)]
 
   // Calculate interactive scale for each equalizer bar based on proximity to pointer X
   barScales.value = barBaseHeights.map((_, index) => {
@@ -195,7 +202,7 @@ function handlePointerMove(e) {
 
 function handlePointerLeave() {
   isInteractive.value = false
-  activeFreqTag.value = 'DSP HIGH-FIDELITY'
+  activeFreqTag.value = 'AAC-LC & HE-AAC'
   waveYScale.value = 1
   barScales.value = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 }
@@ -204,7 +211,7 @@ function handlePointerClick() {
   // Fun pulse burst on click/tap
   barScales.value = barScales.value.map(s => Math.min(1.5, s * 1.4))
   waveYScale.value = 1.3
-  activeFreqTag.value = '⚡ FAAC 2.2 PEAK 0 dB'
+  activeFreqTag.value = '⚡ FAAC 2.2+ / FAAD2'
   setTimeout(() => {
     if (!isInteractive.value) handlePointerLeave()
   }, 1000)
