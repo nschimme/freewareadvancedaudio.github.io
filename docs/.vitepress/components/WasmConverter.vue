@@ -601,13 +601,67 @@ async function startConversion() {
 
 .result-actions {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-direction: column;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .result-actions {
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+    gap: 0.75rem;
+  }
 }
 
 .audio-player {
-  height: 32px;
-  max-width: 200px;
+  height: 36px;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .audio-player {
+    width: 200px;
+  }
+}
+
+@media (max-width: 639px) {
+  .converter-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .drop-zone {
+    padding: 1.25rem 0.75rem;
+  }
+
+  .drop-icon {
+    font-size: 2rem;
+  }
+
+  .control-select {
+    width: 100%;
+    max-width: 100%;
+    font-size: 0.85rem;
+  }
+
+  .preset-buttons {
+    justify-content: space-between;
+  }
+
+  .preset-btn {
+    flex: 1 1 auto;
+    text-align: center;
+    padding: 0.35rem 0.25rem;
+  }
+
+  .download-link {
+    display: block;
+    text-align: center;
+    width: 100%;
+    padding: 0.5rem;
+  }
 }
 
 .download-link {
