@@ -74,14 +74,14 @@
             />
           </g>
 
-          <!-- Dynamic Signature Sine Wave from Original SVG Logo -->
+          <!-- Static Signature Sine Wave from Original SVG Logo -->
           <g class="wave-group" :style="{ transform: `scaleY(${waveYScale})`, transformOrigin: '256px 256px' }">
             <path
               fill="none"
               stroke="url(#wave)"
               stroke-linecap="round"
               :stroke-width="isInteractive ? 14 : 12"
-              :d="logoSinePath"
+              d="M40 256c50 0 80-186 140-186s90 372 150 372 90-186 142-186"
               filter="url(#glow)"
               :class="['sine-wave-logo', { 'wave-boost': isInteractive }]"
             />
@@ -128,7 +128,6 @@ const animatedHeights = ref([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 const isInteractive = ref(false)
 const activeFreqTag = ref('AAC-LC & HE-AAC')
 const waveYScale = ref(1)
-const logoSinePath = ref('M40 256c50 0 80-186 140-186s90 372 150 372 90-186 142-186')
 
 let animFrameId = null
 let clock = 0
@@ -142,20 +141,12 @@ function barGradientUrl(index) {
 function updateSpectrumAnimation() {
   clock += 0.05
 
-  // Continuous lively rhythm on equalizer bars
+  // Smooth stereo spectrum analyzer animation on equalizer bars
   animatedHeights.value = barBaseHeights.map((_, i) => {
     const freq = 1 + (i % 3) * 0.7
     const oscillation = Math.sin(clock * freq + i * 0.8) * 0.22 + Math.cos(clock * 1.5 + i) * 0.15
     return Math.max(0.65, 1 + oscillation)
   })
-
-  // Dynamic wave morphing matching original logo curvature
-  if (!isInteractive.value) {
-    const waveFlex = Math.sin(clock * 1.2) * 20
-    const waveFlex2 = Math.cos(clock * 1.5) * 15
-    logoSinePath.value = `M40 256c50 0 ${80 - waveFlex} ${-186 + waveFlex2} ${140 + waveFlex2} ${-186 + waveFlex}s${90 - waveFlex2} ${372 + waveFlex} ${150 + waveFlex2} ${372 - waveFlex} ${90 - waveFlex} ${-186 + waveFlex2} ${142 + waveFlex} ${-186 - waveFlex}`
-    waveYScale.value = 1 + Math.sin(clock * 0.8) * 0.08
-  }
 
   animFrameId = requestAnimationFrame(updateSpectrumAnimation)
 }
