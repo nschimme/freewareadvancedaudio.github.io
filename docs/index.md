@@ -41,7 +41,6 @@ FAAC and FAAD2 are integrated into major open-source media frameworks, audio con
 - **[Audiobook Boss](https://github.com/Allmight97/audiobook-boss)**: Open-source audiobook processing suite integrating FAAC for M4A encoding and packaging.
 - **[GStreamer](https://gstreamer.freedesktop.org/)**: Official GStreamer plugins (`gst-plugins-bad`) providing `faac` and `faad` elements for multimedia pipelines.
 - **[VLC Media Player](https://www.videolan.org/vlc/)**: Includes FAAD2 decoder support in its modular codec plugin architecture.
-- **[FFmpeg CLI Workflows](https://ffmpeg.org/)**: Easily integrated via external process piping (`faac - -o out.m4a`) and custom container packaging.
 
 ---
 
