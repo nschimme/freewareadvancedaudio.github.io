@@ -36,12 +36,12 @@ features:
 
 FAAC and FAAD2 are integrated into major open-source media frameworks, audio converters, and embedded systems worldwide:
 
-- **[fre:ac](https://www.freac.org/)**: Free audio converter and CD ripper using FAAC and FAAD2.
-- **[Thingino](https://thingino.com/)**: Open-source IP camera firmware utilizing FAAC for efficient live audio encoding.
-- **[Audiobook Boss](https://github.com/Allmight97/audiobook-boss)**: Open-source audiobook management tools using FAAC for M4A/AAC conversion.
-- **[FFmpeg](https://ffmpeg.org/)**: Provides native support for `libfaac` and `libfaad2` via `--enable-libfaac` / `--enable-libfaad`.
-- **[VLC Media Player](https://www.videolan.org/vlc/)**: Utilizes FAAD2 for fast, cross-platform AAC decoding.
-- **[GStreamer](https://gstreamer.freedesktop.org/)**: Plug-and-play GStreamer elements (`faac`, `faad`) for audio pipeline processing.
+- **[fre:ac](https://www.freac.org/)**: Popular cross-platform audio converter and CD ripper directly bundling FAAC and FAAD2 binaries.
+- **[Thingino](https://thingino.com/)**: Embedded Linux IP camera firmware utilizing FAAC for real-time, low-overhead AAC stream encoding.
+- **[Audiobook Boss](https://github.com/Allmight97/audiobook-boss)**: Open-source audiobook processing suite integrating FAAC for M4A encoding and packaging.
+- **[GStreamer](https://gstreamer.freedesktop.org/)**: Official GStreamer plugins (`gst-plugins-bad`) providing `faac` and `faad` elements for multimedia pipelines.
+- **[VLC Media Player](https://www.videolan.org/vlc/)**: Includes FAAD2 decoder support in its modular codec plugin architecture.
+- **[FFmpeg CLI Workflows](https://ffmpeg.org/)**: Easily integrated via external process piping (`faac - -o out.m4a`) and custom container packaging.
 
 ---
 
