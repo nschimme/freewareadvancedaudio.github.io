@@ -36,10 +36,13 @@
       <!-- Controls Panel -->
       <div class="controls-grid" v-if="selectedFile">
         <div class="control-group">
-          <label class="control-label">Operation Mode</label>
+          <label class="control-label">
+            Operation Mode
+            <span class="auto-badge" v-if="autoDetectedMode">Auto-Detected</span>
+          </label>
           <select v-model="mode" class="control-select">
-            <option value="encode">Encode to AAC/M4A (via FAAC)</option>
-            <option value="decode">Decode to WAV (via FAAD2)</option>
+            <option value="encode">Encode PCM/WAV to AAC (via FAAC)</option>
+            <option value="decode">Decode AAC/M4A to WAV (via FAAD2)</option>
           </select>
         </div>
 
@@ -130,12 +133,29 @@ const fileInput = ref(null)
 const selectedFile = ref(null)
 const isDragOver = ref(false)
 const mode = ref('encode')
+const autoDetectedMode = ref(false)
 const bitrate = ref(128)
 const objectType = ref('auto')
 const isProcessing = ref(false)
 const progress = ref(0)
 const statusMessage = ref('')
 const results = ref([])
+
+function detectAndSetMode(file) {
+  if (!file) return
+  const name = file.name.toLowerCase()
+  const type = (file.type || '').toLowerCase()
+
+  if (name.endsWith('.wav') || type.includes('wav')) {
+    mode.value = 'encode'
+    autoDetectedMode.value = true
+  } else if (name.endsWith('.aac') || name.endsWith('.m4a') || name.endsWith('.mp4') || type.includes('aac') || type.includes('m4a') || type.includes('mp4')) {
+    mode.value = 'decode'
+    autoDetectedMode.value = true
+  } else {
+    autoDetectedMode.value = false
+  }
+}
 
 function triggerFileInput() {
   fileInput.value?.click()
@@ -145,6 +165,7 @@ function handleFileChange(event) {
   const files = event.target.files
   if (files && files.length > 0) {
     selectedFile.value = files[0]
+    detectAndSetMode(files[0])
   }
 }
 
@@ -153,6 +174,7 @@ function handleDrop(event) {
   const files = event.dataTransfer.files
   if (files && files.length > 0) {
     selectedFile.value = files[0]
+    detectAndSetMode(files[0])
   }
 }
 
@@ -435,6 +457,15 @@ async function startConversion() {
   padding: 0.15rem 0.5rem;
   border-radius: 6px;
   font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.auto-badge {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
