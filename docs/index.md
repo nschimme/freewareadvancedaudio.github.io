@@ -33,6 +33,10 @@ features:
 
 <div class="home-technical-wrapper">
 
+<AudioVisualizer />
+
+---
+
 ## Ecosystem Users & Integrations
 
 FAAC and FAAD2 are integrated into major open-source media frameworks, audio converters, and embedded systems worldwide:
