@@ -5,6 +5,8 @@ hero:
   name: "Freeware Advanced Audio"
   text: "Open-Source AAC Codecs"
   tagline: "ISO-Free LGPL v2.1+ AAC Encoder (FAAC) & GPL v2+ Decoder (FAAD2)"
+  image:
+    alt: "FAAC Visualizer"
   actions:
     - theme: brand
       text: "In-Browser Demo"
@@ -32,10 +34,6 @@ features:
 ---
 
 <div class="home-technical-wrapper">
-
-<AudioVisualizer />
-
----
 
 ## Ecosystem Users & Integrations
 

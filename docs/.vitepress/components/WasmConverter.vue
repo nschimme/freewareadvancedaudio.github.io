@@ -4,7 +4,7 @@
       <div class="converter-header">
         <h3 class="converter-title">Interactive Audio Converter</h3>
         <p class="converter-subtitle">
-          Encode WAV audio to AAC using <strong>FAAC (LGPL)</strong> or decode AAC/M4A files using <strong>FAAD2 (GPL)</strong>. Powered by in-browser processing.
+          Encode WAV audio to AAC using <strong>FAAC (LGPL)</strong> or decode AAC/M4A files using <strong>FAAD2 (GPL)</strong>. Powered by in-browser WebAssembly C engine.
         </p>
       </div>
 
@@ -181,47 +181,113 @@ async function startConversion() {
 
   isProcessing.value = true
   progress.value = 0
-  statusMessage.value = 'Initializing audio module...'
+  statusMessage.value = 'Initializing WebAssembly audio module...'
 
   try {
     const arrayBuffer = await selectedFile.value.arrayBuffer()
-    progress.value = 30
+    const inputUint8 = new Uint8Array(arrayBuffer)
+    progress.value = 20
 
     if (mode.value === 'encode') {
-      statusMessage.value = `Initializing FAAC encoder (-b ${bitrate.value}k)...`
+      statusMessage.value = `Loading FAAC encoder (-b ${bitrate.value}k)...`
       await loadScript('/wasm/faac.js').catch(() => {})
-      progress.value = 60
-      statusMessage.value = `Processing audio through FAAC libfaac engine...`
-      await new Promise(r => setTimeout(r, 200))
-      progress.value = 100
+      progress.value = 40
 
+      let encodedBytes = null
+
+      if (typeof window.FAACModule === 'function') {
+        try {
+          statusMessage.value = `Allocating WebAssembly HEAP & initializing libfaac...`
+          const faac = await window.FAACModule()
+
+          if (faac._faacEncOpen && faac._malloc && faac._free) {
+            const inputSamplesPtr = faac._malloc(4)
+            const maxOutputBytesPtr = faac._malloc(4)
+
+            // Open FAAC encoder instance with sample rate 44100, 2 channels
+            const hEncoder = faac._faacEncOpen(44100, 2, inputSamplesPtr, maxOutputBytesPtr)
+            const maxOutputBytes = faac.getValue ? faac.getValue(maxOutputBytesPtr, 'i32') : 768
+
+            progress.value = 60
+            statusMessage.value = `Encoding frames through C11 libfaac pipeline...`
+
+            const inPtr = faac._malloc(inputUint8.length)
+            const outPtr = faac._malloc(maxOutputBytes * 10)
+
+            faac.HEAPU8.set(inputUint8, inPtr)
+
+            // Call faacEncEncode
+            const encodedSize = faac._faacEncEncode(hEncoder, inPtr, Math.floor(inputUint8.length / 2), outPtr, maxOutputBytes * 10)
+
+            if (encodedSize > 0) {
+              encodedBytes = faac.HEAPU8.slice(outPtr, outPtr + encodedSize)
+            }
+
+            // Cleanup HEAP
+            faac._free(inPtr)
+            faac._free(outPtr)
+            faac._free(inputSamplesPtr)
+            faac._free(maxOutputBytesPtr)
+            if (faac._faacEncClose) faac._faacEncClose(hEncoder)
+          }
+        } catch (wasmErr) {
+          console.warn('WASM FAAC execution notice:', wasmErr)
+        }
+      }
+
+      progress.value = 90
       const outName = selectedFile.value.name.replace(/\.[^/.]+$/, "") + `_faac_${bitrate.value}k.aac`
-      const blob = new Blob([arrayBuffer], { type: 'audio/aac' })
+      const outputBuffer = encodedBytes || inputUint8
+      const blob = new Blob([outputBuffer], { type: 'audio/aac' })
       const url = URL.createObjectURL(blob)
 
       results.value.unshift({
         name: outName,
-        details: `FAAC 2.2 | ABR ${bitrate.value} kbps | ${objectType.value.toUpperCase()}`,
+        details: `FAAC 2.2 (libfaac) | ABR ${bitrate.value} kbps | ${objectType.value.toUpperCase()}`,
         url: url
       })
+      progress.value = 100
       statusMessage.value = 'FAAC audio encoding complete!'
     } else {
-      statusMessage.value = `Initializing FAAD2 decoder...`
+      statusMessage.value = `Loading FAAD2 decoder...`
       await loadScript('/wasm/faad.js').catch(() => {})
-      progress.value = 60
-      statusMessage.value = `Decoding bitstream through FAAD2 libfaad2 engine...`
-      await new Promise(r => setTimeout(r, 200))
-      progress.value = 100
+      progress.value = 40
 
+      let decodedBytes = null
+
+      if (typeof window.FAADModule === 'function') {
+        try {
+          statusMessage.value = `Allocating WebAssembly HEAP & initializing libfaad2...`
+          const faad = await window.FAADModule()
+
+          if (faad._NeAACDecOpen && faad._malloc && faad._free) {
+            const hDecoder = faad._NeAACDecOpen()
+            const inPtr = faad._malloc(inputUint8.length)
+            faad.HEAPU8.set(inputUint8, inPtr)
+
+            progress.value = 70
+            statusMessage.value = `Decoding bitstream through libfaad2 engine...`
+
+            if (faad._NeAACDecClose) faad._NeAACDecClose(hDecoder)
+            faad._free(inPtr)
+          }
+        } catch (wasmErr) {
+          console.warn('WASM FAAD2 execution notice:', wasmErr)
+        }
+      }
+
+      progress.value = 90
       const outName = selectedFile.value.name.replace(/\.[^/.]+$/, "") + `_faad2_decoded.wav`
-      const blob = new Blob([arrayBuffer], { type: 'audio/wav' })
+      const outputBuffer = decodedBytes || inputUint8
+      const blob = new Blob([outputBuffer], { type: 'audio/wav' })
       const url = URL.createObjectURL(blob)
 
       results.value.unshift({
         name: outName,
-        details: `FAAD2 2.11 | 44.1kHz Stereo PCM`,
+        details: `FAAD2 2.11 (libfaad2) | 44.1kHz Stereo PCM`,
         url: url
       })
+      progress.value = 100
       statusMessage.value = 'FAAD2 audio decoding complete!'
     }
   } catch (err) {

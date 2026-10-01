@@ -47,7 +47,7 @@
             <line x1="0" y1="420" x2="512" y2="420"/>
           </g>
 
-          <!-- Animated Spectrum Equalizer Bars -->
+          <!-- Animated Spectrum Equalizer Bars (Smooth Slower Rhythm) -->
           <g opacity="0.9" class="eq-bars">
             <rect class="bar bar-1" fill="url(#bar-cyan)" width="28" height="120" x="48" y="300" rx="4"/>
             <rect class="bar bar-2" fill="url(#bar-cyan)" width="28" height="200" x="88" y="220" rx="4"/>
@@ -62,15 +62,15 @@
             <rect class="bar bar-11" fill="url(#bar-cyan)" width="28" height="70" x="448" y="350" rx="4"/>
           </g>
 
-          <!-- Animated Glowing Frequency Sine Wave -->
+          <!-- Traveling Glowing Sine Wave -->
           <path
             fill="none"
             stroke="url(#wave)"
             stroke-linecap="round"
             stroke-width="10"
-            d="M40 256c50 0 80-186 140-186s90 372 150 372 90-186 142-186"
+            d="M-400 256c50 0 80-186 140-186s90 372 150 372 90-186 142-186 80-186 140-186 90 372 150 372 90-186 142-186 80-186 140-186"
             filter="url(#glow)"
-            class="glowing-wave"
+            class="traveling-wave"
           />
         </svg>
 
@@ -78,7 +78,7 @@
         <div class="vfd-indicators">
           <span class="vfd-tag">STEREO L/R</span>
           <span class="vfd-tag highlight">DSP HIGH-FIDELITY</span>
-          <span class="vfd-tag">44.1 kHz / 16-BIT</span>
+          <span class="vfd-tag">48 kHz / 16-BIT</span>
         </div>
       </div>
     </div>
@@ -89,7 +89,7 @@
 .visualizer-container {
   display: flex;
   justify-content: center;
-  margin: 2rem 0;
+  align-items: center;
   width: 100%;
 }
 
@@ -97,12 +97,12 @@
   background: linear-gradient(180deg, #1e293b, #0f172a);
   border: 2px solid #334155;
   border-radius: 16px;
-  padding: 12px;
+  padding: 10px;
   box-shadow:
     0 15px 35px -5px rgba(0, 0, 0, 0.6),
     inset 0 1px 2px rgba(255, 255, 255, 0.1);
-  max-width: 600px;
   width: 100%;
+  max-width: 440px;
 }
 
 .display-window {
@@ -119,72 +119,70 @@
   display: block;
 }
 
-/* 90s Equalizer Bar Animations */
+/* Slower, Smooth 90s Equalizer Bar Animations */
 .bar {
   transform-origin: bottom;
-  animation: eq-bounce 1.8s ease-in-out infinite alternate;
+  animation: eq-bounce-slow 4s ease-in-out infinite alternate;
 }
 
-.bar-1 { animation-delay: 0.1s; animation-duration: 1.4s; }
-.bar-2 { animation-delay: 0.3s; animation-duration: 1.7s; }
-.bar-3 { animation-delay: 0.2s; animation-duration: 1.5s; }
-.bar-4 { animation-delay: 0.5s; animation-duration: 1.9s; }
-.bar-5 { animation-delay: 0.1s; animation-duration: 1.6s; }
-.bar-6 { animation-delay: 0.4s; animation-duration: 1.8s; }
-.bar-7 { animation-delay: 0.2s; animation-duration: 1.3s; }
-.bar-8 { animation-delay: 0.6s; animation-duration: 1.7s; }
-.bar-9 { animation-delay: 0.3s; animation-duration: 1.5s; }
-.bar-10 { animation-delay: 0.1s; animation-duration: 1.4s; }
-.bar-11 { animation-delay: 0.4s; animation-duration: 1.6s; }
+.bar-1 { animation-delay: 0.2s; animation-duration: 3.8s; }
+.bar-2 { animation-delay: 0.6s; animation-duration: 4.2s; }
+.bar-3 { animation-delay: 0.4s; animation-duration: 3.5s; }
+.bar-4 { animation-delay: 0.9s; animation-duration: 4.5s; }
+.bar-5 { animation-delay: 0.3s; animation-duration: 3.9s; }
+.bar-6 { animation-delay: 0.8s; animation-duration: 4.1s; }
+.bar-7 { animation-delay: 0.5s; animation-duration: 3.6s; }
+.bar-8 { animation-delay: 1.1s; animation-duration: 4.4s; }
+.bar-9 { animation-delay: 0.7s; animation-duration: 3.7s; }
+.bar-10 { animation-delay: 0.3s; animation-duration: 3.9s; }
+.bar-11 { animation-delay: 0.8s; animation-duration: 4.0s; }
 
-@keyframes eq-bounce {
+@keyframes eq-bounce-slow {
   0% {
-    transform: scaleY(0.4);
+    transform: scaleY(0.55);
   }
-  30% {
-    transform: scaleY(1.05);
+  35% {
+    transform: scaleY(0.92);
   }
-  60% {
-    transform: scaleY(0.65);
+  70% {
+    transform: scaleY(0.68);
   }
   100% {
-    transform: scaleY(0.95);
+    transform: scaleY(0.85);
   }
 }
 
-/* Glowing Sine Wave Animation */
-.glowing-wave {
-  animation: wave-pulse 2.5s ease-in-out infinite alternate;
+/* Moving Wave Animation */
+.traveling-wave {
+  animation: wave-travel 8s linear infinite;
 }
 
-@keyframes wave-pulse {
+@keyframes wave-travel {
   0% {
-    opacity: 0.7;
-    stroke-width: 8;
+    transform: translateX(0);
   }
   100% {
-    opacity: 1;
-    stroke-width: 13;
+    transform: translateX(-432px);
   }
 }
 
 .vfd-indicators {
   position: absolute;
-  bottom: 12px;
-  left: 16px;
-  right: 16px;
+  bottom: 10px;
+  left: 12px;
+  right: 12px;
   display: flex;
   justify-content: space-between;
   font-family: monospace, monospace;
-  font-size: 0.7rem;
-  letter-spacing: 1px;
+  font-size: 0.65rem;
+  letter-spacing: 0.5px;
   pointer-events: none;
 }
 
 .vfd-tag {
   color: rgba(148, 163, 184, 0.6);
-  background: rgba(15, 23, 42, 0.7);
-  padding: 2px 8px;
+  background: rgba(15, 23, 42, 0.8);
+  padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
