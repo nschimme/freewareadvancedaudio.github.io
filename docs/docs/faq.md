@@ -18,8 +18,11 @@ Answers to common developer, packager, and user questions regarding **FAAC** and
 - **FAAC (Encoder)**: Licensed under **LGPL v2.1+**.
 - **FAAD2 (Decoder)**: Licensed under **GPL v2+**.
 
+### Have AAC patents expired for AAC-LC and HE-AAC v1?
+**Yes.** All core patents covering the **AAC-LC** (Low Complexity) and **HE-AAC v1** (Spectral Band Replication - SBR) profiles have expired worldwide. As a result, standard AAC-LC and HE-AAC v1 audio encoding and decoding via FAAC and FAAD2 can be freely deployed globally without patent licensing restrictions or royalty fees.
+
 ### Do I need to pay MPEG-LA patent royalties to use FAAC or FAAD2?
-FAAC and FAAD2 are open-source software libraries. Under software license terms, open-source encoders/decoders do not charge licensing fees. However, depending on commercial jurisdiction, distribution of AAC end-user products above specific volume thresholds may be subject to standard MPEG-LA patent pool policies.
+Since all patents covering AAC-LC and HE-AAC v1 have expired, open-source distribution and commercial usage of FAAC (LGPL v2.1+) and FAAD2 (GPL v2+) for these standard profiles require no MPEG-LA or Via Licensing patent royalties.
 
 ---
 

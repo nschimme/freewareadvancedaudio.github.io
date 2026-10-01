@@ -22,8 +22,7 @@ export default defineConfig({
       { text: 'FAAD2 Decoder Guide', link: '/docs/faad2' },
       { text: 'Benchmarks', link: '/docs/comparison' },
       { text: 'FAQ', link: '/docs/faq' },
-      { text: 'Blog', link: '/blog/website-launch' },
-      { text: 'GitHub Org ↗', link: 'https://github.com/FreewareAdvancedAudio' }
+      { text: 'Blog', link: '/blog/website-launch' }
     ],
     sidebar: [
       {
