@@ -293,6 +293,7 @@ function handlePointerClick() {
   right: 12px;
   display: flex;
   justify-content: space-between;
+  gap: 4px;
   font-family: monospace, monospace;
   font-size: 0.65rem;
   letter-spacing: 0.5px;
@@ -306,6 +307,36 @@ function handlePointerClick() {
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.05);
   transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .rack-bezel {
+    padding: 6px;
+    border-radius: 12px;
+    max-width: 100%;
+  }
+
+  .vfd-indicators {
+    bottom: 6px;
+    left: 6px;
+    right: 6px;
+    font-size: 0.55rem;
+    letter-spacing: 0;
+  }
+
+  .vfd-tag {
+    padding: 1px 4px;
+  }
+}
+
+@media (max-width: 380px) {
+  .vfd-indicators {
+    justify-content: center;
+  }
+  .vfd-tag:last-child {
+    display: none;
+  }
 }
 
 .vfd-tag.highlight {

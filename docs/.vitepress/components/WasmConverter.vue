@@ -4,7 +4,7 @@
       <div class="converter-header">
         <h3 class="converter-title">Interactive Audio Converter</h3>
         <p class="converter-subtitle">
-          Encode WAV audio to AAC using <strong>FAAC (LGPL)</strong> or decode AAC/M4A files using <strong>FAAD2 (GPL)</strong>. Powered by in-browser WebAssembly C engine.
+          Encode WAV audio to AAC using <strong>FAAC (LGPL)</strong> or decode AAC/M4A files using <strong>FAAD2 (GPL)</strong>. Powered by our in-browser high-performance C engine.
         </p>
       </div>
 
@@ -162,6 +162,39 @@ function formatFileSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
 }
 
+function parseWavHeader(buffer) {
+  if (!buffer || buffer.byteLength < 44) return null
+  const dataView = new DataView(buffer)
+  const riff = String.fromCharCode(...new Uint8Array(buffer, 0, 4))
+  const wave = String.fromCharCode(...new Uint8Array(buffer, 8, 4))
+  if (riff !== 'RIFF' || wave !== 'WAVE') return null
+
+  let offset = 12
+  let sampleRate = 44100
+  let numChannels = 2
+  let bitsPerSample = 16
+  let dataOffset = 44
+  let dataSize = buffer.byteLength - 44
+
+  while (offset < buffer.byteLength - 8) {
+    const chunkId = String.fromCharCode(...new Uint8Array(buffer, offset, 4))
+    const chunkSize = dataView.getUint32(offset + 4, true)
+    if (chunkId === 'fmt ') {
+      numChannels = dataView.getUint16(offset + 10, true)
+      sampleRate = dataView.getUint32(offset + 12, true)
+      bitsPerSample = dataView.getUint16(offset + 22, true)
+    } else if (chunkId === 'data') {
+      dataOffset = offset + 8
+      dataSize = chunkSize
+      break
+    }
+    offset += 8 + chunkSize
+  }
+
+  const pcmBytes = new Uint8Array(buffer, dataOffset, Math.min(dataSize, buffer.byteLength - dataOffset))
+  return { sampleRate, numChannels, bitsPerSample, pcmBytes }
+}
+
 async function loadScript(src) {
   return new Promise((resolve, reject) => {
     if (document.querySelector(`script[src="${src}"]`)) {
@@ -181,12 +214,17 @@ async function startConversion() {
 
   isProcessing.value = true
   progress.value = 0
-  statusMessage.value = 'Initializing WebAssembly audio module...'
+  statusMessage.value = 'Initializing in-browser audio engine...'
 
   try {
     const arrayBuffer = await selectedFile.value.arrayBuffer()
     const inputUint8 = new Uint8Array(arrayBuffer)
     progress.value = 20
+
+    const wavHeaderInfo = parseWavHeader(arrayBuffer)
+    const pcmData = wavHeaderInfo ? wavHeaderInfo.pcmBytes : inputUint8
+    const sampleRate = wavHeaderInfo ? wavHeaderInfo.sampleRate : 44100
+    const channels = wavHeaderInfo ? wavHeaderInfo.numChannels : 2
 
     if (mode.value === 'encode') {
       statusMessage.value = `Loading FAAC encoder (-b ${bitrate.value}k)...`
@@ -197,27 +235,28 @@ async function startConversion() {
 
       if (typeof window.FAACModule === 'function') {
         try {
-          statusMessage.value = `Allocating WebAssembly HEAP & initializing libfaac...`
+          statusMessage.value = `Initializing libfaac audio engine...`
           const faac = await window.FAACModule()
 
           if (faac._faacEncOpen && faac._malloc && faac._free) {
             const inputSamplesPtr = faac._malloc(4)
             const maxOutputBytesPtr = faac._malloc(4)
 
-            // Open FAAC encoder instance with sample rate 44100, 2 channels
-            const hEncoder = faac._faacEncOpen(44100, 2, inputSamplesPtr, maxOutputBytesPtr)
+            // Open FAAC encoder instance with actual sample rate and channel count
+            const hEncoder = faac._faacEncOpen(sampleRate, channels, inputSamplesPtr, maxOutputBytesPtr)
             const maxOutputBytes = faac.getValue ? faac.getValue(maxOutputBytesPtr, 'i32') : 768
 
             progress.value = 60
-            statusMessage.value = `Encoding frames through C11 libfaac pipeline...`
+            statusMessage.value = `Encoding PCM audio through libfaac C11 pipeline...`
 
-            const inPtr = faac._malloc(inputUint8.length)
+            const inPtr = faac._malloc(pcmData.length)
             const outPtr = faac._malloc(maxOutputBytes * 10)
 
-            faac.HEAPU8.set(inputUint8, inPtr)
+            faac.HEAPU8.set(pcmData, inPtr)
 
-            // Call faacEncEncode
-            const encodedSize = faac._faacEncEncode(hEncoder, inPtr, Math.floor(inputUint8.length / 2), outPtr, maxOutputBytes * 10)
+            // Call faacEncEncode with 16-bit PCM sample count
+            const totalSamples = Math.floor(pcmData.length / 2)
+            const encodedSize = faac._faacEncEncode(hEncoder, inPtr, totalSamples, outPtr, maxOutputBytes * 10)
 
             if (encodedSize > 0) {
               encodedBytes = faac.HEAPU8.slice(outPtr, outPtr + encodedSize)
@@ -257,7 +296,7 @@ async function startConversion() {
 
       if (typeof window.FAADModule === 'function') {
         try {
-          statusMessage.value = `Allocating WebAssembly HEAP & initializing libfaad2...`
+          statusMessage.value = `Initializing libfaad2 audio engine...`
           const faad = await window.FAADModule()
 
           if (faad._NeAACDecOpen && faad._malloc && faad._free) {
