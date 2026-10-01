@@ -5,6 +5,5 @@ dist
 .vitepress/cache
 *.log
 
-# Ignore compiled WebAssembly binary assets
-docs/public/wasm/*.wasm
-docs/public/wasm/*.a
+# Ignore compiled WebAssembly build output
+docs/public/wasm/

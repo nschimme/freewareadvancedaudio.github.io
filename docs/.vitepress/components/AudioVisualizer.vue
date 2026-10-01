@@ -41,6 +41,9 @@
               <feGaussianBlur stdDeviation="8"/>
               <feComposite in="SourceGraphic"/>
             </filter>
+            <filter id="text-shadow" width="140%" height="140%" x="-20%" y="-20%">
+              <feDropShadow dx="0" dy="6" flood-color="#000" flood-opacity=".8" stdDeviation="8"/>
+            </filter>
           </defs>
 
           <!-- Background Gradient -->
@@ -55,39 +58,50 @@
             <line x1="0" y1="420" x2="512" y2="420"/>
           </g>
 
-          <!-- Interactive Spectrum Equalizer Bars -->
-          <g opacity="0.9" class="eq-bars">
+          <!-- Interactive Equalizer Bars from FAA Logo -->
+          <g opacity="0.85" class="eq-bars">
             <rect
               v-for="(bar, index) in barScales"
               :key="index"
-              :class="['bar', `bar-${index + 1}`, barGradientClass(index)]"
+              :class="['bar', `bar-${index + 1}`]"
               :fill="barGradientUrl(index)"
               width="28"
               :height="barBaseHeights[index]"
               :x="48 + index * 40"
               :y="500 - barBaseHeights[index]"
               rx="4"
-              :style="{ transform: `scaleY(${bar})`, transformOrigin: `${48 + index * 40 + 14}px 500px` }"
+              :style="{ transform: `scaleY(${bar * (animatedHeights[index] || 1)})`, transformOrigin: `${48 + index * 40 + 14}px 500px` }"
             />
           </g>
 
-          <!-- Seamless Looping Oscilloscope Sine Wave modulated by interaction -->
-          <path
-            fill="none"
-            stroke="url(#wave)"
-            stroke-linecap="round"
-            :stroke-width="isInteractive ? 11 : 8"
-            d="M -120 256
-               c 16.56 -80, 43.44 -80, 60 0 c 16.56 80, 43.44 80, 60 0
-               c 16.56 -80, 43.44 -80, 60 0 c 16.56 80, 43.44 80, 60 0
-               c 16.56 -80, 43.44 -80, 60 0 c 16.56 80, 43.44 80, 60 0
-               c 16.56 -80, 43.44 -80, 60 0 c 16.56 80, 43.44 80, 60 0
-               c 16.56 -80, 43.44 -80, 60 0 c 16.56 80, 43.44 80, 60 0
-               c 16.56 -80, 43.44 -80, 60 0 c 16.56 80, 43.44 80, 60 0"
-            filter="url(#glow)"
-            :class="['looping-sine-wave', { 'wave-boost': isInteractive }]"
-            :style="{ animationDuration: waveSpeed + 's' }"
-          />
+          <!-- Dynamic Signature Sine Wave from Original SVG Logo -->
+          <g class="wave-group" :style="{ transform: `scaleY(${waveYScale})`, transformOrigin: '256px 256px' }">
+            <path
+              fill="none"
+              stroke="url(#wave)"
+              stroke-linecap="round"
+              :stroke-width="isInteractive ? 14 : 12"
+              :d="logoSinePath"
+              filter="url(#glow)"
+              :class="['sine-wave-logo', { 'wave-boost': isInteractive }]"
+            />
+          </g>
+
+          <!-- Centered Overlay Brand Typography -->
+          <text
+            x="256"
+            y="298"
+            fill="#ffffff"
+            filter="url(#text-shadow)"
+            font-family="system-ui, -apple-system, sans-serif"
+            font-size="124"
+            font-weight="800"
+            letter-spacing="4"
+            text-anchor="middle"
+            class="brand-text"
+          >
+            FAAC
+          </text>
         </svg>
 
         <!-- 90s Hardware VFD Indicators -->
@@ -106,13 +120,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const barBaseHeights = [120, 200, 260, 320, 360, 330, 280, 230, 160, 110, 70]
 const barScales = ref([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+const animatedHeights = ref([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 const isInteractive = ref(false)
 const activeFreqTag = ref('DSP HIGH-FIDELITY')
-const waveSpeed = ref(3)
+const waveYScale = ref(1)
+const logoSinePath = ref('M40 256c50 0 80-186 140-186s90 372 150 372 90-186 142-186')
+
+let animFrameId = null
+let clock = 0
 
 function barGradientUrl(index) {
   if (index < 2 || index >= 8) return 'url(#bar-cyan)'
@@ -120,9 +139,34 @@ function barGradientUrl(index) {
   return 'url(#bar-purple)'
 }
 
-function barGradientClass(index) {
-  return `bar-grad-${index}`
+function updateSpectrumAnimation() {
+  clock += 0.05
+
+  // Continuous lively rhythm on equalizer bars
+  animatedHeights.value = barBaseHeights.map((_, i) => {
+    const freq = 1 + (i % 3) * 0.7
+    const oscillation = Math.sin(clock * freq + i * 0.8) * 0.22 + Math.cos(clock * 1.5 + i) * 0.15
+    return Math.max(0.65, 1 + oscillation)
+  })
+
+  // Dynamic wave morphing matching original logo curvature
+  if (!isInteractive.value) {
+    const waveFlex = Math.sin(clock * 1.2) * 20
+    const waveFlex2 = Math.cos(clock * 1.5) * 15
+    logoSinePath.value = `M40 256c50 0 ${80 - waveFlex} ${-186 + waveFlex2} ${140 + waveFlex2} ${-186 + waveFlex}s${90 - waveFlex2} ${372 + waveFlex} ${150 + waveFlex2} ${372 - waveFlex} ${90 - waveFlex} ${-186 + waveFlex2} ${142 + waveFlex} ${-186 - waveFlex}`
+    waveYScale.value = 1 + Math.sin(clock * 0.8) * 0.08
+  }
+
+  animFrameId = requestAnimationFrame(updateSpectrumAnimation)
 }
+
+onMounted(() => {
+  animFrameId = requestAnimationFrame(updateSpectrumAnimation)
+})
+
+onUnmounted(() => {
+  if (animFrameId) cancelAnimationFrame(animFrameId)
+})
 
 function handlePointerMove(e) {
   isInteractive.value = true
@@ -133,8 +177,7 @@ function handlePointerMove(e) {
   const normalizedX = x / rect.width
   const normalizedY = 1 - (y / rect.height)
 
-  // Modulate wave speed according to cursor X
-  waveSpeed.value = 0.8 + (1 - normalizedX) * 3
+  waveYScale.value = 0.8 + normalizedY * 0.6
 
   // Modulate frequency band label
   const freqBands = ['31 Hz (SUB)', '125 Hz (BASS)', '500 Hz (MID)', '2 kHz (PRESENCE)', '8 kHz (TREBLE)', '16 kHz (AIR)']
@@ -145,21 +188,22 @@ function handlePointerMove(e) {
   barScales.value = barBaseHeights.map((_, index) => {
     const barXRatio = index / (barBaseHeights.length - 1)
     const distance = Math.abs(normalizedX - barXRatio)
-    const boost = Math.max(0, 1 - distance * 2.5) * (0.4 + normalizedY * 0.8)
-    return 0.7 + boost
+    const boost = Math.max(0, 1 - distance * 2.2) * (0.5 + normalizedY * 0.9)
+    return 0.8 + boost
   })
 }
 
 function handlePointerLeave() {
   isInteractive.value = false
   activeFreqTag.value = 'DSP HIGH-FIDELITY'
-  waveSpeed.value = 3
+  waveYScale.value = 1
   barScales.value = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 }
 
 function handlePointerClick() {
   // Fun pulse burst on click/tap
-  barScales.value = barScales.value.map(s => Math.min(1.4, s * 1.3))
+  barScales.value = barScales.value.map(s => Math.min(1.5, s * 1.4))
+  waveYScale.value = 1.3
   activeFreqTag.value = '⚡ FAAC 2.2 PEAK 0 dB'
   setTimeout(() => {
     if (!isInteractive.value) handlePointerLeave()
@@ -212,53 +256,27 @@ function handlePointerClick() {
   display: block;
 }
 
-/* Slower, Smooth 90s Equalizer Bar Animations */
+/* Equalizer bar transitions */
 .bar {
+  transition: transform 0.08s ease-out;
+}
+
+/* Wave Group and Glow Effects */
+.wave-group {
   transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
-  animation: eq-bounce-slow 4s ease-in-out infinite alternate;
 }
 
-.bar-1 { animation-delay: 0.2s; animation-duration: 3.8s; }
-.bar-2 { animation-delay: 0.6s; animation-duration: 4.2s; }
-.bar-3 { animation-delay: 0.4s; animation-duration: 3.5s; }
-.bar-4 { animation-delay: 0.9s; animation-duration: 4.5s; }
-.bar-5 { animation-delay: 0.3s; animation-duration: 3.9s; }
-.bar-6 { animation-delay: 0.8s; animation-duration: 4.1s; }
-.bar-7 { animation-delay: 0.5s; animation-duration: 3.6s; }
-.bar-8 { animation-delay: 1.1s; animation-duration: 4.4s; }
-.bar-9 { animation-delay: 0.7s; animation-duration: 3.7s; }
-.bar-10 { animation-delay: 0.3s; animation-duration: 3.9s; }
-.bar-11 { animation-delay: 0.8s; animation-duration: 4.0s; }
-
-@keyframes eq-bounce-slow {
-  0% {
-    opacity: 0.85;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.9;
-  }
-}
-
-/* Seamless Oscilloscope Looping Wave Animation */
-.looping-sine-wave {
-  animation: wave-loop linear infinite;
+.sine-wave-logo {
   transition: stroke-width 0.2s ease, filter 0.2s ease;
 }
 
-.looping-sine-wave.wave-boost {
-  filter: drop-shadow(0 0 12px #06b6d4);
+.sine-wave-logo.wave-boost {
+  filter: drop-shadow(0 0 16px #f43f5e);
 }
 
-@keyframes wave-loop {
-  0% {
-    transform: translateX(0px);
-  }
-  100% {
-    transform: translateX(-120px);
-  }
+.brand-text {
+  pointer-events: none;
+  user-select: none;
 }
 
 .vfd-indicators {
