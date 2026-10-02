@@ -1,31 +1,37 @@
 ---
-title: FAAC & FAAD2 FAQ — Licensing, Audio Tuning & Embedded Compilation
-description: Frequently asked questions for FAAC and FAAD2 AAC audio codecs. Answers regarding LGPL v2.1+ licensing, average bitrate tuning (-b flag), and embedded C/C++ compilation.
+title: FAAC & FAAD2 FAQ — Licensing, Patent Status & Audio Engineering
+description: Frequently asked questions for FAAC and FAAD2 AAC audio codecs. Answers regarding LGPL v2.1+ licensing, patent expiration timelines, average bitrate tuning (-b flag), and embedded C/C++ compilation.
 ---
 
 # Frequently Asked Questions (FAQ)
 
 Answers to common developer, packager, and user questions regarding **FAAC** and **FAAD2**.
 
+::: warning LEGAL DISCLAIMER
+The information provided in this document is for general informational and educational purposes only and **does not constitute formal legal advice**. The maintainers, authors, and contributors of FAAC and FAAD2 do not warrant or indemnify users, developers, or distributors against third-party patent claims, copyright claims, or royalty demands. **YOU ARE SOLELY RESPONSIBLE FOR YOUR OWN USE, INTEGRATION, AND DISTRIBUTION OF THIS SOFTWARE.**
+:::
+
 ---
 
 ## 1. Licensing & Legal Questions
 
-### Is FAAC LGPL compliant and safe for commercial software?
-**Yes.** FAAC 2.0+ was completely rewritten from scratch under the **LGPL v2.1+** license. It contains zero ISO reference code or proprietary headers. Software projects can dynamically link against `libfaac` without inheriting copyleft obligations on their proprietary source code.
+### Is FAAC LGPL compliant and safe for commercial software integration?
+FAAC 2.0+ was rewritten from scratch under the **GNU Lesser General Public License v2.1 or later (LGPL v2.1+)**. It contains zero ISO reference code or proprietary header files. Under the terms of LGPL v2.1+, applications may dynamically link against `libfaac` without automatically subjecting their proprietary application code to copyleft disclosure requirements, subject to compliance with LGPL conditions (such as allowing users to update or relink `libfaac`).
 
 ### What is the license difference between FAAC, FAAD2, and FAAD3?
 - **FAAC (Encoder)**: Licensed under **LGPL v2.1+** (written in C11/C99).
 - **FAAD2 (Decoder)**: Licensed under **GPL v2+** (written in C99).
 - **FAAD3 (Decoder)**: Licensed under **LGPL v2.1+** (written in C11).
 
-### Have AAC patents expired for AAC-LC and HE-AAC v1? What about HE-AAC v2?
-**Yes for AAC-LC and HE-AAC v1.** All core patents covering the **AAC-LC** (Low Complexity) and **HE-AAC v1** (Spectral Band Replication - SBR) profiles have expired worldwide. Standard AAC-LC and HE-AAC v1 audio encoding and decoding via FAAC and FAAD2 can be freely deployed globally without patent licensing restrictions or royalty fees.
+### What is the patent status of AAC-LC, HE-AAC v1, and HE-AAC v2?
+The primary patents covering the core **MPEG-2/4 AAC-LC** (Low Complexity) and **HE-AAC v1** (Spectral Band Replication - SBR) audio profiles were filed in the late 1990s and early 2000s, and their standard 20-year patent terms have expired in major jurisdictions worldwide.
 
-For **HE-AAC v2** (Parametric Stereo - PS), remaining patents are scheduled to expire in **2029**.
+For **HE-AAC v2** (Parametric Stereo - PS), remaining patent terms in certain regions are estimated to expire around **2029**.
 
-### Do I need to pay MPEG-LA patent royalties to use FAAC or FAAD2?
-Since all patents covering AAC-LC and HE-AAC v1 have expired worldwide, open-source distribution and commercial usage of FAAC (LGPL v2.1+) and FAAD2 (GPL v2+) for these standard profiles require no MPEG-LA or Via Licensing patent royalties. HE-AAC v2 patents will fully expire in 2029.
+### Do I need to pay patent royalties or obtain licenses to distribute or use FAAC / FAAD2?
+While core AAC-LC and HE-AAC v1 patent portfolios managed by former licensing pools (such as Via Licensing / MPEG LA) have lapsed due to patent term expirations, patent laws and enforcement vary by country and jurisdiction.
+
+**No Warranty or Indemnification**: The FAAC and FAAD2 project maintainers provide this software "AS IS" without any express or implied warranties regarding patent non-infringement or freedom to operate. Software developers, distributors, and commercial vendors must independently evaluate their local intellectual property obligations before distributing or embedding derivative works. You are solely responsible for your own actions and licensing compliance.
 
 ---
 
