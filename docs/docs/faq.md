@@ -14,9 +14,10 @@ Answers to common developer, packager, and user questions regarding **FAAC** and
 ### Is FAAC LGPL compliant and safe for commercial software?
 **Yes.** FAAC 2.0+ was completely rewritten from scratch under the **LGPL v2.1+** license. It contains zero ISO reference code or proprietary headers. Software projects can dynamically link against `libfaac` without inheriting copyleft obligations on their proprietary source code.
 
-### What is the license difference between FAAC and FAAD2?
-- **FAAC (Encoder)**: Licensed under **LGPL v2.1+**.
-- **FAAD2 (Decoder)**: Licensed under **GPL v2+**.
+### What is the license difference between FAAC, FAAD2, and FAAD3?
+- **FAAC (Encoder)**: Licensed under **LGPL v2.1+** (written in C11/C99).
+- **FAAD2 (Decoder)**: Licensed under **GPL v2+** (written in C99).
+- **FAAD3 (Decoder)**: Licensed under **LGPL v2.1+** (written in C11).
 
 ### Have AAC patents expired for AAC-LC and HE-AAC v1? What about HE-AAC v2?
 **Yes for AAC-LC and HE-AAC v1.** All core patents covering the **AAC-LC** (Low Complexity) and **HE-AAC v1** (Spectral Band Replication - SBR) profiles have expired worldwide. Standard AAC-LC and HE-AAC v1 audio encoding and decoding via FAAC and FAAD2 can be freely deployed globally without patent licensing restrictions or royalty fees.

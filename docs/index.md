@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Freeware Advanced Audio"
   text: "Open-Source AAC Codecs"
-  tagline: "ISO-Free LGPL v2.1+ AAC Encoder (FAAC) & GPL v2+ Decoder (FAAD2)"
+  tagline: "ISO-Free LGPL v2.1+ AAC Encoder (FAAC), GPL v2+ C99 Decoder (FAAD2) & LGPL v2.1+ C11 Decoder (FAAD3)"
   image:
     alt: "FAAC Visualizer"
   actions:

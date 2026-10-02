@@ -39,6 +39,6 @@ Explore our updated CLI guides and C API documentation:
 
 ## Future Roadmap
 
-We are actively working on continuous quality tuning and optimizations for FAAC, as well as planning a future **FAAD3 LGPL rewrite** to bring LGPL licensing to the decoder library as well.
+We are actively working on continuous quality tuning and optimizations for FAAC, as well as the rollout of **FAAD3**—a C11 rewrite under **LGPL v2.1+** bringing LGPL licensing and performance enhancements to the decoder library alongside FAAD2 (GPL v2+, C99).
 
 Stay tuned for more updates!

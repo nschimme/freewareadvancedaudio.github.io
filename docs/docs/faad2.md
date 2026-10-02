@@ -3,17 +3,21 @@ title: FAAD2 AAC Decoder — Guide, CLI Options & C API
 description: Complete technical documentation for FAAD2 GPL v2+ AAC audio decoder. Covers command-line usage, HE-AAC v1/v2 decoding, surround sound decoding, and C API reference (libfaad).
 ---
 
-# FAAD2 AAC Decoder: Guide, CLI Options & C API
+# FAAD2 & FAAD3 AAC Decoder: Guide, CLI Options & C API
 
-**FAAD2 (Freeware Advanced Audio Decoder 2)** is a fast, standalone **GPL v2+** open-source MPEG-2 and MPEG-4 AAC audio decoder.
+**FAAD2 (Freeware Advanced Audio Decoder 2)** is a fast, standalone **GPL v2+** open-source MPEG-2 and MPEG-4 AAC audio decoder written in **C99**.
 
-FAAD2 decodes AAC-LC, HE-AAC v1 (SBR), HE-AAC v2 (Parametric Stereo), Main, and LTP profiles, as well as multi-channel surround sound streams (up to 7.1 channels).
+The next-generation **FAAD3** decoder is written in clean **C11** and relicensed under **LGPL v2.1+**, providing lightweight, LGPL-compliant decoding for embedded systems and cross-platform applications.
+
+Both decoders support AAC-LC, HE-AAC v1 (SBR), HE-AAC v2 (Parametric Stereo), Main, and LTP profiles, as well as multi-channel surround sound streams (up to 7.1 channels).
 
 ---
 
 ## Key Features & Capabilities
 
-- **GPL v2+ License**: Open-source license for standalone media players, open-source audio pipelines, and Linux distributions.
+- **Licensing & Architecture**:
+  - **FAAD2**: **GPL v2+** license, written in portable **C99**.
+  - **FAAD3**: **LGPL v2.1+** license, rewritten in modern **C11** for seamless commercial and open-source library integration.
 - **Full AAC Profile Support**:
   - **MPEG-4 AAC-LC** (Low Complexity)
   - **HE-AAC v1** (Spectral Band Replication - SBR)

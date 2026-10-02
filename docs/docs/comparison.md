@@ -44,8 +44,8 @@ Objective audio codec benchmarks and high-level feature matrices evaluating **FA
 | <i class="fa-solid fa-medal" style="color: #94a3b8;"></i> 2 | **FDK AAC 2.0.0** | 1.878 | 4.190 | 0.9573 | 18.0 dB | **0.01 ms** | 344.1x | 940.5 KB | Non-Free |
 | <i class="fa-solid fa-award" style="color: #d97706;"></i> 3 | **FFmpeg AAC** | 1.877 | 4.195 | 0.9564 | 18.1 dB | 9.14 ms | 135.1x | 274.5 KB | LGPL v2.1+ |
 | 4 | **Apple AAC 27.0** | 1.874 | 4.195 | 0.9572 | 18.1 dB | **0.01 ms** | 174.4x | 100.3 KB | Proprietary |
-| 5 | **FAAD 3** | 1.874 | 4.195 | 0.9571 | **18.1 dB** | **0.01 ms** | **490.3x** | 136.0 KB | **GPL v2+** |
-| 6 | **FAAD 2.11.3** | 1.873 | 4.191 | 0.9581 | **18.1 dB** | **0.01 ms** | 376.8x | 296.3 KB | **GPL v2+** |
+| 5 | **FAAD 3** | 1.874 | 4.195 | 0.9571 | **18.1 dB** | **0.01 ms** | **490.3x** | 136.0 KB | **LGPL v2.1+** (C11) |
+| 6 | **FAAD 2.11.3** | 1.873 | 4.191 | 0.9581 | **18.1 dB** | **0.01 ms** | 376.8x | 296.3 KB | **GPL v2+** (C99) |
 
 ---
 
