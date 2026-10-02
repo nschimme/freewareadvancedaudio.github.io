@@ -27,17 +27,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Install dependencies
-        run: npm ci || npm install
-
-      - name: Build VitePress site
-        run: npm run docs:build
+      - name: Build site via Docker and extract static output
+        run: |
+          docker build -t freeware-audio-site --target site-builder .
+          container_id=$(docker create freeware-audio-site)
+          mkdir -p docs/.vitepress/dist
+          docker cp $container_id:/app/docs/.vitepress/dist/. docs/.vitepress/dist/
+          docker rm $container_id
+          ls -la docs/.vitepress/dist/
 
       - name: Upload GitHub Pages artifact
         if: github.event_name != 'pull_request'

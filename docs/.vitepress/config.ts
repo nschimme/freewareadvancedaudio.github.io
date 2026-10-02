@@ -17,8 +17,23 @@ export default defineConfig({
     siteTitle: 'Freeware Advanced Audio',
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Blog', link: '/blog/' },
-      { text: 'GitHub', link: 'https://github.com/FreewareAdvancedAudio' }
+      { text: 'Interactive Converter', link: '/playground' },
+      { text: 'FAAC Encoder Guide', link: '/docs/faac' },
+      { text: 'FAAD2 Decoder Guide', link: '/docs/faad2' },
+      { text: 'Benchmarks', link: '/docs/comparison' },
+      { text: 'FAQ', link: '/docs/faq' },
+      { text: 'Blog', link: '/blog/' }
+    ],
+    sidebar: [
+      {
+        text: 'Documentation Guides',
+        items: [
+          { text: 'FAAC AAC Encoder Guide', link: '/docs/faac' },
+          { text: 'FAAD2 AAC Decoder Guide', link: '/docs/faad2' },
+          { text: 'Codec Comparison & Benchmarks', link: '/docs/comparison' },
+          { text: 'Frequently Asked Questions (FAQ)', link: '/docs/faq' }
+        ]
+      }
     ],
     socialLinks: [
       { icon: 'github', link: 'https://github.com/FreewareAdvancedAudio' }

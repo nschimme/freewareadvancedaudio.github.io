@@ -2,7 +2,8 @@ node_modules
 .DS_Store
 dist
 .vitepress/dist
-.vitepress/cache
+.vitepress/cache*
+docs/.vitepress/cache*
 *.log
 
 # Ignore compiled WebAssembly build output

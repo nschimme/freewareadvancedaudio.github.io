@@ -9,32 +9,28 @@ hero:
     alt: "FAAC Visualizer"
   actions:
     - theme: brand
-      text: "GitHub Organization"
-      link: "https://github.com/FreewareAdvancedAudio"
+      text: "In-Browser Demo"
+      link: "/playground"
     - theme: alt
-      text: "Read Blog"
-      link: "/blog/"
+      text: "C API & Docs"
+      link: "/docs/faac"
 
 features:
-  - icon: "🛠️"
+  - icon: "<i class=\"fa-solid fa-wrench\"></i>"
     title: "FAAC 2.0+ Architecture"
     details: "Written in C11/C99. Free of legacy ISO reference code. LGPL v2.1+ licensed."
-  - icon: "📊"
+  - icon: "<i class=\"fa-solid fa-chart-line\"></i>"
     title: "Profiles & Rate Control"
     details: "AAC-LC and HE-AAC v1 (SBR). Supports VBR (-q), ABR (-b), and CBR (--cbr) with bit reservoir modeling."
-  - icon: "⚡"
+  - icon: "<i class=\"fa-solid fa-bolt\"></i>"
     title: "Encoding Speed"
     details: "Lightweight, low-overhead C implementation with 3–5x throughput headroom over standard encoders."
-  - icon: "🔊"
+  - icon: "<i class=\"fa-solid fa-volume-high\"></i>"
     title: "FAAD2 Decoder"
     details: "Standalone GPL v2+ decoder for MPEG-2/4 AAC, HE-AAC v1/v2 (SBR+PS), and multi-channel streams up to 7.1."
 ---
 
 <div class="home-technical-wrapper">
-
-::: info Under Development
-The official Freeware Advanced Audio website and documentation portal are currently under active development. Comprehensive documentation, API references, and interactive tools will be added here soon.
-:::
 
 ## Ecosystem Users & Integrations
 
@@ -48,6 +44,10 @@ FAAC and FAAD2 are integrated into major open-source media frameworks, audio con
 
 ---
 
-For full source code, releases, and issue tracking, visit our GitHub organization: **[https://github.com/FreewareAdvancedAudio](https://github.com/FreewareAdvancedAudio)**
+## Interactive In-Browser Audio Converter
+
+Test FAAC encoding and FAAD2 decoding live inside your web browser without installing any software or uploading files to a server:
+
+<WasmConverter />
 
 </div>
