@@ -18,9 +18,13 @@ Official website and technical documentation platform for **FAAC** (LGPL v2.1+ A
 
 ```
 ├── .github/workflows/deploy.yml # GitHub Actions workflow for Docker site build & GH Pages deployment
+├── .gitignore                   # Ignore rules for build output, WASM binaries & generated CLI docs
+├── .gitmodules                  # Git submodule configuration for vendor/faac & vendor/faad2
 ├── .pages.yml                   # PagesCMS schema configuration
 ├── Dockerfile                   # Multi-stage build compiling FAAC & FAAD2 C libraries to WASM + VitePress site
 ├── docker-compose.yml           # Docker Compose setup (platform: linux/amd64)
+├── scripts/                     # Utility scripts (generate-cli-docs.js)
+├── vendor/                      # Submodules for upstream FAAC and FAAD2 repositories
 └── docs/                        # VitePress documentation root
     ├── .vitepress/              # VitePress configuration, theme, and components
     │   ├── components/          # AudioVisualizer.vue & WasmConverter.vue
@@ -37,13 +41,20 @@ Official website and technical documentation platform for **FAAC** (LGPL v2.1+ A
 ## Local Development
 
 ```bash
+# Clone repository with submodules
+git clone --recursive https://github.com/FreewareAdvancedAudio/freewareadvancedaudio.github.io.git
+cd freewareadvancedaudio.github.io
+
+# Or update submodules if already cloned
+git submodule update --init --recursive
+
 # Install Node dependencies
 npm install
 
-# Start VitePress local dev server
+# Start VitePress local dev server (automatically generates CLI docs from manpages)
 npm run docs:dev
 
-# Build static production site
+# Build static production site (automatically generates CLI docs from manpages)
 npm run docs:build
 ```
 
