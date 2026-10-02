@@ -11,6 +11,28 @@ Engineered in clean, modern C11/C99, FAAC is completely free of legacy ISO refer
 
 ---
 
+## Downloads & Installation
+
+### Package Managers
+
+#### macOS (Homebrew)
+Install FAAC on macOS via [Homebrew](https://brew.sh/):
+```bash
+brew install faac
+```
+
+#### Linux Package Managers
+- **Debian / Ubuntu**: `sudo apt install faac`
+- **Fedora**: `sudo dnf install faac`
+- **Arch Linux**: `sudo pacman -S faac`
+
+### Official Releases & Source Code
+Source code archives, tagged releases, and release notes for FAAC are published on GitHub:
+- **Latest FAAC Releases**: [github.com/FreewareAdvancedAudio/faac/releases](https://github.com/FreewareAdvancedAudio/faac/releases)
+- **Source Repository**: [github.com/FreewareAdvancedAudio/faac](https://github.com/FreewareAdvancedAudio/faac)
+
+---
+
 ## Core Capabilities & Audio Profiles
 
 ### Supported AAC Profiles

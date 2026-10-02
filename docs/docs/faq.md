@@ -9,7 +9,28 @@ Answers to common developer, packager, and user questions regarding **FAAC** and
 
 ---
 
-## 1. Licensing & Legal Questions
+## 1. Downloads & Installation
+
+### How can I install FAAC or FAAD2 on macOS using Homebrew?
+On macOS, you can install both tools via [Homebrew](https://brew.sh/):
+```bash
+# Install FAAC encoder
+brew install faac
+
+# Install FAAD2 decoder
+brew install faad2
+```
+
+### Where can I download official FAAC and FAAD2 source releases?
+Tagged source archives, tarballs, and release notes are published directly on GitHub:
+- **FAAC AAC Encoder Releases**: [github.com/FreewareAdvancedAudio/faac/releases](https://github.com/FreewareAdvancedAudio/faac/releases)
+- **FAAD2 / FAAD3 AAC Decoder Releases**: [github.com/FreewareAdvancedAudio/faad2/releases](https://github.com/FreewareAdvancedAudio/faad2/releases)
+
+Linux distributions (Debian, Ubuntu, Fedora, Arch) also provide pre-compiled `faac`, `faad`, `libfaac`, and `libfaad2` packages.
+
+---
+
+## 2. Licensing & Legal Questions
 
 ### Is FAAC LGPL compliant and safe for commercial software integration?
 FAAC 2.0+ was rewritten from scratch under the **GNU Lesser General Public License v2.1 or later (LGPL v2.1+)**. It contains zero ISO reference code or proprietary header files. Under the terms of LGPL v2.1+, applications may dynamically link against `libfaac` without automatically subjecting their proprietary application code to copyleft disclosure requirements, subject to compliance with LGPL conditions (such as allowing users to update or relink `libfaac`).
@@ -31,7 +52,7 @@ Like most open-source multimedia projects (e.g., FFmpeg), FAAC and FAAD2 are pro
 
 ---
 
-## 2. Integration & Usage Questions
+## 3. Integration & Usage Questions
 
 ### Which bitrate mode should I use for FAAC: `-b` or `-q`?
 For consistent audio quality across varying content, **`-b` (Average Bitrate - ABR)** is strongly recommended over `-q`.
@@ -43,7 +64,7 @@ For consistent audio quality across varying content, **`-b` (Average Bitrate - A
 
 ---
 
-## 3. Performance & Quality Questions
+## 4. Performance & Quality Questions
 
 ### How does FAAC compare against FDK-AAC and Apple AAC?
 According to objective quality benchmarks ([faac-benchmark #90](https://github.com/nschimme/faac-benchmark/discussions/90)), **FAAC 2.2.0** delivers top-tier 1st Percentile MOS scores (strong floor resilience against audio artifacts) and **>500x realtime** encoding speed on modern processors while remaining 100% open-source LGPL v2.1+.

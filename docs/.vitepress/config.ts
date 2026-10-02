@@ -22,6 +22,13 @@ export default defineConfig({
       { text: 'FAAC Encoder Guide', link: '/docs/faac' },
       { text: 'FAAD2 Decoder Guide', link: '/docs/faad2' },
       { text: 'Benchmarks', link: '/docs/comparison' },
+      {
+        text: 'Downloads',
+        items: [
+          { text: 'FAAC Encoder Releases', link: 'https://github.com/FreewareAdvancedAudio/faac/releases' },
+          { text: 'FAAD2 Decoder Releases', link: 'https://github.com/FreewareAdvancedAudio/faad2/releases' }
+        ]
+      },
       { text: 'FAQ', link: '/docs/faq' },
       { text: 'Blog', link: '/blog/' }
     ],

@@ -13,6 +13,28 @@ Both decoders support the full spectrum of MPEG AAC profiles—including AAC-LC,
 
 ---
 
+## Downloads & Installation
+
+### Package Managers
+
+#### macOS (Homebrew)
+Install FAAD2 on macOS via [Homebrew](https://brew.sh/):
+```bash
+brew install faad2
+```
+
+#### Linux Package Managers
+- **Debian / Ubuntu**: `sudo apt install faad`
+- **Fedora**: `sudo dnf install faad2`
+- **Arch Linux**: `sudo pacman -S faad2`
+
+### Official Releases & Source Code
+Source code archives, tagged releases, and release notes for FAAD2 and FAAD3 are published on GitHub:
+- **Latest FAAD2 / FAAD3 Releases**: [github.com/FreewareAdvancedAudio/faad2/releases](https://github.com/FreewareAdvancedAudio/faad2/releases)
+- **Source Repository**: [github.com/FreewareAdvancedAudio/faad2](https://github.com/FreewareAdvancedAudio/faad2)
+
+---
+
 ## Technical Capabilities & AAC Profile Support
 
 ### Supported Profiles & Containers
