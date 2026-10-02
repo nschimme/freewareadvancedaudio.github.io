@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'Freeware Advanced Audio',
-  description: 'Official documentation and WebAssembly playground for FAAC (LGPL v2.1+ AAC Encoder) and FAAD2 (GPL v2+ AAC Decoder).',
+  description: 'Official documentation and WebAssembly playground for FAAC (LGPL v2.1+ AAC Encoder) and FAAD (GPL v2+/LGPL v2.1+ AAC Decoder).',
   cleanUrls: true,
   appearance: 'force-dark',
   head: [
@@ -24,7 +24,7 @@ export default defineConfig({
         text: 'Downloads',
         items: [
           { text: 'FAAC Encoder Releases', link: 'https://github.com/FreewareAdvancedAudio/faac/releases' },
-          { text: 'FAAD2 Decoder Releases', link: 'https://github.com/FreewareAdvancedAudio/faad2/releases' }
+          { text: 'FAAD Decoder Releases', link: 'https://github.com/FreewareAdvancedAudio/faad2/releases' }
         ]
       },
       { text: 'Blog', link: '/blog/' }
@@ -35,14 +35,14 @@ export default defineConfig({
         items: [
           { text: 'Installation Guide', link: '/docs/install' },
           { text: 'FAAC AAC Encoder', link: '/docs/faac' },
-          { text: 'FAAD2 AAC Decoder', link: '/docs/faad2' }
+          { text: 'FAAD AAC Decoder', link: '/docs/faad' }
         ]
       },
       {
         text: 'CLI Manuals',
         items: [
           { text: 'FAAC CLI Manpage', link: '/docs/faac-cli' },
-          { text: 'FAAD2 CLI Manpage', link: '/docs/faad2-cli' }
+          { text: 'FAAD CLI Manpage', link: '/docs/faad-cli' }
         ]
       },
       {
@@ -56,7 +56,7 @@ export default defineConfig({
       { icon: 'github', link: 'https://github.com/FreewareAdvancedAudio' }
     ],
     footer: {
-      message: 'Freeware Advanced Audio Organization — FAAC (LGPL v2.1+) & FAAD2 (GPL v2+)',
+      message: 'Freeware Advanced Audio Organization — FAAC (LGPL v2.1+) & FAAD (GPL v2+ / LGPL v2.1+)',
       copyright: 'Copyright © 2026 Freeware Advanced Audio'
     }
   }

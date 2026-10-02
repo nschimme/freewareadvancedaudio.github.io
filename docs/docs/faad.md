@@ -1,13 +1,13 @@
 ---
-title: FAAD2 AAC Decoder Guide & C API Reference
-description: Complete guide for FAAD2 (GPL v2+ AAC decoder) and FAAD3 (LGPL v2.1+). Includes CLI examples, multi-channel surround decoding, and libfaad C API documentation.
+title: FAAD AAC Decoder Guide & C API Reference
+description: Complete guide for FAAD (MPEG-4 AAC decoder). Includes CLI examples, multi-channel surround decoding, and libfaad C API documentation.
 ---
 
-# FAAD2 AAC Decoder Guide & C API Reference
+# FAAD AAC Decoder Guide & C API Reference
 
-**FAAD2 (Freeware Advanced Audio Decoder 2)** is an open-source MPEG-2 and MPEG-4 AAC audio decoder licensed under **GPL v2+** (written in C99).
+**FAAD (Freeware Advanced Audio Decoder)** is an open-source MPEG-2 and MPEG-4 AAC audio decoder.
 
-The next-generation **FAAD3** decoder is written in clean C11 under **LGPL v2.1+**, providing lightweight decoding for embedded systems and applications.
+The released **FAAD2** engine is licensed under **GPL v2+** (written in C99). The next-generation **FAAD3** engine is written in clean C11 under **LGPL v2.1+**, providing lightweight decoding for embedded systems and cross-platform applications.
 
 ---
 
@@ -20,7 +20,7 @@ The next-generation **FAAD3** decoder is written in clean C11 under **LGPL v2.1+
 | **Surround Sound** | Up to 7.1 channel surround sound with optional 2-channel downmix (`-d`) |
 | **Containers** | Raw ADTS `.aac`, MP4/M4A containers, ADIF streams |
 | **Installation** | See [Installation Guide](/docs/install) |
-| **Full CLI Options** | See [FAAD2 CLI Manual Page](/docs/faad2-cli) |
+| **Full CLI Options** | See [FAAD CLI Manual Page](/docs/faad-cli) |
 
 ---
 
@@ -37,7 +37,7 @@ faad -i audio_file.aac
 faad -d -o stereo_downmix.wav surround_51.m4a
 ```
 
-For complete options and flags, view the dedicated [FAAD2 Command-Line Manual](/docs/faad2-cli).
+For complete options and flags, view the dedicated [FAAD Command-Line Manual](/docs/faad-cli).
 
 ---
 
@@ -89,7 +89,7 @@ int main(void) {
 ```c
 NeAACDecHandle NeAACDecOpen(void);
 ```
-Initializes a new FAAD2 decoder instance.
+Initializes a new FAAD decoder instance.
 
 #### `NeAACDecGetCurrentConfiguration` / `NeAACDecSetConfiguration`
 ```c

@@ -1,11 +1,11 @@
 ---
-title: Installation Guide — FAAC & FAAD2
-description: Complete installation guide for FAAC (AAC Encoder) and FAAD2 (AAC Decoder) across macOS Homebrew, Linux package managers, and building from source via Meson, CMake, or Autotools.
+title: Installation Guide — FAAC & FAAD
+description: Complete installation guide for FAAC (AAC Encoder) and FAAD (AAC Decoder) across macOS Homebrew, Linux package managers, and building from source via Meson, CMake, or Autotools.
 ---
 
 # Installation Guide
 
-Install **FAAC** (Encoder) and **FAAD2** (Decoder) via macOS Homebrew, Linux package managers, or build directly from source.
+Install **FAAC** (Encoder) and **FAAD** (Decoder) via macOS Homebrew, Linux package managers, or build directly from source.
 
 ---
 
@@ -17,7 +17,7 @@ Install official Homebrew formulas on macOS:
 # Install FAAC AAC Encoder
 brew install faac
 
-# Install FAAD2 AAC Decoder
+# Install FAAD AAC Decoder
 brew install faad2
 ```
 
@@ -49,7 +49,7 @@ sudo pacman -S faac faad2
 
 Source code repositories and official release archives:
 - **FAAC Repository & Releases**: [github.com/FreewareAdvancedAudio/faac](https://github.com/FreewareAdvancedAudio/faac)
-- **FAAD2 Repository & Releases**: [github.com/FreewareAdvancedAudio/faad2](https://github.com/FreewareAdvancedAudio/faad2)
+- **FAAD Repository & Releases**: [github.com/FreewareAdvancedAudio/faad2](https://github.com/FreewareAdvancedAudio/faad2)
 
 ### Building FAAC (Meson / Ninja)
 
@@ -62,7 +62,7 @@ ninja -C build
 sudo ninja -C build install
 ```
 
-### Building FAAD2 (CMake / Make)
+### Building FAAD (CMake / Make)
 
 ```bash
 git clone --recursive https://github.com/FreewareAdvancedAudio/faad2.git

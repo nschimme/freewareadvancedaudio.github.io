@@ -244,11 +244,11 @@ if (fs.existsSync(faacManPath)) {
   console.log('Generated docs/docs/faac-cli-gen.md');
 }
 
-// Generate FAAD2 CLI markdown snippet
+// Generate FAAD CLI markdown snippet
 const faadManPath = path.join(process.cwd(), 'vendor/faad2/frontend/faad.man');
 if (fs.existsSync(faadManPath)) {
   const faadMan = fs.readFileSync(faadManPath, 'utf8');
   const faadMd = parseManpageToMarkdown(faadMan);
-  fs.writeFileSync(path.join(process.cwd(), 'docs/docs/faad2-cli-gen.md'), faadMd);
-  console.log('Generated docs/docs/faad2-cli-gen.md');
+  fs.writeFileSync(path.join(process.cwd(), 'docs/docs/faad-cli-gen.md'), faadMd);
+  console.log('Generated docs/docs/faad-cli-gen.md');
 }

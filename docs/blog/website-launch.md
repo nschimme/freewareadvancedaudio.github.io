@@ -32,7 +32,7 @@ You can now test FAAC AAC encoding and FAAD2 decoding **directly inside your web
 Explore our updated CLI guides and C API documentation:
 
 - [FAAC Encoder Documentation](/docs/faac)
-- [FAAD2 Decoder Documentation](/docs/faad2)
+- [FAAD Decoder Documentation](/docs/faad)
 - [Codec Comparison & Licensing Clearhouse](/docs/comparison)
 
 ---
