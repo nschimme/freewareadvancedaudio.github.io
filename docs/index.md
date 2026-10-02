@@ -18,16 +18,16 @@ hero:
 features:
   - icon: "<i class=\"fa-solid fa-bolt\"></i>"
     title: "Fast"
-    details: "Low-overhead C implementation delivering 3–5x throughput headroom for lower battery consumption and CPU usage."
+    details: "Low-overhead C implementation delivering up to 500x+ realtime throughput headroom for minimal battery consumption and CPU usage."
   - icon: "<i class=\"fa-solid fa-microchip\"></i>"
     title: "Small"
-    details: "Tiny binary footprint (<75 KB) enabling seamless deployment into embedded devices and IoT microcontrollers."
+    details: "Compact binary footprint (<75 KB) enabling seamless deployment into resource-constrained embedded systems and IoT microcontrollers."
   - icon: "<i class=\"fa-solid fa-sliders\"></i>"
     title: "Quality"
-    details: "Pick all three—speed, compact footprint, and pristine audio quality—without having to choose two out of three."
+    details: "High MOS quality ratings across AAC-LC and HE-AAC profiles without compromising encoding speed or binary size."
   - icon: "<i class=\"fa-solid fa-code\"></i>"
     title: "Modern"
-    details: "Clean, ISO-free C11/C99 architecture under LGPL v2.1+ licensing for modern cross-platform software."
+    details: "Clean, ISO-free C11/C99 architecture under LGPL v2.1+ licensing for straightforward integration into modern software applications."
 ---
 
 <div class="home-technical-wrapper">

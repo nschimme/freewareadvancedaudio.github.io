@@ -7,22 +7,22 @@ description: Complete technical documentation for FAAC 2.0+ LGPL v2.1+ AAC audio
 
 **FAAC (Freeware Advanced Audio Coder)** is an ISO-free, high-performance **LGPL v2.1+** open-source MPEG-2 and MPEG-4 AAC audio encoder.
 
-Written in clean C11/C99, FAAC is designed for embedded systems, desktop converters (such as [fre:ac](https://www.freac.org/)), mobile applications, and web runtimes requiring fast, high-quality audio compression without proprietary licensing constraints.
+Written in clean C11/C99, FAAC is designed for embedded systems, desktop converters (such as [fre:ac](https://www.freac.org/)), mobile applications, and cross-platform runtimes requiring fast, high-quality audio compression without proprietary licensing constraints.
 
 ---
 
 ## Key Features & Licensing
 
 - **LGPL v2.1+ License**: Free and open-source software suitable for static or dynamic linking in commercial and open-source applications.
-- **ISO-Free Codebase**: Completely rewritten from scratch—contains zero legacy ISO reference code or patent-encumbered proprietary headers.
+- **ISO-Free Codebase**: Completely rewritten from scratch—contains zero legacy ISO reference code or proprietary headers.
 - **AAC Profiles Supported**:
-  - **MPEG-4 AAC-LC** (Low Complexity) — Mainstream profile for universal compatibility.
+  - **MPEG-4 AAC-LC** (Low Complexity) — Mainstream profile for broad hardware and software compatibility.
   - **MPEG-4 HE-AAC v1** (High-Efficiency AAC with SBR) — Optimized for low bitrates (32–96 kbps).
-- **Flexible Rate Control**:
-  - **Average Bitrate (ABR)** (`-b` flag) — Primary rate control mode recommended for production.
+- **Flexible Rate Control Modes**:
+  - **Average Bitrate (ABR)** (`-b` flag) — Recommended rate control mode for optimal quality distribution.
   - **Variable Bitrate (VBR)** (`-q` flag) — Quality-based variable bitrate encoding.
   - **Constant Bitrate (CBR)** (`--cbr` flag) — Fixed bitrate encoding with bit reservoir modeling.
-- **Ultra-Fast Throughput**: Encodes audio at **300x–600x realtime** speeds with minimal memory footprint (~73 KB binary size).
+- **High Throughput**: Encodes audio at **300x–600x realtime** speeds with a minimal binary size (~73 KB compiled).
 
 ---
 
@@ -62,11 +62,6 @@ faac -b 192 -w -o high_quality.m4a input.wav
 faac -b 64 -object 5 -w -o low_bitrate.m4a input.wav
 ```
 
-#### 4. FFmpeg Integration
-Use `libfaac` directly within FFmpeg pipelines:
-```bash
-ffmpeg -i input.wav -c:a libfaac -b:a 128k output.m4a
-```
 
 ---
 
