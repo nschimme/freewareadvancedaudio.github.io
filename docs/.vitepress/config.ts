@@ -35,8 +35,7 @@ export default defineConfig({
         items: [
           { text: 'FAAC AAC Encoder', link: '/docs/faac' },
           { text: 'FAAD2 AAC Decoder', link: '/docs/faad2' },
-          { text: 'Codec Benchmarks', link: '/docs/comparison' },
-          { text: 'FAQ', link: '/docs/faq' }
+          { text: 'Codec Benchmarks', link: '/docs/comparison' }
         ]
       }
     ],

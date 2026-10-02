@@ -42,4 +42,19 @@ FAAC and FAAD2 are integrated into major open-source media frameworks, audio con
 - **[GStreamer](https://gstreamer.freedesktop.org/)**: Official GStreamer plugins (`gst-plugins-bad`) providing `faac` and `faad` elements for multimedia pipelines.
 - **[VLC Media Player](https://www.videolan.org/vlc/)**: Includes FAAD2 decoder support in its modular codec plugin architecture.
 
+---
+
+## Quick Q&A
+
+### How do I install FAAC or FAAD2?
+- **macOS (Homebrew)**: `brew install faac` and `brew install faad2`
+- **Linux (Debian/Ubuntu)**: `sudo apt install faac faad`
+- **Source Archives**: Published directly on [FAAC Releases](https://github.com/FreewareAdvancedAudio/faac/releases) and [FAAD2 Releases](https://github.com/FreewareAdvancedAudio/faad2/releases).
+
+### What are the open-source licenses and patent status?
+FAAC is licensed under **LGPL v2.1+** (written in cleanroom C11/C99 free of ISO reference code) and FAAD2 under **GPL v2+** (with FAAD3 under LGPL v2.1+). Core patents for AAC-LC and HE-AAC v1 have expired worldwide.
+
+### Where can I find complete developer documentation?
+Explore the [FAAC Encoder Guide](/docs/faac), [FAAD2 Decoder Guide](/docs/faad2), and [Codec Benchmarks](/docs/comparison) for CLI syntax, C API integration examples, and objective quality evaluations.
+
 </div>
