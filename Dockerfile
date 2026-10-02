@@ -9,9 +9,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && pip3 install --no-cache-dir meson \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone FAAC and FAAD2 repositories from GitHub organization
-RUN git clone https://github.com/FreewareAdvancedAudio/faac.git /build/faac_src \
-    && git clone https://github.com/FreewareAdvancedAudio/faad2.git /build/faad2_src
+# Copy git submodule repositories
+COPY vendor/faac /build/faac_src
+COPY vendor/faad2 /build/faad2_src
 
 # Create Meson cross file for Emscripten FAAC build with cpu_family
 RUN echo "[binaries]" > /build/emscripten.cross && \
@@ -70,4 +70,4 @@ CMD ["npm", "run", "docs:dev", "--", "--host", "0.0.0.0"]
 # Static site builder stage for production deployment
 FROM app AS site-builder
 
-RUN npm run docs:build
+RUN npm run docs:generate-cli && npm run docs:build

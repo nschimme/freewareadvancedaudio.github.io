@@ -1,6 +1,6 @@
 ---
 title: FAAD2 AAC Decoder — Guide, CLI Options & C API
-description: Complete technical documentation for FAAD2 GPL v2+ AAC audio decoder. Covers command-line usage, HE-AAC v1/v2 decoding, surround sound decoding, and C API reference (libfaad).
+description: Complete technical documentation for FAAD2 GPL v2+ and FAAD3 LGPL v2.1+ AAC audio decoders. Covers command-line usage, generated CLI reference, HE-AAC decoding, and C API (libfaad).
 ---
 
 # FAAD2 & FAAD3 AAC Decoder: Guide, CLI Options & C API
@@ -29,25 +29,13 @@ Both decoders support AAC-LC, HE-AAC v1 (SBR), HE-AAC v2 (Parametric Stereo), Ma
 
 ---
 
-## FAAD2 Command-Line Interface (CLI Guide)
+## Quick Start CLI Examples
 
 ### Syntax
 
 ```bash
 faad [options] <input.aac|input.m4a>
 ```
-
-### Essential CLI Flags
-
-| Option | Flag | Description | Default / Recommended |
-| :--- | :--- | :--- | :--- |
-| **Output File** | `-o <file.wav>` | Set output WAV audio file path | Default: `<input>.wav` |
-| **Output Format** | `-f <format>` | Set output sample format: `1` (16-bit PCM), `2` (24-bit), `3` (32-bit float) | `1` (16-bit PCM) |
-| **Headerless Raw Stream** | `-a <file>` | Write raw headerless PCM output to file | Disabled |
-| **Info / Summary** | `-i` | Display detailed bitstream header and profile information without decoding | Disabled |
-| **Downmix Channels** | `-d` | Downmix multi-channel / 5.1 audio streams to stereo WAV | Disabled |
-
-### Usage Examples
 
 #### 1. Decode AAC or M4A File to WAV
 ```bash
@@ -63,6 +51,14 @@ faad -i audio_file.aac
 ```bash
 faad -d -o stereo_downmix.wav surround_51.m4a
 ```
+
+---
+
+## FAAD Command-Line Interface Manual (Generated from Man Page)
+
+The command-line interface documentation below is generated directly from the upstream `faad.man` manual page in the repository.
+
+<!-- @include: ./faad2-cli-gen.md -->
 
 ---
 

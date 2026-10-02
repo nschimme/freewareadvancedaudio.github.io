@@ -1,6 +1,6 @@
 ---
 title: FAAC LGPL AAC Encoder — Guide, CLI Options & C API
-description: Complete technical documentation for FAAC 2.0+ LGPL v2.1+ AAC audio encoder. Covers command-line usage (-b bitrate, profiles), C API reference (libfaac), and FFmpeg integration.
+description: Complete technical documentation for FAAC 2.0+ LGPL v2.1+ AAC audio encoder. Covers command-line usage (-b bitrate, profiles), generated CLI reference, C API reference (libfaac), and integrations.
 ---
 
 # FAAC LGPL AAC Encoder: Guide, CLI Options & C API
@@ -26,26 +26,13 @@ Written in clean C11/C99, FAAC is designed for embedded systems, desktop convert
 
 ---
 
-## FAAC Command-Line Interface (CLI Guide)
+## Quick Start CLI Examples
 
 ### Syntax
 
 ```bash
 faac [options] -o <output.aac|output.m4a> <input.wav>
 ```
-
-### Essential CLI Flags
-
-| Option | Flag | Description | Default / Recommended |
-| :--- | :--- | :--- | :--- |
-| **Average Bitrate** | `-b <kbps>` | Target average bitrate in kilobits per second per channel/stream | **`128`** (for stereo LC) |
-| **VBR Quality** | `-q <quality>` | Set VBR quality level (10–500, higher is better quality) | `100` |
-| **Bitrate Mode** | `--cbr` | Force strict Constant Bitrate (CBR) encoding | Off (ABR/VBR) |
-| **AAC Profile** | `-object <type>` | Set object type: `2` (LC), `5` (HE-AAC v1 / SBR) | `2` (AAC-LC) |
-| **Cutoff Frequency** | `-c <cutoff>` | Set low-pass filter cutoff frequency in Hz | Auto-calculated |
-| **MP4 Container** | `-w` | Wrap output AAC stream inside an MP4/M4A container | Off (Raw ADTS `.aac`) |
-
-### Usage Examples
 
 #### 1. Standard Stereo Encoding (128 kbps ABR)
 ```bash
@@ -62,6 +49,13 @@ faac -b 192 -w -o high_quality.m4a input.wav
 faac -b 64 -object 5 -w -o low_bitrate.m4a input.wav
 ```
 
+---
+
+## FAAC Command-Line Interface Manual (Generated from Man Page)
+
+The command-line interface documentation below is generated directly from the upstream `faac.1` manual page in the repository.
+
+<!-- @include: ./faac-cli-gen.md -->
 
 ---
 
