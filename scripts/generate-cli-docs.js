@@ -1,19 +1,23 @@
 import fs from 'fs';
 import path from 'path';
 
-function cleanRoffText(str) {
+function unescapeRoff(str) {
   if (!str) return '';
   let res = str;
-  // Font change stripping
-  res = res.replace(/\\f[A-Za-z0-9]/g, '');
+  // Font escape sequences
+  res = res.replace(/\\f[BIPR]/g, '');
   res = res.replace(/\\f\[[A-Za-z0-9]+\]/g, '');
-  // Unescape troff sequences
+  // Hyphen and special character unescaping
+  res = res.replace(/\\-\^\-/g, '--');
   res = res.replace(/\\-\^?/g, '-');
+  res = res.replace(/\\\^\-/g, '-');
+  res = res.replace(/\\\^/g, '');
   res = res.replace(/\\\(hy/g, '-');
-  res = res.replace(/\\ /g, ' ');
+  res = res.replace(/\\hy\(/g, '-');
   res = res.replace(/\\\(em/g, '—');
+  res = res.replace(/\\ /g, ' ');
   res = res.replace(/\\e/g, '\\');
-  res = res.replace(/\\~/g, '~');
+  res = res.replace(/\\~/g, ' ');
   res = res.replace(/\\</g, '<');
   res = res.replace(/\\>/g, '>');
   res = res.replace(/\\hy/g, '');
@@ -22,7 +26,6 @@ function cleanRoffText(str) {
 
 function escapeVueHtml(str) {
   if (!str) return '';
-  // Escape unformatted angle brackets outside backticks so Vue parser doesn't treat them as tags
   let result = '';
   let inBacktick = false;
 
@@ -66,24 +69,73 @@ function parseMacroArgs(line) {
   return tokens;
 }
 
+function formatAlternatingArgs(args) {
+  let res = '';
+  args.forEach((arg, idx) => {
+    let cleanArg = unescapeRoff(arg);
+    if (!cleanArg) return;
+    if (idx > 0) {
+      if (!/^\s*[\.,;:\)\]\>]/.test(cleanArg) && !/\s$/.test(res) && !/^\s/.test(cleanArg)) {
+        res += ' ';
+      }
+    }
+    res += cleanArg;
+  });
+  return res.replace(/\s+,/g, ',').replace(/\s+/g, ' ').trim();
+}
+
 function parseManpageToMarkdown(manContent) {
   const lines = manContent.split(/\r?\n/);
   let md = [];
   let inTP = false;
   let tpTerm = '';
   let tpDesc = [];
+  let rsLevel = 0;
 
   function flushTP() {
     if (inTP) {
       if (tpTerm) {
-        let cleanTerm = cleanRoffText(tpTerm).replace(/\s+/g, ' ').trim();
+        let cleanTerm = unescapeRoff(tpTerm).replace(/\s+/g, ' ').trim();
         cleanTerm = cleanTerm.replace(/\s+,/g, ',');
-        md.push(`- **\`${cleanTerm}\`**`);
+
+        // Check if term is a bullet item like "* Portable" or "- Fast"
+        if (/^[\*\-\+]\s+/.test(cleanTerm)) {
+          const itemText = cleanTerm.replace(/^[\*\-\+]\s+/, '');
+          md.push(`- **${itemText}**`);
+        } else {
+          md.push(`- **\`${cleanTerm}\`**`);
+        }
+
         if (tpDesc.length > 0) {
-          let descText = tpDesc.map(cleanRoffText).join(' ').replace(/\s+/g, ' ').trim();
-          if (descText) {
-            md.push(`  ${escapeVueHtml(descText)}`);
+          let descLines = [];
+          let currentLine = [];
+
+          tpDesc.forEach(item => {
+            if (item === '\n') {
+              if (currentLine.length > 0) {
+                descLines.push(currentLine.join(' '));
+                currentLine = [];
+              }
+            } else {
+              currentLine.push(item);
+            }
+          });
+          if (currentLine.length > 0) {
+            descLines.push(currentLine.join(' '));
           }
+
+          descLines.forEach(lineText => {
+            let cleanLine = unescapeRoff(lineText).replace(/\s+/g, ' ').trim();
+            if (!cleanLine) return;
+
+            // Check if line looks like a sub-list item (e.g. "1: 16-bit PCM...")
+            if (/^\d+:\s+/.test(cleanLine)) {
+              const match = cleanLine.match(/^(\d+):\s+(.*)$/);
+              md.push(`  - **${match[1]}**: ${escapeVueHtml(match[2])}`);
+            } else {
+              md.push(`  ${escapeVueHtml(cleanLine)}`);
+            }
+          });
         }
       }
       inTP = false;
@@ -95,7 +147,9 @@ function parseManpageToMarkdown(manContent) {
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i].trim();
     if (!line) {
-      if (!inTP) {
+      if (inTP) {
+        tpDesc.push('\n');
+      } else {
         md.push('');
       }
       continue;
@@ -110,48 +164,55 @@ function parseManpageToMarkdown(manContent) {
       } else if (macro === '.SH') {
         flushTP();
         const sectionName = tokens.slice(1).join(' ').replace(/^"(.*)"$/, '$1');
-        md.push(`\n### ${cleanRoffText(sectionName)}\n`);
+        md.push(`\n### ${unescapeRoff(sectionName)}\n`);
       } else if (macro === '.SS') {
         flushTP();
         const subSec = tokens.slice(1).join(' ').replace(/^"(.*)"$/, '$1');
-        md.push(`\n#### ${cleanRoffText(subSec)}\n`);
+        md.push(`\n#### ${unescapeRoff(subSec)}\n`);
       } else if (macro === '.TP') {
         flushTP();
         inTP = true;
-      } else if (macro === '.PP' || macro === '.P' || macro === '.br') {
-        flushTP();
-        md.push('');
-      } else if (macro === '.RS' || macro === '.RE' || macro === '.nh') {
-        // structural or hyphenation macros
+      } else if (macro === '.PP' || macro === '.P') {
+        if (inTP) {
+          tpDesc.push('\n');
+        } else {
+          flushTP();
+          md.push('');
+        }
+      } else if (macro === '.br') {
+        if (inTP) {
+          tpDesc.push('\n');
+        } else {
+          md.push('');
+        }
+      } else if (macro === '.RS') {
+        rsLevel++;
+        if (inTP) tpDesc.push('\n');
+      } else if (macro === '.RE') {
+        if (rsLevel > 0) rsLevel--;
+        if (inTP) tpDesc.push('\n');
       } else if (macro === '.BR' || macro === '.BI' || macro === '.B' || macro === '.I' || macro === '.RI') {
         const rawArgs = tokens.slice(1);
-        let formatted = '';
-        if (macro === '.BR' || macro === '.BI') {
-          rawArgs.forEach((arg) => {
-            formatted += ' ' + cleanRoffText(arg);
-          });
-        } else if (macro === '.B' || macro === '.I') {
-          formatted = cleanRoffText(rawArgs.join(' '));
-        } else if (macro === '.RI') {
-          formatted = rawArgs.map(cleanRoffText).join(' ');
-        }
+        let formatted = formatAlternatingArgs(rawArgs);
 
         if (inTP && !tpTerm) {
-          tpTerm = formatted.trim();
+          tpTerm = formatted;
         } else if (inTP) {
           tpDesc.push(formatted);
         } else {
           md.push(escapeVueHtml(formatted));
         }
+      } else if (macro === '.nh') {
+        // ignore hyphenation macro
       } else {
-        const rest = tokens.slice(1).map(cleanRoffText).join(' ');
+        const rest = unescapeRoff(tokens.slice(1).join(' '));
         if (rest && !/^\d+$/.test(rest)) {
           if (inTP) tpDesc.push(rest);
           else md.push(escapeVueHtml(rest));
         }
       }
     } else {
-      const cleanLine = cleanRoffText(line);
+      const cleanLine = unescapeRoff(line);
       if (inTP) {
         if (!tpTerm) {
           tpTerm = cleanLine;
@@ -159,7 +220,12 @@ function parseManpageToMarkdown(manContent) {
           tpDesc.push(cleanLine);
         }
       } else {
-        md.push(escapeVueHtml(cleanLine));
+        if (rsLevel > 0 && /^\d+:\s+/.test(cleanLine)) {
+          const match = cleanLine.match(/^(\d+):\s+(.*)$/);
+          md.push(`- **${match[1]}**: ${escapeVueHtml(match[2])}`);
+        } else {
+          md.push(escapeVueHtml(cleanLine));
+        }
       }
     }
   }
