@@ -9,7 +9,7 @@ hero:
     alt: "FAAC Visualizer"
   actions:
     - theme: brand
-      text: "In-Browser Demo"
+      text: "Interactive Playground"
       link: "/playground"
     - theme: alt
       text: "C API & Docs"
@@ -41,13 +41,5 @@ FAAC and FAAD2 are integrated into major open-source media frameworks, audio con
 - **[Audiobook Boss](https://github.com/Allmight97/audiobook-boss)**: Open-source audiobook processing suite integrating FAAC for M4A encoding and packaging.
 - **[GStreamer](https://gstreamer.freedesktop.org/)**: Official GStreamer plugins (`gst-plugins-bad`) providing `faac` and `faad` elements for multimedia pipelines.
 - **[VLC Media Player](https://www.videolan.org/vlc/)**: Includes FAAD2 decoder support in its modular codec plugin architecture.
-
----
-
-## Interactive In-Browser Audio Converter
-
-Test FAAC encoding and FAAD2 decoding live inside your web browser without installing any software or uploading files to a server:
-
-<WasmConverter />
 
 </div>

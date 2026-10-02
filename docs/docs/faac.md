@@ -1,69 +1,72 @@
 ---
-title: FAAC LGPL AAC Encoder — Guide, CLI Options & C API
-description: Complete technical documentation for FAAC 2.0+ LGPL v2.1+ AAC audio encoder. Covers command-line usage (-b bitrate, profiles), generated CLI reference, C API reference (libfaac), and integrations.
+title: FAAC LGPL AAC Encoder — Technical Guide & C API Reference
+description: Comprehensive technical guide for the FAAC LGPL v2.1+ MPEG-4 AAC encoder. Features rate control tuning (-b ABR, -q VBR), CLI command examples, generated manual reference, and C API (libfaac) integration.
 ---
 
-# FAAC LGPL AAC Encoder: Guide, CLI Options & C API
+# FAAC LGPL AAC Encoder: Technical Guide & C API Reference
 
-**FAAC (Freeware Advanced Audio Coder)** is an ISO-free, high-performance **LGPL v2.1+** open-source MPEG-2 and MPEG-4 AAC audio encoder.
+**FAAC (Freeware Advanced Audio Coder)** is a high-performance, open-source MPEG-2 and MPEG-4 AAC audio encoder licensed under the **GNU Lesser General Public License v2.1 or later (LGPL v2.1+)**.
 
-Written in clean C11/C99, FAAC is designed for embedded systems, desktop converters (such as [fre:ac](https://www.freac.org/)), mobile applications, and cross-platform runtimes requiring fast, high-quality audio compression without proprietary licensing constraints.
-
----
-
-## Key Features & Licensing
-
-- **LGPL v2.1+ License**: Free and open-source software suitable for static or dynamic linking in commercial and open-source applications.
-- **ISO-Free Codebase**: Completely rewritten from scratch—contains zero legacy ISO reference code or proprietary headers.
-- **AAC Profiles Supported**:
-  - **MPEG-4 AAC-LC** (Low Complexity) — Mainstream profile for broad hardware and software compatibility.
-  - **MPEG-4 HE-AAC v1** (High-Efficiency AAC with SBR) — Optimized for low bitrates (32–96 kbps).
-- **Flexible Rate Control Modes**:
-  - **Average Bitrate (ABR)** (`-b` flag) — Recommended rate control mode for optimal quality distribution.
-  - **Variable Bitrate (VBR)** (`-q` flag) — Quality-based variable bitrate encoding.
-  - **Constant Bitrate (CBR)** (`--cbr` flag) — Fixed bitrate encoding with bit reservoir modeling.
-- **High Throughput**: Encodes audio at **300x–600x realtime** speeds with a minimal binary size (~73 KB compiled).
+Engineered in clean, modern C11/C99, FAAC is completely free of legacy ISO reference code. It delivers exceptional encoding throughput (>500x realtime) with an ultra-compact binary size (~73 KB), making it an ideal choice for embedded systems, desktop conversion tools, streaming pipelines, and cross-platform applications.
 
 ---
 
-## Quick Start CLI Examples
+## Core Capabilities & Audio Profiles
 
-### Syntax
+### Supported AAC Profiles
+- **MPEG-4 AAC-LC (Low Complexity)**: The universal standard for broadcast, streaming, and audio playback across consumer hardware and mobile platforms.
+- **MPEG-4 HE-AAC v1 (High-Efficiency AAC with SBR)**: Combines a Low Complexity AAC core with Spectral Band Replication (SBR) to achieve transparent audio at reduced bitrates (32–96 kbps).
+
+### Rate Control Strategies
+- **Average Bitrate (ABR - Recommended)**: Configured via the `-b` flag (e.g., `-b 128`). Maintains a target average bitrate across the entire file while dynamically allocating bits to complex passages.
+- **Variable Bitrate (VBR)**: Configured via the `-q` flag (e.g., `-q 100`). Maintains constant psychoacoustic quality, allowing bitrates to fluctuate based on signal complexity.
+- **Constant Bitrate (CBR)**: Configured via the `--cbr` flag alongside `-b`. Employs a bit reservoir mechanism (6144 bits/channel) for strict bandwidth-constrained transports.
+
+---
+
+## Command-Line Quick Start
+
+### Basic CLI Syntax
 
 ```bash
-faac [options] -o <output.aac|output.m4a> <input.wav>
+faac [options] -o <output_filename.m4a> <input_filename.wav>
 ```
 
-#### 1. Standard Stereo Encoding (128 kbps ABR)
+### Common Command Examples
+
+#### 1. Standard Stereo Audio (128 kbps ABR)
+Recommended default for music and general audio encoding:
 ```bash
 faac -b 128 -w -o output.m4a input.wav
 ```
 
-#### 2. High-Quality Archival Encoding (192 kbps ABR)
+#### 2. High-Fidelity Archival Audio (192 kbps ABR)
+High-bitrate configuration for critical audio archival:
 ```bash
 faac -b 192 -w -o high_quality.m4a input.wav
 ```
 
-#### 3. Low-Bitrate HE-AAC v1 Stream (64 kbps SBR)
+#### 3. Low-Bitrate Streaming (64 kbps HE-AAC v1 / SBR)
+Optimized for voice, podcasting, and bandwidth-constrained streaming:
 ```bash
 faac -b 64 -object 5 -w -o low_bitrate.m4a input.wav
 ```
 
 ---
 
-## FAAC Command-Line Interface Manual (Generated from Man Page)
+## Command-Line Manual Page
 
-The command-line interface documentation below is generated directly from the upstream `faac.1` manual page in the repository.
+The following reference is generated automatically from the upstream `faac.1` manual page:
 
 <!-- @include: ./faac-cli-gen.md -->
 
 ---
 
-## C API Reference (`libfaac`)
+## C API Integration Guide (`libfaac`)
 
-Integrate `libfaac` directly into your C/C++ application. Include `<faac.h>` and link against `-lfaac`.
+Integrate `libfaac` directly into your C/C++ application for real-time in-memory AAC encoding. Include `<faac.h>` and link against `-lfaac`.
 
-### Complete Integration Example
+### Complete Lifecycle Example
 
 ```c
 #include <stdio.h>
@@ -75,14 +78,14 @@ int main(void) {
     unsigned long inputSamples;
     unsigned long maxOutputBytes;
 
-    // 1. Open encoder instance (44.1 kHz, 2 Channels)
+    // 1. Initialize encoder handle (44.1 kHz, 2 Channels)
     faacEncHandle hEncoder = faacEncOpen(44100, 2, &inputSamples, &maxOutputBytes);
     if (!hEncoder) {
-        fprintf(stderr, "Failed to open FAAC encoder handle\n");
+        fprintf(stderr, "Error: Failed to initialize FAAC encoder handle\n");
         return 1;
     }
 
-    // 2. Configure encoder settings
+    // 2. Configure encoder parameters
     faacEncConfigurationPtr config = faacEncGetCurrentConfiguration(hEncoder);
     config->bitRate = 128000 / 2; // Bitrate per channel (64 kbps/ch = 128 kbps stereo)
     config->aacObjectType = LOW;   // AAC-LC Profile
@@ -90,26 +93,25 @@ int main(void) {
     config->useTns = 1;            // Enable Temporal Noise Shaping
     config->allowMidSide = 1;      // Enable Mid/Side Stereo
 
-    // Apply configuration
     if (!faacEncSetConfiguration(hEncoder, config)) {
-        fprintf(stderr, "Failed to set FAAC configuration\n");
+        fprintf(stderr, "Error: Invalid FAAC encoder configuration\n");
         faacEncClose(hEncoder);
         return 1;
     }
 
-    // 3. Prepare sample buffers
-    int32_t *pcmInput = malloc(inputSamples * sizeof(int32_t));
-    unsigned char *aacOutput = malloc(maxOutputBytes);
+    // 3. Allocate buffers
+    int32_t *pcmInput = (int32_t *)malloc(inputSamples * sizeof(int32_t));
+    unsigned char *aacOutput = (unsigned char *)malloc(maxOutputBytes);
 
-    // 4. Encode audio frame loop
-    // Populate pcmInput buffer with audio PCM samples...
+    // 4. Encode audio frame
+    // (Fill pcmInput with 32-bit PCM audio samples here)
     int bytesEncoded = faacEncEncode(hEncoder, pcmInput, inputSamples, aacOutput, maxOutputBytes);
 
     if (bytesEncoded > 0) {
-        // Write aacOutput buffer to output file or stream
+        // Process or write encoded AAC bitstream buffer (aacOutput)
     }
 
-    // 5. Cleanup
+    // 5. Cleanup resources
     free(pcmInput);
     free(aacOutput);
     faacEncClose(hEncoder);
@@ -117,7 +119,7 @@ int main(void) {
 }
 ```
 
-### Core C API Functions
+### Core API Functions
 
 #### `faacEncOpen`
 ```c
@@ -126,14 +128,14 @@ faacEncHandle faacEncOpen(unsigned long sampleRate,
                           unsigned long *inputSamples,
                           unsigned long *maxOutputBytes);
 ```
-Opens an encoder handle for the specified sample rate and channel count. Returns the required input sample count per frame and maximum output buffer size.
+Allocates an encoder instance for the given sample rate and channel configuration. Sets `inputSamples` to the required PCM samples per frame and `maxOutputBytes` to the worst-case encoded buffer size.
 
 #### `faacEncGetCurrentConfiguration` / `faacEncSetConfiguration`
 ```c
 faacEncConfigurationPtr faacEncGetCurrentConfiguration(faacEncHandle hEncoder);
 int faacEncSetConfiguration(faacEncHandle hEncoder, faacEncConfigurationPtr config);
 ```
-Gets and sets the encoder configuration struct controlling bitrates, object types, and filter settings.
+Retrieves and applies the encoder configuration structure controlling bitrates, object types, and acoustic modules.
 
 #### `faacEncEncode`
 ```c
@@ -143,10 +145,10 @@ int faacEncEncode(faacEncHandle hEncoder,
                   unsigned char *outputBuffer,
                   unsigned int bufferSize);
 ```
-Encodes a frame of PCM audio samples into an AAC bitstream frame. Returns the encoded byte length.
+Encodes a frame of PCM audio samples into an AAC bitstream packet. Returns the number of encoded bytes generated.
 
 #### `faacEncClose`
 ```c
 void faacEncClose(faacEncHandle hEncoder);
 ```
-Closes the encoder instance and releases allocated internal resources.
+Finalizes bitstream output, flushes internal state, and releases all allocated memory.
