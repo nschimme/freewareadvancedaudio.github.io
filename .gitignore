@@ -8,3 +8,6 @@ docs/.vitepress/cache*
 
 # Ignore compiled WebAssembly build output
 docs/public/wasm/
+
+# Ignore auto-generated CLI docs
+docs/docs/*-cli-gen.md
