@@ -32,24 +32,27 @@ features:
 
 <div class="home-technical-wrapper">
 
-## Ecosystem Users & Integrations
+## Where FAAC & FAAD Shine
 
-FAAC and FAAD are integrated into major open-source media frameworks, audio converters, and embedded systems worldwide:
+FAAC and FAAD excel in specialized environments where low memory overhead, ultra-fast throughput, and clean open-source licensing are essential:
 
-- **[fre:ac](https://www.freac.org/)**: Popular cross-platform audio converter and CD ripper directly bundling FAAC and FAAD binaries.
-- **[Thingino](https://thingino.com/)**: Embedded Linux IP camera firmware utilizing FAAC for real-time, low-overhead AAC stream encoding.
-- **[Audiobook Boss](https://github.com/Allmight97/audiobook-boss)**: Open-source audiobook processing suite integrating FAAC for M4A encoding and packaging.
-- **[GStreamer](https://gstreamer.freedesktop.org/)**: Official GStreamer plugins (`gst-plugins-bad`) providing `faac` and `faad` elements for multimedia pipelines.
-- **[VLC Media Player](https://www.videolan.org/vlc/)**: Includes FAAD decoder support in its modular codec plugin architecture.
+### <i class="fa-solid fa-microchip"></i> Embedded Firmware & IoT Microcontrollers
+- **[Thingino Linux Firmware](https://thingino.com/)**: Uses FAAC for real-time, low-CPU AAC audio stream encoding on IP cameras and resource-constrained SoC hardware.
+
+### <i class="fa-solid fa-layer-group"></i> Multimedia Frameworks & Modular Plugins
+- **[GStreamer](https://gstreamer.freedesktop.org/)**: Official `gst-plugins-bad` elements (`faac` and `faad`) provide low-latency AAC encoding/decoding in custom streaming pipelines.
+- **[VLC Media Player](https://www.videolan.org/vlc/)**: Integrates FAAD decoder modules for lightweight, cross-platform AAC stream playback.
+
+### <i class="fa-solid fa-compact-disc"></i> Cross-Platform Audio Processing & Ripping
+- **[fre:ac Converter](https://www.freac.org/)**: Popular open-source audio converter and CD ripper directly bundling FAAC and FAAD binaries for batch M4A conversion.
+- **[Audiobook Boss](https://github.com/Allmight97/audiobook-boss)**: Uses FAAC for M4A audio packaging and high-speed chapter encoding.
 
 ---
 
 ## Quick Q&A
 
 ### How do I install FAAC or FAAD?
-- **macOS (Homebrew)**: `brew install faac` and `brew install faad2`
-- **Linux (Debian/Ubuntu)**: `sudo apt install faac faad`
-- **Source Archives**: Published directly on [FAAC Releases](https://github.com/FreewareAdvancedAudio/faac/releases) and [FAAD Releases](https://github.com/FreewareAdvancedAudio/faad2/releases).
+Pre-compiled packages for macOS (Homebrew), Linux (`apt`, `dnf`, `pacman`), and source archives are detailed in our complete [Installation Guide](/docs/install).
 
 ### What are the open-source licenses and patent status?
 FAAC is licensed under **LGPL v2.1+** (written in cleanroom C11/C99 free of ISO reference code) and FAAD2 under **GPL v2+** (with FAAD3 under LGPL v2.1+). Core patents for AAC-LC and HE-AAC v1 have expired worldwide, while HE-AAC v2 (Parametric Stereo) patents are scheduled to expire in **2029**.
