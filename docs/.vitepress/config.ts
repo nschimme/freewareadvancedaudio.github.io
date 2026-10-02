@@ -7,6 +7,7 @@ export default defineConfig({
   appearance: 'force-dark',
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
+    ['link', { rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css' }],
     ['meta', { name: 'theme-color', content: '#0f172a' }],
     ['meta', { property: 'og:site_name', content: 'Freeware Advanced Audio' }],
     ['meta', { property: 'og:type', content: 'website' }],

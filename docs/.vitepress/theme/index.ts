@@ -1,4 +1,3 @@
-import '@fortawesome/fontawesome-free/css/all.min.css'
 import DefaultTheme from 'vitepress/theme'
 import WasmConverter from '../components/WasmConverter.vue'
 import AudioVisualizer from '../components/AudioVisualizer.vue'
