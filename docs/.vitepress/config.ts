@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'Freeware Advanced Audio',
-  description: 'Official website for FAAC (LGPL v2.1+ AAC Encoder) and FAAD2 (GPL v2+ AAC Decoder). High-performance, open-source audio compression software.',
+  description: 'Official documentation and WebAssembly playground for FAAC (LGPL v2.1+ AAC Encoder) and FAAD2 (GPL v2+ AAC Decoder).',
   cleanUrls: true,
   appearance: 'force-dark',
   head: [
@@ -18,10 +18,8 @@ export default defineConfig({
     siteTitle: 'Freeware Advanced Audio',
     nav: [
       { text: 'Home', link: '/' },
+      { text: 'Documentation', link: '/docs/faac' },
       { text: 'Interactive Converter', link: '/playground' },
-      { text: 'FAAC Encoder Guide', link: '/docs/faac' },
-      { text: 'FAAD2 Decoder Guide', link: '/docs/faad2' },
-      { text: 'Benchmarks', link: '/docs/comparison' },
       {
         text: 'Downloads',
         items: [
@@ -29,17 +27,16 @@ export default defineConfig({
           { text: 'FAAD2 Decoder Releases', link: 'https://github.com/FreewareAdvancedAudio/faad2/releases' }
         ]
       },
-      { text: 'FAQ', link: '/docs/faq' },
       { text: 'Blog', link: '/blog/' }
     ],
     sidebar: [
       {
         text: 'Documentation Guides',
         items: [
-          { text: 'FAAC AAC Encoder Guide', link: '/docs/faac' },
-          { text: 'FAAD2 AAC Decoder Guide', link: '/docs/faad2' },
-          { text: 'Codec Comparison & Benchmarks', link: '/docs/comparison' },
-          { text: 'Frequently Asked Questions (FAQ)', link: '/docs/faq' }
+          { text: 'FAAC AAC Encoder', link: '/docs/faac' },
+          { text: 'FAAD2 AAC Decoder', link: '/docs/faad2' },
+          { text: 'Codec Benchmarks', link: '/docs/comparison' },
+          { text: 'FAQ', link: '/docs/faq' }
         ]
       }
     ],

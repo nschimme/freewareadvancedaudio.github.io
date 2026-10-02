@@ -1,97 +1,71 @@
 ---
-title: FAAD2 & FAAD3 AAC Decoder — Technical Guide & C API Reference
-description: Comprehensive technical guide for the FAAD2 (GPL v2+) and FAAD3 (LGPL v2.1+) MPEG-4 AAC decoders. Features multi-channel surround decoding, CLI command examples, generated manual reference, and C API (libfaad) integration.
+title: FAAD2 AAC Decoder Guide & C API Reference
+description: Complete guide for FAAD2 (GPL v2+ AAC decoder) and FAAD3 (LGPL v2.1+). Includes installation, CLI examples, multi-channel surround decoding, CLI reference, and libfaad C API documentation.
 ---
 
-# FAAD2 & FAAD3 AAC Decoder: Technical Guide & C API Reference
+# FAAD2 AAC Decoder Guide & C API Reference
 
-**FAAD2 (Freeware Advanced Audio Decoder 2)** is an ultra-fast, open-source MPEG-2 and MPEG-4 AAC audio decoder written in **C99** under the **GNU General Public License v2 or later (GPL v2+)**.
+**FAAD2 (Freeware Advanced Audio Decoder 2)** is an open-source MPEG-2 and MPEG-4 AAC audio decoder licensed under **GPL v2+** (written in C99).
 
-The next-generation **FAAD3** decoder is written in clean **C11** and relicensed under the **GNU Lesser General Public License v2.1 or later (LGPL v2.1+)**, making it seamlessly embeddable into commercial applications and open-source libraries.
-
-Both decoders support the full spectrum of MPEG AAC profiles—including AAC-LC, HE-AAC v1 (SBR), HE-AAC v2 (Parametric Stereo), Main, and LTP—with multi-channel surround sound mapping up to 7.1 channels.
+The next-generation **FAAD3** decoder is written in clean C11 under **LGPL v2.1+**, providing lightweight, LGPL-compliant decoding for embedded systems and applications.
 
 ---
 
-## Downloads & Installation
+## Quick Start & Installation
 
-### Package Managers
+### Installation
 
-#### macOS (Homebrew)
-Install FAAD2 on macOS via [Homebrew](https://brew.sh/):
 ```bash
+# macOS
 brew install faad2
+
+# Linux (Debian/Ubuntu, Fedora, Arch)
+sudo apt install faad        # Debian / Ubuntu
+sudo dnf install faad2       # Fedora
+sudo pacman -S faad2        # Arch Linux
 ```
 
-#### Linux Package Managers
-- **Debian / Ubuntu**: `sudo apt install faad`
-- **Fedora**: `sudo dnf install faad2`
-- **Arch Linux**: `sudo pacman -S faad2`
+Source archives and release notes are available on [GitHub Releases](https://github.com/FreewareAdvancedAudio/faad2/releases).
 
-### Official Releases & Source Code
-Source code archives, tagged releases, and release notes for FAAD2 and FAAD3 are published on GitHub:
-- **Latest FAAD2 / FAAD3 Releases**: [github.com/FreewareAdvancedAudio/faad2/releases](https://github.com/FreewareAdvancedAudio/faad2/releases)
-- **Source Repository**: [github.com/FreewareAdvancedAudio/faad2](https://github.com/FreewareAdvancedAudio/faad2)
-
----
-
-## Technical Capabilities & AAC Profile Support
-
-### Supported Profiles & Containers
-- **MPEG-4 AAC-LC (Low Complexity)**: Full decoding support for standard 16-bit, 24-bit, and 32-bit PCM output.
-- **MPEG-4 HE-AAC v1 (SBR)**: Reconstructs high-frequency audio components via Spectral Band Replication.
-- **MPEG-4 HE-AAC v2 (PS)**: Decodes Parametric Stereo streams for low-bitrate spatial audio.
-- **Containers & Transports**: Decodes raw ADTS `.aac` bitstreams, MP4/M4A audio tracks, and ADIF streams.
-
-### Surround Sound & Performance
-- **Multi-Channel Audio**: Full channel mapping for 5.1 and 7.1 surround sound streams, with optional downmixing to 2-channel stereo (`-d` flag).
-- **High Throughput**: Achieves **>350x–500x realtime** decoding performance with an ultra-low peak RAM footprint (~2.8 MB).
-
----
-
-## Command-Line Quick Start
-
-### Basic CLI Syntax
+### CLI Usage Examples
 
 ```bash
-faad [options] <input_filename.aac|input_filename.m4a>
-```
-
-### Common Command Examples
-
-#### 1. Decode AAC / M4A to Uncompressed WAV
-Decodes an M4A audio file into a 16-bit PCM WAV file:
-```bash
+# 1. Decode AAC or M4A to uncompressed WAV
 faad -o decoded_output.wav input.m4a
-```
 
-#### 2. Inspect Bitstream Headers & Audio Metadata
-Analyzes bitstream parameters, object types, sample rate, and channel configuration without decoding audio:
-```bash
+# 2. Inspect bitstream parameters and audio metadata
 faad -i audio_file.aac
-```
 
-#### 3. Downmix 5.1 Surround Stream to Stereo WAV
-Decodes a 5.1 surround sound stream and downmixes output to 2-channel stereo PCM:
-```bash
+# 3. Downmix 5.1 surround sound stream to 2-channel stereo WAV
 faad -d -o stereo_downmix.wav surround_51.m4a
 ```
 
 ---
 
-## Command-Line Manual Page
+## Technical Highlights & Profiles
 
-The following reference is generated automatically from the upstream `faad.man` manual page:
+| Feature | Details |
+| :--- | :--- |
+| **Licensing** | FAAD2: GPL v2+ (C99) \| FAAD3: LGPL v2.1+ (C11) |
+| **Supported Profiles** | MPEG-4 AAC-LC, HE-AAC v1 (SBR), HE-AAC v2 (PS), Main, LTP |
+| **Surround Sound** | Up to 7.1 channel surround sound with optional 2-channel downmix (`-d`) |
+| **Containers** | Raw ADTS `.aac`, MP4/M4A containers, ADIF streams |
+
+---
+
+## Command-Line Interface Reference
+
+The command-line manual below is generated directly from the upstream `faad.man` man page.
 
 <!-- @include: ./faad2-cli-gen.md -->
 
 ---
 
-## C API Integration Guide (`libfaad`)
+## C API Reference (`libfaad`)
 
-Integrate `libfaad2` directly into your C/C++ media engine or playback framework. Include `<faad.h>` and link against `-lfaad`.
+Link against `-lfaad` and include `<faad.h>`.
 
-### Complete Lifecycle Example
+### Integration Lifecycle
 
 ```c
 #include <stdio.h>
@@ -102,42 +76,28 @@ Integrate `libfaad2` directly into your C/C++ media engine or playback framework
 int main(void) {
     // 1. Allocate decoder handle
     NeAACDecHandle hDecoder = NeAACDecOpen();
-    if (!hDecoder) {
-        fprintf(stderr, "Error: Failed to initialize FAAD2 decoder handle\n");
-        return 1;
-    }
+    if (!hDecoder) return 1;
 
-    // 2. Configure decoder settings
+    // 2. Configure decoder (16-bit PCM output)
     NeAACDecConfigurationPtr config = NeAACDecGetCurrentConfiguration(hDecoder);
-    config->outputFormat = FAAD_FMT_16BIT; // 16-bit integer PCM output
+    config->outputFormat = FAAD_FMT_16BIT;
     NeAACDecSetConfiguration(hDecoder, config);
 
-    // 3. Initialize decoder with first frame / header buffer
-    unsigned char buffer[2048] = { /* AAC bitstream header or first frame bytes */ };
+    // 3. Initialize decoder with bitstream header
+    unsigned char buffer[2048] = { /* AAC header or first frame bytes */ };
     unsigned long sampleRate;
     unsigned char channels;
 
-    long initResult = NeAACDecInit(hDecoder, buffer, sizeof(buffer), &sampleRate, &channels);
-    if (initResult < 0) {
-        fprintf(stderr, "Error: Failed to parse AAC bitstream header\n");
+    if (NeAACDecInit(hDecoder, buffer, sizeof(buffer), &sampleRate, &channels) < 0) {
         NeAACDecClose(hDecoder);
         return 1;
     }
 
-    printf("Bitstream Initialized: %lu Hz, %d Channels\n", sampleRate, channels);
-
-    // 4. Decode frame loop
+    // 4. Decode frame
     NeAACDecFrameInfo frameInfo;
     void *pcmSamples = NeAACDecDecode(hDecoder, &frameInfo, buffer, sizeof(buffer));
 
-    if (frameInfo.error == 0 && frameInfo.samples > 0) {
-        // pcmSamples points to decoded PCM audio buffer
-        // Bytes consumed from input buffer = frameInfo.bytesconsumed
-    } else if (frameInfo.error > 0) {
-        fprintf(stderr, "Decode error: %s\n", NeAACDecGetErrorMessage(frameInfo.error));
-    }
-
-    // 5. Cleanup handle
+    // 5. Cleanup
     NeAACDecClose(hDecoder);
     return 0;
 }
@@ -149,36 +109,32 @@ int main(void) {
 ```c
 NeAACDecHandle NeAACDecOpen(void);
 ```
-Allocates and initializes a new FAAD2 decoder instance.
+Initializes a new FAAD2 decoder instance.
 
 #### `NeAACDecGetCurrentConfiguration` / `NeAACDecSetConfiguration`
 ```c
 NeAACDecConfigurationPtr NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder);
 unsigned char NeAACDecSetConfiguration(NeAACDecHandle hDecoder, NeAACDecConfigurationPtr config);
 ```
-Retrieves and updates decoder settings, including sample format (16-bit, 24-bit, 32-bit float) and downmix parameters.
+Gets and sets decoder settings (PCM sample format, downmixing).
 
 #### `NeAACDecInit`
 ```c
-long NeAACDecInit(NeAACDecHandle hDecoder,
-                  unsigned char *buffer,
-                  unsigned long bufferSize,
-                  unsigned long *sampleRate,
+long NeAACDecInit(NeAACDecHandle hDecoder, unsigned char *buffer,
+                  unsigned long bufferSize, unsigned long *sampleRate,
                   unsigned char *channels);
 ```
-Initializes bitstream parsing from initial header bytes or AudioSpecificConfig (ASC) payload. Returns sample rate and channel count.
+Parses stream header / AudioSpecificConfig bytes to set sample rate and channels.
 
 #### `NeAACDecDecode`
 ```c
-void* NeAACDecDecode(NeAACDecHandle hDecoder,
-                     NeAACDecFrameInfo *frameInfo,
-                     unsigned char *buffer,
-                     unsigned long bufferSize);
+void* NeAACDecDecode(NeAACDecHandle hDecoder, NeAACDecFrameInfo *frameInfo,
+                     unsigned char *buffer, unsigned long bufferSize);
 ```
-Decodes a single AAC frame into raw PCM audio samples and updates `NeAACDecFrameInfo` with byte consumption and channel details.
+Decodes a single AAC frame into raw PCM audio samples and updates `frameInfo`.
 
 #### `NeAACDecClose`
 ```c
 void NeAACDecClose(NeAACDecHandle hDecoder);
 ```
-Releases all internal state and frees memory allocated for the decoder instance.
+Frees decoder handle memory and resources.
