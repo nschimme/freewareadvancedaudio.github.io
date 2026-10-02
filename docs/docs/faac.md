@@ -1,33 +1,30 @@
 ---
 title: FAAC AAC Encoder Guide & C API Reference
-description: Complete guide for FAAC (LGPL v2.1+ AAC encoder). Includes installation, CLI examples, rate control tuning (-b ABR, -q VBR), CLI reference, and libfaac C API documentation.
+description: Complete guide for FAAC (LGPL v2.1+ AAC encoder). Includes CLI usage examples, rate control tuning (-b ABR, -q VBR), and libfaac C API documentation.
 ---
 
 # FAAC AAC Encoder Guide & C API Reference
 
 **FAAC (Freeware Advanced Audio Coder)** is an open-source MPEG-2 and MPEG-4 AAC audio encoder licensed under **LGPL v2.1+**.
 
-Written in clean C11/C99 without legacy ISO reference code, FAAC delivers high encoding throughput (>500x realtime) with an ultra-small binary footprint (~73 KB), making it ideal for embedded firmware, desktop tools, and server pipelines.
+Written in clean C11/C99 without legacy ISO reference code, FAAC delivers high encoding throughput (>500x realtime) with an ultra-small binary footprint (~73 KB).
 
 ---
 
-## Quick Start & Installation
+## Technical Highlights
 
-### Installation
+| Feature | Details |
+| :--- | :--- |
+| **License** | GNU Lesser General Public License v2.1+ (LGPL v2.1+) |
+| **Supported Profiles** | MPEG-4 AAC-LC, MPEG-4 HE-AAC v1 (SBR) |
+| **Rate Control** | Average Bitrate (`-b`), Variable Bitrate (`-q`), Constant Bitrate (`--cbr`) |
+| **Binary Footprint** | ~73 KB compiled binary |
+| **Installation** | See [Installation Guide](/docs/install) |
+| **Full CLI Options** | See [FAAC CLI Manual Page](/docs/faac-cli) |
 
-```bash
-# macOS
-brew install faac
+---
 
-# Linux (Debian/Ubuntu, Fedora, Arch)
-sudo apt install faac       # Debian / Ubuntu
-sudo dnf install faac       # Fedora
-sudo pacman -S faac        # Arch Linux
-```
-
-Source archives and release notes are available on [GitHub Releases](https://github.com/FreewareAdvancedAudio/faac/releases).
-
-### CLI Usage Examples
+## Quick Start CLI Examples
 
 ```bash
 # 1. Standard stereo encoding (128 kbps ABR - recommended default)
@@ -40,24 +37,7 @@ faac -b 192 -w -o high_quality.m4a input.wav
 faac -b 64 -object 5 -w -o low_bitrate.m4a input.wav
 ```
 
----
-
-## Technical Highlights & Profiles
-
-| Feature | Details |
-| :--- | :--- |
-| **License** | GNU Lesser General Public License v2.1+ (LGPL v2.1+) |
-| **Supported Profiles** | MPEG-4 AAC-LC, MPEG-4 HE-AAC v1 (SBR) |
-| **Rate Control** | Average Bitrate (`-b`), Variable Bitrate (`-q`), Constant Bitrate (`--cbr`) |
-| **Binary Footprint** | ~73 KB compiled binary |
-
----
-
-## Command-Line Interface Reference
-
-The command-line manual below is generated directly from the upstream `faac.1` man page.
-
-<!-- @include: ./faac-cli-gen.md -->
+For complete options and flags, view the dedicated [FAAC Command-Line Manual](/docs/faac-cli).
 
 ---
 

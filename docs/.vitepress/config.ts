@@ -31,10 +31,23 @@ export default defineConfig({
     ],
     sidebar: [
       {
-        text: 'Documentation Guides',
+        text: 'Getting Started',
         items: [
+          { text: 'Installation Guide', link: '/docs/install' },
           { text: 'FAAC AAC Encoder', link: '/docs/faac' },
-          { text: 'FAAD2 AAC Decoder', link: '/docs/faad2' },
+          { text: 'FAAD2 AAC Decoder', link: '/docs/faad2' }
+        ]
+      },
+      {
+        text: 'CLI Manuals',
+        items: [
+          { text: 'FAAC CLI Manpage', link: '/docs/faac-cli' },
+          { text: 'FAAD2 CLI Manpage', link: '/docs/faad2-cli' }
+        ]
+      },
+      {
+        text: 'Benchmarks & Evaluation',
+        items: [
           { text: 'Codec Benchmarks', link: '/docs/comparison' }
         ]
       }

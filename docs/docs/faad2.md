@@ -1,33 +1,30 @@
 ---
 title: FAAD2 AAC Decoder Guide & C API Reference
-description: Complete guide for FAAD2 (GPL v2+ AAC decoder) and FAAD3 (LGPL v2.1+). Includes installation, CLI examples, multi-channel surround decoding, CLI reference, and libfaad C API documentation.
+description: Complete guide for FAAD2 (GPL v2+ AAC decoder) and FAAD3 (LGPL v2.1+). Includes CLI examples, multi-channel surround decoding, and libfaad C API documentation.
 ---
 
 # FAAD2 AAC Decoder Guide & C API Reference
 
 **FAAD2 (Freeware Advanced Audio Decoder 2)** is an open-source MPEG-2 and MPEG-4 AAC audio decoder licensed under **GPL v2+** (written in C99).
 
-The next-generation **FAAD3** decoder is written in clean C11 under **LGPL v2.1+**, providing lightweight, LGPL-compliant decoding for embedded systems and applications.
+The next-generation **FAAD3** decoder is written in clean C11 under **LGPL v2.1+**, providing lightweight decoding for embedded systems and applications.
 
 ---
 
-## Quick Start & Installation
+## Technical Highlights
 
-### Installation
+| Feature | Details |
+| :--- | :--- |
+| **Licensing** | FAAD2: GPL v2+ (C99) \| FAAD3: LGPL v2.1+ (C11) |
+| **Supported Profiles** | MPEG-4 AAC-LC, HE-AAC v1 (SBR), HE-AAC v2 (PS), Main, LTP |
+| **Surround Sound** | Up to 7.1 channel surround sound with optional 2-channel downmix (`-d`) |
+| **Containers** | Raw ADTS `.aac`, MP4/M4A containers, ADIF streams |
+| **Installation** | See [Installation Guide](/docs/install) |
+| **Full CLI Options** | See [FAAD2 CLI Manual Page](/docs/faad2-cli) |
 
-```bash
-# macOS
-brew install faad2
+---
 
-# Linux (Debian/Ubuntu, Fedora, Arch)
-sudo apt install faad        # Debian / Ubuntu
-sudo dnf install faad2       # Fedora
-sudo pacman -S faad2        # Arch Linux
-```
-
-Source archives and release notes are available on [GitHub Releases](https://github.com/FreewareAdvancedAudio/faad2/releases).
-
-### CLI Usage Examples
+## Quick Start CLI Examples
 
 ```bash
 # 1. Decode AAC or M4A to uncompressed WAV
@@ -40,24 +37,7 @@ faad -i audio_file.aac
 faad -d -o stereo_downmix.wav surround_51.m4a
 ```
 
----
-
-## Technical Highlights & Profiles
-
-| Feature | Details |
-| :--- | :--- |
-| **Licensing** | FAAD2: GPL v2+ (C99) \| FAAD3: LGPL v2.1+ (C11) |
-| **Supported Profiles** | MPEG-4 AAC-LC, HE-AAC v1 (SBR), HE-AAC v2 (PS), Main, LTP |
-| **Surround Sound** | Up to 7.1 channel surround sound with optional 2-channel downmix (`-d`) |
-| **Containers** | Raw ADTS `.aac`, MP4/M4A containers, ADIF streams |
-
----
-
-## Command-Line Interface Reference
-
-The command-line manual below is generated directly from the upstream `faad.man` man page.
-
-<!-- @include: ./faad2-cli-gen.md -->
+For complete options and flags, view the dedicated [FAAD2 Command-Line Manual](/docs/faad2-cli).
 
 ---
 
