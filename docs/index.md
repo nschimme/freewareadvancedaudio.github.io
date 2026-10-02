@@ -16,18 +16,18 @@ hero:
       link: "/docs/faac"
 
 features:
-  - icon: "<i class=\"fa-solid fa-wrench\"></i>"
-    title: "FAAC 2.0+ Architecture"
-    details: "Written in C11/C99. Free of legacy ISO reference code. LGPL v2.1+ licensed."
-  - icon: "<i class=\"fa-solid fa-chart-line\"></i>"
-    title: "Profiles & Rate Control"
-    details: "AAC-LC and HE-AAC v1 (SBR). Supports VBR (-q), ABR (-b), and CBR (--cbr) with bit reservoir modeling."
   - icon: "<i class=\"fa-solid fa-bolt\"></i>"
-    title: "Encoding Speed"
-    details: "Lightweight, low-overhead C implementation with 3–5x throughput headroom over standard encoders."
-  - icon: "<i class=\"fa-solid fa-volume-high\"></i>"
-    title: "FAAD2 Decoder"
-    details: "Standalone GPL v2+ decoder for MPEG-2/4 AAC, HE-AAC v1/v2 (SBR+PS), and multi-channel streams up to 7.1."
+    title: "Fast"
+    details: "Low-overhead C implementation delivering 3–5x throughput headroom for lower battery consumption and CPU usage."
+  - icon: "<i class=\"fa-solid fa-microchip\"></i>"
+    title: "Small"
+    details: "Tiny binary footprint (<75 KB) enabling seamless deployment into embedded devices and IoT microcontrollers."
+  - icon: "<i class=\"fa-solid fa-sliders\"></i>"
+    title: "Quality"
+    details: "Pick all three—speed, compact footprint, and pristine audio quality—without having to choose two out of three."
+  - icon: "<i class=\"fa-solid fa-code\"></i>"
+    title: "Modern"
+    details: "Clean, ISO-free C11/C99 architecture under LGPL v2.1+ licensing for modern cross-platform software."
 ---
 
 <div class="home-technical-wrapper">
