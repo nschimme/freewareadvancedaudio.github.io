@@ -7,10 +7,6 @@ description: Frequently asked questions for FAAC and FAAD2 AAC audio codecs. Ans
 
 Answers to common developer, packager, and user questions regarding **FAAC** and **FAAD2**.
 
-::: warning LEGAL DISCLAIMER
-The information provided in this document is for general informational and educational purposes only and **does not constitute formal legal advice**. The maintainers, authors, and contributors of FAAC and FAAD2 do not warrant or indemnify users, developers, or distributors against third-party patent claims, copyright claims, or royalty demands. **YOU ARE SOLELY RESPONSIBLE FOR YOUR OWN USE, INTEGRATION, AND DISTRIBUTION OF THIS SOFTWARE.**
-:::
-
 ---
 
 ## 1. Licensing & Legal Questions
@@ -31,7 +27,7 @@ For **HE-AAC v2** (Parametric Stereo - PS), remaining patent terms in certain re
 ### Do I need to pay patent royalties or obtain licenses to distribute or use FAAC / FAAD2?
 While core AAC-LC and HE-AAC v1 patent portfolios managed by former licensing pools (such as Via Licensing / MPEG LA) have lapsed due to patent term expirations, patent laws and enforcement vary by country and jurisdiction.
 
-**No Warranty or Indemnification**: The FAAC and FAAD2 project maintainers provide this software "AS IS" without any express or implied warranties regarding patent non-infringement or freedom to operate. Software developers, distributors, and commercial vendors must independently evaluate their local intellectual property obligations before distributing or embedding derivative works. You are solely responsible for your own actions and licensing compliance.
+Like most open-source multimedia projects (e.g., FFmpeg), FAAC and FAAD2 are provided "AS IS" without express or implied warranties. Developers and commercial vendors integrating this software are responsible for evaluating their local intellectual property obligations and freedom to operate.
 
 ---
 
