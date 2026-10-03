@@ -54,7 +54,7 @@ Source code repositories and official release archives:
 ### Building FAAC (Meson / Ninja)
 
 ```bash
-git clone --recursive https://github.com/FreewareAdvancedAudio/faac.git
+git clone https://github.com/FreewareAdvancedAudio/faac.git
 cd faac
 
 meson setup build
@@ -65,7 +65,7 @@ sudo ninja -C build install
 ### Building FAAD (CMake / Make)
 
 ```bash
-git clone --recursive https://github.com/FreewareAdvancedAudio/faad2.git
+git clone https://github.com/FreewareAdvancedAudio/faad2.git
 cd faad2
 
 mkdir build && cd build
