@@ -73,7 +73,7 @@ async function main() {
   const wasmBinary = fs.readFileSync(path.join(wasmDir, 'faac.wasm'));
   const workerSource = fs.readFileSync(path.join(__dirname, '../docs/public/wasm/faac-worker.js'), 'utf8');
   const cases = [
-    { objectType: 'auto', expectedResolved: 'he-v1', channels: 1, sampleRate: 44100, bitrate: 48, samples: 44117 },
+    { objectType: 'auto', expectedResolved: 'he-v1', channels: 2, sampleRate: 44100, bitrate: 48, samples: 44117 },
     { objectType: 'auto', expectedResolved: 'lc', channels: 2, sampleRate: 48000, bitrate: 128, samples: 48123 },
     { objectType: 'lc', expectedResolved: 'lc', channels: 1, sampleRate: 44100, bitrate: 96, samples: 44117 },
     { objectType: 'lc', expectedResolved: 'lc', channels: 2, sampleRate: 48000, bitrate: 128, samples: 48123 },
