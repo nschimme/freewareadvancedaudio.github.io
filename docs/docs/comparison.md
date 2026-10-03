@@ -1,6 +1,6 @@
 ---
 title: Codec Comparison & Selection Guide — Choosing the Right Audio Codec
-description: Technical guide helping developers and audiophiles choose between FAAC, FLAC, Opus, LAME MP3, Apple AAC, and FDK-AAC based on fidelity, sample rate flexibility, license, and throughput.
+description: Technical guide helping developers and audiophiles choose between FAAC, FLAC, Opus, LAME MP3, Apple AAC, FDK-AAC, and FFmpeg AAC based on fidelity, sample rate flexibility, license, and throughput.
 ---
 
 # Codec Comparison & Selection Guide
@@ -30,21 +30,27 @@ This guide provides an objective technical comparison to help developers and aud
 ### 4. Choose LAME MP3 (`libmp3lame`) when:
 * **You must support legacy hardware**: MP3 is required only when targeting legacy hardware audio players or embedded automotive systems manufactured prior to AAC adoption.
 
+### 5. Choose Fraunhofer FDK-AAC (`libfdk-aac`) when:
+* **You broadcast Digital Radio Mondiale (DRM) or require HE-AAC v2 / xHE-AAC**: FDK-AAC supports specialized broadcast profiles like Digital Radio Mondiale (DRM) and Parametric Stereo (HE-AAC v2). Note that FDK-AAC carries a custom non-free license restricting commercial binary redistribution.
+
+### 6. Choose FFmpeg Native AAC (`aac`) when:
+* **You need a built-in fallback inside general-purpose FFmpeg pipelines**: FFmpeg's native internal AAC encoder requires zero external library linking and acts as a universal fallback toolkit, though it lacks the encoding throughput, minimal memory usage, and rate-control precision of dedicated libraries like FAAC.
+
 ---
 
 ## Technical Architectural Comparison
 
-| Attribute | FAAC (`libfaac`) | FLAC | Opus | LAME MP3 | Apple AAC |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Primary Focus** | Speed, Low Footprint & Native Sample Rates | Bit-Perfect Archival | Real-Time Low-Latency Streaming | Legacy Compatibility | Apple Ecosystem Muxing |
-| **Compression Type** | Perceptual Lossy (AAC-LC / HE-v1) | Lossless PCM | Perceptual Lossy | Perceptual Lossy | Perceptual Lossy |
-| **Sample Rates** | **8 kHz – 96 kHz Native** | 1 Hz – 655 kHz | Internal 48 kHz | 8 kHz – 48 kHz | 8 kHz – 96 kHz |
-| **Channel Support** | Mono, Stereo, 5.1, 7.1, up to 64 Ch | Up to 8 Ch | Up to 255 Ch | Mono, Stereo | Mono, Stereo, 5.1, 7.1 |
-| **Container Muxing** | Native ISO MP4 / M4A (`.m4a`) | Native Ogg/FLAC | Ogg / WebM | Raw MP3 Stream | Native ISO MP4 |
-| **Gapless Metadata** | Native `iTunSMPB` priming delay | Native | Native | LAME Info Tag | Native |
-| **Binary Footprint** | **~73 – 82 KB** | ~200 KB | ~480 KB | ~185 KB | ~100 KB (System) |
-| **Shared Library** | `libfaac.so` / `.dylib` / `.dll` | `libFLAC.so` | `libopus.so` | `libmp3lame.so` | AudioToolbox |
-| **License** | **LGPL v2.1+** | Xiph BSD / GPL | BSD-3-Clause | LGPL v2.0+ | Proprietary |
+| Attribute | FAAC (`libfaac`) | FLAC | Opus | LAME MP3 | FDK-AAC | FFmpeg AAC |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Primary Focus** | Speed, Low Footprint & Native Sample Rates | Bit-Perfect Archival | Real-Time Low-Latency Streaming | Legacy Compatibility | Digital Radio Mondiale (DRM) & HE-v2 | Built-in General Toolkit Fallback |
+| **Compression Type** | Perceptual Lossy (AAC-LC / HE-v1) | Lossless PCM | Perceptual Lossy | Perceptual Lossy | Perceptual Lossy | Perceptual Lossy |
+| **Sample Rates** | **8 kHz – 96 kHz Native** | 1 Hz – 655 kHz | Internal 48 kHz | 8 kHz – 48 kHz | 8 kHz – 96 kHz | 8 kHz – 96 kHz |
+| **Channel Support** | Mono, Stereo, 5.1, 7.1, up to 64 Ch | Up to 8 Ch | Up to 255 Ch | Mono, Stereo | Mono, Stereo, 5.1, 7.1 | Mono, Stereo, 5.1, 7.1 |
+| **Container Muxing** | Native ISO MP4 / M4A (`.m4a`) | Native Ogg/FLAC | Ogg / WebM | Raw MP3 Stream | M4A / ADTS / LATM | Any FFmpeg format |
+| **Gapless Metadata** | Native `iTunSMPB` priming delay | Native | Native | LAME Info Tag | Supported | Basic |
+| **Binary Footprint** | **~73 – 82 KB** | ~200 KB | ~480 KB | ~185 KB | ~940 KB | ~275 KB (Codec portion) |
+| **Shared Library** | `libfaac.so` / `.dylib` / `.dll` | `libFLAC.so` | `libopus.so` | `libmp3lame.so` | `libfdk-aac.so` | `libavcodec.so` |
+| **License** | **LGPL v2.1+** | Xiph BSD / GPL | BSD-3-Clause | LGPL v2.0+ | Non-Free (FDK License) | LGPL v2.1+ / GPL |
 
 ---
 

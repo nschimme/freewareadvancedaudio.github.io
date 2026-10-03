@@ -43,7 +43,8 @@ FAAC and FAAD excel in specialized environments where execution speed, memory co
 - **[GStreamer](https://gstreamer.freedesktop.org/)**: Official `gst-plugins-bad` elements (`faac` and `faad`) provide low-latency AAC encoding and decoding in enterprise multimedia pipelines.
 - **[VLC Media Player](https://www.videolan.org/vlc/)**: Integrates FAAD decoder modules for lightweight, cross-platform AAC audio stream playback.
 
-### <i class="fa-solid fa-compact-disc"></i> Cross-Platform Desktop Tools & Utilities
+### <i class="fa-solid fa-compact-disc"></i> Cross-Platform Tools & Codec Packs
+- **[X Codec Pack](https://xcodecpack.com/aac-encoder/)**: Integrates FAAC for DirectShow AAC audio encoding and system-wide M4A audio conversion on Windows.
 - **[fre:ac Converter](https://www.freac.org/)**: Popular cross-platform audio converter and CD ripper directly bundling FAAC and FAAD for high-speed M4A batch processing.
 - **[Audiobook Boss](https://github.com/Allmight97/audiobook-boss)**: Integrates FAAC for rapid chapter encoding and M4A audiobook packaging.
 
