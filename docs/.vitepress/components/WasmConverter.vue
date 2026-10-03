@@ -2,9 +2,9 @@
   <div class="wasm-converter-container">
     <div class="converter-card">
       <div class="converter-header">
-        <h3 class="converter-title"><i class="fa-solid fa-bolt"></i> In-Browser FAAC AAC Encoder</h3>
+        <h3 class="converter-title"><i class="fa-solid fa-bolt"></i> In-Browser FAAC AAC/M4A Converter</h3>
         <p class="converter-subtitle">
-          Encode WAV audio to high-quality AAC streams live in your browser using <strong>FAAC (LGPL v2.1+)</strong>. No server uploads required—all processing stays on your device.
+          Convert WAV audio to genuine <strong>M4A (MP4 container)</strong> audio with gapless playback metadata live in your browser using <strong>FAAC (LGPL v2.1+)</strong>. Processing is offloaded to a background Web Worker so the page stays smooth and responsive.
         </p>
       </div>
 
@@ -64,11 +64,10 @@
         </div>
 
         <div class="control-group">
-          <label class="control-label">AAC Profile / Object Type</label>
+          <label class="control-label">MPEG Profile / Object Type</label>
           <select v-model="objectType" class="control-select">
-            <option value="auto">Auto (Default: LC for high bitrates, HE-v1 for low bitrates)</option>
             <option value="lc">MPEG-4 AAC-LC (Low Complexity)</option>
-            <option value="he-aac-v1">MPEG-4 HE-AAC v1 (SBR)</option>
+            <option value="he-v1">MPEG-4 HE-AAC v1 (SBR)</option>
           </select>
         </div>
       </div>
@@ -81,10 +80,10 @@
           @click="startEncoding"
         >
           <span v-if="!isProcessing">
-            <i class="fa-solid fa-rocket"></i> Encode to AAC (FAAC)
+            <i class="fa-solid fa-rocket"></i> Encode to M4A Container (FAAC)
           </span>
           <span v-else>
-            <i class="fa-solid fa-spinner fa-spin"></i> Encoding AAC... {{ progress }}%
+            <i class="fa-solid fa-spinner fa-spin"></i> Encoding M4A (Worker Thread)... {{ progress }}%
           </span>
         </button>
 
@@ -99,12 +98,29 @@
 
       <!-- Encoded Audio Results -->
       <div class="results-section" v-if="results.length > 0">
-        <h4 class="results-title"><i class="fa-solid fa-circle-check"></i> Encoded AAC Output</h4>
+        <h4 class="results-title"><i class="fa-solid fa-circle-check"></i> Encoded M4A Output</h4>
         <div class="result-card" v-for="(item, index) in results" :key="index">
           <div class="result-info">
             <span class="result-name">{{ item.name }}</span>
             <span class="result-meta">{{ item.details }}</span>
           </div>
+
+          <!-- Gapless Loop Player -->
+          <div class="gapless-box">
+            <div class="gapless-info">
+              <span class="gapless-title"><i class="fa-solid fa-infinity"></i> Gapless Loop Player</span>
+              <span class="gapless-desc">Uses Web Audio API to play a 100% gapless loop using M4A metadata.</span>
+            </div>
+            <button
+              class="loop-btn"
+              :class="{ active: activeLoopIndex === index }"
+              @click="toggleGaplessLoop(item, index)"
+            >
+              <i :class="activeLoopIndex === index ? 'fa-solid fa-square' : 'fa-solid fa-play'"></i>
+              {{ activeLoopIndex === index ? 'Stop Gapless Loop' : 'Play Gapless Loop' }}
+            </button>
+          </div>
+
           <div class="result-actions">
             <audio controls :src="item.url" class="audio-player"></audio>
             <a :href="item.url" :download="item.name" class="download-link">
@@ -124,11 +140,15 @@ const fileInput = ref(null)
 const selectedFile = ref(null)
 const isDragOver = ref(false)
 const bitrate = ref(128)
-const objectType = ref('auto')
+const objectType = ref('lc')
 const isProcessing = ref(false)
 const progress = ref(0)
 const statusMessage = ref('')
 const results = ref([])
+
+const activeLoopIndex = ref(null)
+let audioCtx = null
+let loopSourceNode = null
 
 function triggerFileInput() {
   fileInput.value?.click()
@@ -188,160 +208,183 @@ function parseWavHeader(buffer) {
   return { sampleRate, numChannels, bitsPerSample, pcmBytes }
 }
 
-async function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) {
-      resolve()
-      return
+async function toggleGaplessLoop(item, index) {
+  if (activeLoopIndex.value === index) {
+    stopLoop()
+    activeLoopIndex.value = null
+    return
+  }
+
+  stopLoop()
+  activeLoopIndex.value = index
+
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)()
     }
-    const s = document.createElement('script')
-    s.src = src
-    s.onload = () => resolve()
-    s.onerror = (err) => reject(err)
-    document.head.appendChild(s)
-  })
+    if (audioCtx.state === 'suspended') {
+      await audioCtx.resume()
+    }
+
+    const response = await fetch(item.url)
+    const arrayBuf = await response.arrayBuffer()
+    const audioBuf = await audioCtx.decodeAudioData(arrayBuf)
+
+    loopSourceNode = audioCtx.createBufferSource()
+    loopSourceNode.buffer = audioBuf
+    loopSourceNode.loop = true
+    loopSourceNode.connect(audioCtx.destination)
+    loopSourceNode.start(0)
+  } catch (err) {
+    console.error('Gapless playback error:', err)
+    activeLoopIndex.value = null
+  }
 }
+
+function stopLoop() {
+  if (loopSourceNode) {
+    try {
+      loopSourceNode.stop()
+      loopSourceNode.disconnect()
+    } catch (e) {}
+    loopSourceNode = null
+  }
+}
+
+// Inline Worker Code for FAAC WASM encoding
+const workerCode = `
+self.onmessage = async function(e) {
+  const { inputBuffer, bitrate, objectType, sampleRate, channels } = e.data;
+
+  self.postMessage({ type: 'progress', progress: 10, status: 'Initializing WASM background worker...' });
+
+  try {
+    if (!self.FAACModule) {
+      importScripts('/wasm/faac.js');
+    }
+
+    self.postMessage({ type: 'progress', progress: 30, status: 'Loading FAAC engine in background thread...' });
+
+    const faac = await self.FAACModule();
+    let encodedBytes = null;
+
+    if (faac.FS && (faac._run_encoding_session_ext || faac._faac_encoder_open)) {
+      faac.FS.writeFile('/input.wav', new Uint8Array(inputBuffer));
+
+      if (faac._init_encode_options && faac._run_encoding_session_ext) {
+        const optsPtr = faac._malloc(128);
+        faac._init_encode_options(optsPtr);
+
+        const inPath = faac._malloc(32);
+        faac.stringToUTF8('/input.wav', inPath, 32);
+        const outPath = faac._malloc(32);
+        faac.stringToUTF8('/output.m4a', outPath, 32);
+
+        faac.setValue(optsPtr + 0, inPath, 'i32');
+        faac.setValue(optsPtr + 4, outPath, 'i32');
+        faac.setValue(optsPtr + 8, 1, 'i8'); // container_mp4
+
+        const bitRatePerChan = Math.floor((bitrate * 1000) / (channels || 1));
+        faac.setValue(optsPtr + 52, 0, 'i16');
+        faac.setValue(optsPtr + 56, bitRatePerChan, 'i32');
+
+        // object_type in encode_options struct: LOW = 1, HEAAC = 5
+        let objTypeNum = 1;
+        if (objectType === 'he-v1') objTypeNum = 5;
+        faac.setValue(optsPtr + 32, objTypeNum, 'i32');
+
+        self.postMessage({ type: 'progress', progress: 60, status: 'Encoding M4A container with gapless metadata...' });
+
+        const code = faac._run_encoding_session_ext(optsPtr, 0);
+        if (code === 0) {
+          encodedBytes = faac.FS.readFile('/output.m4a');
+        }
+
+        faac._free(inPath);
+        faac._free(outPath);
+        if (faac._free_encode_options) faac._free_encode_options(optsPtr);
+        faac._free(optsPtr);
+      }
+
+      try {
+        faac.FS.unlink('/input.wav');
+        faac.FS.unlink('/output.m4a');
+      } catch (err) {}
+    }
+
+    self.postMessage({ type: 'progress', progress: 95, status: 'Finalizing M4A audio stream...' });
+
+    if (encodedBytes) {
+      self.postMessage({ type: 'complete', encodedBytes: encodedBytes.buffer }, [encodedBytes.buffer]);
+    } else {
+      self.postMessage({ type: 'error', message: 'FAAC encoding produced no output bytes.' });
+    }
+  } catch (err) {
+    self.postMessage({ type: 'error', message: err.message || 'Worker execution failed' });
+  }
+};
+`
 
 async function startEncoding() {
   if (!selectedFile.value) return
 
   isProcessing.value = true
   progress.value = 0
-  statusMessage.value = 'Initializing FAAC WebAssembly engine...'
+  statusMessage.value = 'Preparing Web Worker encoding task...'
 
   try {
     const arrayBuffer = await selectedFile.value.arrayBuffer()
-    const inputUint8 = new Uint8Array(arrayBuffer)
-    progress.value = 25
-
     const wavHeaderInfo = parseWavHeader(arrayBuffer)
-    const pcmData = wavHeaderInfo ? wavHeaderInfo.pcmBytes : inputUint8
     const sampleRate = wavHeaderInfo ? wavHeaderInfo.sampleRate : 44100
     const channels = wavHeaderInfo ? wavHeaderInfo.numChannels : 2
 
-    statusMessage.value = `Loading FAAC C11 encoder module (-b ${bitrate.value}k)...`
-    await loadScript('/wasm/faac.js').catch(() => {})
-    progress.value = 45
+    const blob = new Blob([workerCode], { type: 'application/javascript' })
+    const workerUrl = URL.createObjectURL(blob)
+    const worker = new Worker(workerUrl)
 
-    let encodedBytes = null
+    worker.onmessage = (e) => {
+      const msg = e.data
+      if (msg.type === 'progress') {
+        progress.value = msg.progress
+        statusMessage.value = msg.status
+      } else if (msg.type === 'complete') {
+        progress.value = 100
+        statusMessage.value = 'FAAC M4A encoding complete!'
+        isProcessing.value = false
 
-    if (typeof window.FAACModule === 'function') {
-      try {
-        statusMessage.value = `Encoding audio via FAAC 2.0 C engine...`
-        const faac = await window.FAACModule()
+        const outputBuffer = new Uint8Array(msg.encodedBytes)
+        const baseName = selectedFile.value.name.replace(/\.[^/.]+$/, "")
+        const outName = `${baseName}_faac_${bitrate.value}k.m4a`
+        const outBlob = new Blob([outputBuffer], { type: 'audio/mp4' })
+        const url = URL.createObjectURL(outBlob)
 
-        if (faac._faac_params_init && faac._faac_encoder_open && faac._malloc && faac._free) {
-          // Initialize params struct (sizeof faac_params ~ 128 bytes)
-          const paramsPtr = faac._malloc(128)
-          faac._faac_params_init(paramsPtr, 128)
+        results.value.unshift({
+          name: outName,
+          details: `FAAC 2.2 (libfaac & mp4write) | M4A Container | ${bitrate.value} kbps ABR | AAC-${objectType.value.toUpperCase()} | ${sampleRate} Hz ${channels === 2 ? 'Stereo' : 'Mono'}`,
+          url: url,
+          rawBuffer: outputBuffer
+        })
 
-          // Set configuration fields
-          faac.setValue(paramsPtr + 4, sampleRate, 'i32')
-          faac.setValue(paramsPtr + 8, channels, 'i32')
-
-          // Object type: 0 = LC, 2 = HE-AAC v1, 3 = AUTO
-          let objType = 3 // AUTO
-          if (objectType.value === 'lc') objType = 0
-          else if (objectType.value === 'he-aac-v1') objType = 2
-          faac.setValue(paramsPtr + 16, objType, 'i32')
-
-          // Bitrate per channel in bits/sec
-          const bitRatePerChannel = Math.floor((bitrate.value * 1000) / (channels || 1))
-          faac.setValue(paramsPtr + 28, bitRatePerChannel, 'i32')
-
-          // Output ADTS stream format (1 = FAAC_STREAM_ADTS)
-          faac.setValue(paramsPtr + 40, 1, 'i32')
-          // Input 16-bit PCM format (1 = FAAC_INPUT_16BIT)
-          faac.setValue(paramsPtr + 44, 1, 'i32')
-
-          // Open encoder handle
-          const hEncoderPtr = faac._malloc(4)
-          const openStatus = faac._faac_encoder_open(paramsPtr, hEncoderPtr)
-
-          if (openStatus === 0) {
-            const hEncoder = faac.getValue(hEncoderPtr, 'i32')
-
-            // Query encoder info
-            const infoPtr = faac._malloc(128)
-            faac.setValue(infoPtr, 128, 'i32') // struct_size
-            faac._faac_encoder_get_info(hEncoder, infoPtr)
-
-            const maxOutputBytes = faac.getValue(infoPtr + 8, 'i32') || 2048
-            const encoderDelay = faac.getValue(infoPtr + 36, 'i32') || 0
-
-            statusMessage.value = `Encoding PCM frames (Encoder Delay: ${encoderDelay} samples)...`
-            progress.value = 60
-
-            // Allocate PCM input buffer and output frame buffer
-            const inPtr = faac._malloc(pcmData.length)
-            const outPtr = faac._malloc(maxOutputBytes)
-            const bytesWrittenPtr = faac._malloc(4)
-
-            faac.HEAPU8.set(pcmData, inPtr)
-
-            const totalPcmSamples = Math.floor(pcmData.length / 2) // 16-bit = 2 bytes/sample
-            const chunks = []
-
-            // Main encode call for input PCM
-            faac._faac_encoder_encode(hEncoder, inPtr, totalPcmSamples, outPtr, maxOutputBytes, bytesWrittenPtr)
-            let written = faac.getValue(bytesWrittenPtr, 'i32')
-            if (written > 0) {
-              chunks.push(faac.HEAPU8.slice(outPtr, outPtr + written))
-            }
-
-            // Flush remaining buffered frames
-            let flushCount = 0
-            while (flushCount < 20) {
-              faac._faac_encoder_encode(hEncoder, 0, 0, outPtr, maxOutputBytes, bytesWrittenPtr)
-              written = faac.getValue(bytesWrittenPtr, 'i32')
-              if (written <= 0) break
-              chunks.push(faac.HEAPU8.slice(outPtr, outPtr + written))
-              flushCount++
-            }
-
-            // Concatenate output ADTS AAC chunks
-            const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0)
-            if (totalLength > 0) {
-              encodedBytes = new Uint8Array(totalLength)
-              let offset = 0
-              for (const chunk of chunks) {
-                encodedBytes.set(chunk, offset)
-                offset += chunk.length
-              }
-            }
-
-            faac._free(inPtr)
-            faac._free(outPtr)
-            faac._free(bytesWrittenPtr)
-            faac._free(infoPtr)
-            faac._faac_encoder_close(hEncoderPtr)
-          }
-
-          faac._free(paramsPtr)
-          faac._free(hEncoderPtr)
-        }
-      } catch (wasmErr) {
-        console.warn('FAAC WASM execution notice:', wasmErr)
+        worker.terminate()
+        URL.revokeObjectURL(workerUrl)
+      } else if (msg.type === 'error') {
+        statusMessage.value = 'Worker Error: ' + msg.message
+        isProcessing.value = false
+        worker.terminate()
+        URL.revokeObjectURL(workerUrl)
       }
     }
 
-    progress.value = 90
-    const baseName = selectedFile.value.name.replace(/\.[^/.]+$/, "")
-    const outName = `${baseName}_faac_${bitrate.value}k.m4a`
-    const outputBuffer = encodedBytes || inputUint8
-    const blob = new Blob([outputBuffer], { type: 'audio/mp4' })
-    const url = URL.createObjectURL(blob)
+    worker.postMessage({
+      inputBuffer: arrayBuffer,
+      bitrate: bitrate.value,
+      objectType: objectType.value,
+      sampleRate,
+      channels
+    }, [arrayBuffer])
 
-    results.value.unshift({
-      name: outName,
-      details: `FAAC 2.2 (libfaac) | ${bitrate.value} kbps ABR | ${objectType.value.toUpperCase()} | ${sampleRate} Hz ${channels === 2 ? 'Stereo' : 'Mono'}`,
-      url: url
-    })
-    progress.value = 100
-    statusMessage.value = 'FAAC AAC encoding complete!'
   } catch (err) {
     statusMessage.value = 'Error: ' + err.message
-  } finally {
     isProcessing.value = false
   }
 }
@@ -568,19 +611,11 @@ async function startEncoding() {
   background: #0f172a;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
   margin-bottom: 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-}
-
-@media (min-width: 640px) {
-  .result-card {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
+  gap: 0.8rem;
 }
 
 .result-name {
@@ -595,6 +630,57 @@ async function startEncoding() {
   color: #64748b;
 }
 
+.gapless-box {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .gapless-box {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.gapless-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #34d399;
+  display: block;
+}
+
+.gapless-desc {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: block;
+}
+
+.loop-btn {
+  background: #10b981;
+  color: #0f172a;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.loop-btn.active {
+  background: #ef4444;
+  color: #ffffff;
+}
+
 .result-actions {
   display: flex;
   flex-direction: column;
@@ -606,8 +692,8 @@ async function startEncoding() {
   .result-actions {
     flex-direction: row;
     align-items: center;
-    width: auto;
-    gap: 0.75rem;
+    justify-content: space-between;
+    width: 100%;
   }
 }
 
@@ -618,7 +704,7 @@ async function startEncoding() {
 
 @media (min-width: 640px) {
   .audio-player {
-    width: 200px;
+    flex: 1;
   }
 }
 

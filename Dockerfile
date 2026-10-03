@@ -31,9 +31,11 @@ RUN cd /build/faac_src && \
 
 # Compile Emscripten JS/WASM FAAC output module
 RUN mkdir -p /build/out_wasm && \
-    emcc -O2 /build/faac_src/build_wasm/libfaac/libfaac.a -I/build/faac_src/include \
-      -s EXPORTED_FUNCTIONS='["_faac_params_init","_faac_encoder_open","_faac_encoder_get_info","_faac_encoder_encode","_faac_encoder_close","_malloc","_free"]' \
-      -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue"]' \
+    emcc -O2 /build/faac_src/build_wasm/libfaac/libfaac.a /build/faac_src/build_wasm/frontend/libfrontend.a \
+      -I/build/faac_src/include -I/build/faac_src/frontend \
+      -s EXPORTED_FUNCTIONS='["_init_encode_options","_free_encode_options","_run_encoding_session_ext","_faac_params_init","_faac_encoder_open","_faac_encoder_get_info","_faac_encoder_encode","_faac_encoder_close","_malloc","_free"]' \
+      -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue","FS","UTF8ToString","stringToUTF8"]' \
+      -s FORCE_FILESYSTEM=1 \
       -s MODULARIZE=1 -s EXPORT_NAME="FAACModule" \
       -o /build/out_wasm/faac.js
 
@@ -54,7 +56,7 @@ COPY --from=builder /build/out_wasm/ /app/docs/public/wasm/
 
 EXPOSE 5173 4173
 
-CMD ["npm run docs:generate-cli && npm run docs:dev -- --host 0.0.0.0"]
+CMD ["npm", "run", "docs:dev", "--", "--host", "0.0.0.0"]
 
 # Static site builder stage for production deployment
 FROM app AS site-builder

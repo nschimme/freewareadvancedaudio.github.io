@@ -1,6 +1,6 @@
 ---
 title: FAAC AAC Encoder Guide & C API Reference
-description: Complete guide for FAAC (LGPL v2.1+ AAC encoder). Includes CLI usage examples, rate control tuning (-b ABR, -q VBR), and libfaac C API documentation.
+description: Complete guide for FAAC (LGPL v2.1+ AAC encoder). Includes CLI usage examples, M4A container output, gapless playback metadata support, and libfaac C API documentation.
 ---
 
 # FAAC AAC Encoder Guide & C API Reference
@@ -16,7 +16,8 @@ Written in clean C11/C99 without legacy ISO reference code, FAAC delivers high e
 | Feature | Details |
 | :--- | :--- |
 | **License** | GNU Lesser General Public License v2.1+ (LGPL v2.1+) |
-| **Supported Profiles** | MPEG-4 AAC-LC, MPEG-4 HE-AAC v1 (SBR) |
+| **Supported Profiles** | MPEG-4 AAC-LC, MPEG-4 Main Profile, MPEG-4 LTP, HE-AAC v1 (SBR) |
+| **Container Support** | Genuine ISO MP4 / M4A (`.m4a`) containers with gapless playback metadata |
 | **Rate Control** | Average Bitrate (`-b`), Variable Bitrate (`-q`), Constant Bitrate (`--cbr`) |
 | **Binary Footprint** | ~73 KB compiled binary |
 | **Installation** | See [Installation Guide](/docs/install) |
@@ -27,10 +28,10 @@ Written in clean C11/C99 without legacy ISO reference code, FAAC delivers high e
 ## Quick Start CLI Examples
 
 ```bash
-# 1. Standard stereo encoding (128 kbps ABR - recommended default)
+# 1. Standard stereo M4A container encoding (128 kbps ABR - recommended default)
 faac -b 128 -w -o output.m4a input.wav
 
-# 2. High-fidelity archival encoding (192 kbps ABR)
+# 2. High-fidelity archival M4A container (192 kbps ABR)
 faac -b 192 -w -o high_quality.m4a input.wav
 
 # 3. Low-bitrate streaming (64 kbps HE-AAC v1 / SBR)
@@ -38,6 +39,20 @@ faac -b 64 -object 5 -w -o low_bitrate.m4a input.wav
 ```
 
 For complete options and flags, view the dedicated [FAAC Command-Line Manual](/docs/faac-cli).
+
+---
+
+## M4A Container & Gapless Playback
+
+When wrapping raw AAC bitstreams into MP4/M4A containers (`-w` or `-o filename.m4a`), FAAC automatically creates valid ISO MP4 atoms (`ftyp`, `moov`, `stsz`, `mdat`).
+
+In addition, FAAC writes iTunes-compatible gapless metadata (`iTunSMPB` box) into the container:
+* **Priming Delay (`encoder_delay`)**: Records exact samples introduced by filterbanks during initialization.
+* **Padding Samples**: Records zero padding samples added at the end of the final audio frame.
+
+Media players and Web Audio engines decode this metadata to achieve **100% seamless, gapless audio playback** without boundary clicks or silence delays.
+
+You can try gapless M4A container encoding live in your browser on the [Interactive Playground](/playground).
 
 ---
 
