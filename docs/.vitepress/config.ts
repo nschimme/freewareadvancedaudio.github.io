@@ -6,7 +6,7 @@ export default defineConfig({
   cleanUrls: true,
   appearance: 'force-dark',
   sitemap: {
-    hostname: 'https://freewareadvancedaudio.org'
+    hostname: 'https://freewareadvancedaudio.github.io'
   },
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],

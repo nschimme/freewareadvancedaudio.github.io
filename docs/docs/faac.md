@@ -7,7 +7,7 @@ description: Complete guide for FAAC (LGPL v2.1+ AAC encoder). Includes CLI usag
 
 **FAAC (Freeware Advanced Audio Coder)** is an open-source MPEG-2 and MPEG-4 AAC audio encoder licensed under **LGPL v2.1+**.
 
-Written in clean C11/C99 without legacy ISO reference code, FAAC delivers high encoding throughput (>500x realtime) with an ultra-small binary footprint (~73 KB).
+Written in clean C11/C99 without legacy ISO reference code, FAAC delivers high encoding throughput (>500x realtime) with an ultra-compact binary footprint.
 
 ---
 
@@ -16,10 +16,9 @@ Written in clean C11/C99 without legacy ISO reference code, FAAC delivers high e
 | Feature | Details |
 | :--- | :--- |
 | **License** | GNU Lesser General Public License v2.1+ (LGPL v2.1+) |
-| **Supported Profiles** | MPEG-4 AAC-LC, MPEG-4 Main Profile, MPEG-4 LTP, HE-AAC v1 (SBR) |
+| **Supported Profiles** | MPEG-4 AAC-LC, HE-AAC v1 (SBR) |
 | **Container Support** | Genuine ISO MP4 / M4A (`.m4a`) containers with gapless playback metadata |
 | **Rate Control** | Average Bitrate (`-b`), Variable Bitrate (`-q`), Constant Bitrate (`--cbr`) |
-| **Binary Footprint** | ~73 KB compiled binary |
 | **Installation** | See [Installation Guide](/docs/install) |
 | **Full CLI Options** | See [FAAC CLI Manual Page](/docs/faac-cli) |
 
@@ -58,7 +57,7 @@ You can try gapless M4A container encoding live in your browser on the [Interact
 
 ## C API Reference (`libfaac`)
 
-FAAC 2.0 introduces a modern, thread-safe C API. Link against `-lfaac` and include `<faac.h>`.
+Modern releases of FAAC feature a thread-safe C API. Link against `-lfaac` and include `<faac.h>`.
 
 ### Integration Lifecycle
 
@@ -141,7 +140,7 @@ faac_status faac_encoder_encode(faac_encoder *enc,
 Encodes PCM audio samples into an AAC bitstream packet. Pass `in = NULL` or `in_samples = 0` to flush remaining buffered frames at end-of-stream.
 
 #### Gapless Playback & Priming Delay (`encoder_delay`)
-FAAC 2.0 tracks exact encoder priming delay in `info.encoder_delay` (in output sample units). When muxing into MP4 containers (`.m4a`), use `encoder_delay` and padding sample counts to write gapless metadata atoms (`iTunSMPB` or edit lists), matching the gapless handling implemented in `faac` CLI.
+FAAC tracks exact encoder priming delay in `info.encoder_delay` (in output sample units). When muxing into MP4 containers (`.m4a`), use `encoder_delay` and padding sample counts to write gapless metadata atoms (`iTunSMPB` or edit lists), matching the gapless handling implemented in `faac` CLI.
 
 #### `faac_encoder_close`
 ```c
