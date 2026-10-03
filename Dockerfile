@@ -33,7 +33,7 @@ RUN cd /build/faac_src && \
 RUN mkdir -p /build/out_wasm && \
     emcc -O2 /build/faac_src/build_wasm/libfaac/libfaac.a /build/faac_src/build_wasm/frontend/libfrontend.a \
       -I/build/faac_src/include -I/build/faac_src/frontend \
-      -s EXPORTED_FUNCTIONS='["_faac_params_init","_faac_encoder_open","_faac_encoder_get_info","_faac_encoder_encode","_faac_encoder_close","_mp4_open","_mp4_set_format","_mp4_set_decoder_config","_mp4_set_encoder","_mp4_set_gapless","_mp4_write_frame","_mp4_finish","_mp4_close","_malloc","_free"]' \
+      -s EXPORTED_FUNCTIONS='["_faac_params_init","_faac_encoder_open","_faac_encoder_get_info","_faac_get_library_info","_faac_encoder_encode","_faac_encoder_close","_mp4_open","_mp4_set_format","_mp4_set_decoder_config","_mp4_set_encoder","_mp4_set_gapless","_mp4_write_frame","_mp4_finish","_mp4_close","_malloc","_free"]' \
       -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue","FS","UTF8ToString","stringToUTF8","addFunction","removeFunction"]' \
       -s ALLOW_TABLE_GROWTH=1 \
       -s FORCE_FILESYSTEM=1 \

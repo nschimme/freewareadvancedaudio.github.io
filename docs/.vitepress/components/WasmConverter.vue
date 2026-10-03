@@ -241,8 +241,21 @@ self.onmessage = async function(e) {
     if (ascPtr && ascSize > 0) {
       faac._mp4_set_decoder_config(ascPtr, ascSize);
     }
-    const encNamePtr = faac._malloc(32);
-    faac.stringToUTF8('FAAC 2.2', encNamePtr, 32);
+    let versionStr = '2.x';
+    if (faac._faac_get_library_info) {
+      const libInfoPtr = faac._malloc(20);
+      faac.setValue(libInfoPtr + 0, 20, 'i32');
+      if (faac._faac_get_library_info(libInfoPtr) === 0) {
+        const strPtr = faac.getValue(libInfoPtr + 8, 'i32');
+        if (strPtr) {
+          versionStr = faac.UTF8ToString(strPtr);
+        }
+      }
+      faac._free(libInfoPtr);
+    }
+
+    const encNamePtr = faac._malloc(64);
+    faac.stringToUTF8('FAAC ' + versionStr, encNamePtr, 64);
     faac._mp4_set_encoder(encNamePtr);
 
     const pcmInput = new Int16Array(pcm16Data);
@@ -311,7 +324,7 @@ self.onmessage = async function(e) {
     self.postMessage({ type: 'progress', progress: 98, status: 'Finalizing M4A container...' });
 
     if (encodedBytes) {
-      self.postMessage({ type: 'complete', encodedBytes: encodedBytes.buffer }, [encodedBytes.buffer]);
+      self.postMessage({ type: 'complete', encodedBytes: encodedBytes.buffer, version: versionStr }, [encodedBytes.buffer]);
     } else {
       self.postMessage({ type: 'error', message: 'FAAC encoding produced no output bytes.' });
     }
@@ -368,7 +381,7 @@ async function startEncoding() {
 
         results.value.unshift({
           name: outName,
-          details: `FAAC 2.2 (faac.h & mp4write.h) | M4A Container | ${bitrate.value} kbps ABR | AAC-${objectType.value.toUpperCase()} | ${sampleRate} Hz ${formatChannelLayout(channels)}`,
+          details: `FAAC ${msg.version || '2.x'} (libfaac & mp4write) | M4A Container | ${bitrate.value} kbps ABR | AAC-${objectType.value.toUpperCase()} | ${sampleRate} Hz ${formatChannelLayout(channels)}`,
           url: url,
           rawBuffer: outputBuffer
         })
