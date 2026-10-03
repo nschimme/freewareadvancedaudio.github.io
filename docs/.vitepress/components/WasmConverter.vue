@@ -105,22 +105,6 @@
             <span class="result-meta">{{ item.details }}</span>
           </div>
 
-          <!-- Gapless Loop Player -->
-          <div class="gapless-box">
-            <div class="gapless-info">
-              <span class="gapless-title"><i class="fa-solid fa-infinity"></i> Gapless Loop Player</span>
-              <span class="gapless-desc">Uses Web Audio API to play a 100% gapless loop using M4A metadata.</span>
-            </div>
-            <button
-              class="loop-btn"
-              :class="{ active: activeLoopIndex === index }"
-              @click="toggleGaplessLoop(item, index)"
-            >
-              <i :class="activeLoopIndex === index ? 'fa-solid fa-square' : 'fa-solid fa-play'"></i>
-              {{ activeLoopIndex === index ? 'Stop Gapless Loop' : 'Play Gapless Loop' }}
-            </button>
-          </div>
-
           <div class="result-actions">
             <audio controls :src="item.url" class="audio-player"></audio>
             <a :href="item.url" :download="item.name" class="download-link">
@@ -146,10 +130,6 @@ const progress = ref(0)
 const statusMessage = ref('')
 const results = ref([])
 
-const activeLoopIndex = ref(null)
-let audioCtx = null
-let loopSourceNode = null
-
 function triggerFileInput() {
   fileInput.value?.click()
 }
@@ -173,6 +153,14 @@ function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
   return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
+}
+
+function formatChannelLayout(channels) {
+  if (channels === 1) return 'Mono'
+  if (channels === 2) return 'Stereo'
+  if (channels === 6) return '5.1 Surround'
+  if (channels === 8) return '7.1 Surround'
+  return `${channels} Channels`
 }
 
 function parseWavHeader(buffer) {
@@ -208,50 +196,7 @@ function parseWavHeader(buffer) {
   return { sampleRate, numChannels, bitsPerSample, pcmBytes }
 }
 
-async function toggleGaplessLoop(item, index) {
-  if (activeLoopIndex.value === index) {
-    stopLoop()
-    activeLoopIndex.value = null
-    return
-  }
-
-  stopLoop()
-  activeLoopIndex.value = index
-
-  try {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-    }
-    if (audioCtx.state === 'suspended') {
-      await audioCtx.resume()
-    }
-
-    const response = await fetch(item.url)
-    const arrayBuf = await response.arrayBuffer()
-    const audioBuf = await audioCtx.decodeAudioData(arrayBuf)
-
-    loopSourceNode = audioCtx.createBufferSource()
-    loopSourceNode.buffer = audioBuf
-    loopSourceNode.loop = true
-    loopSourceNode.connect(audioCtx.destination)
-    loopSourceNode.start(0)
-  } catch (err) {
-    console.error('Gapless playback error:', err)
-    activeLoopIndex.value = null
-  }
-}
-
-function stopLoop() {
-  if (loopSourceNode) {
-    try {
-      loopSourceNode.stop()
-      loopSourceNode.disconnect()
-    } catch (e) {}
-    loopSourceNode = null
-  }
-}
-
-// Inline Worker Code for FAAC WASM encoding
+// Inline Worker Code for FAAC WASM encoding using encode_engine.c & progress.c
 const workerCode = `
 self.onmessage = async function(e) {
   const { inputBuffer, bitrate, objectType, sampleRate, channels } = e.data;
@@ -360,7 +305,7 @@ async function startEncoding() {
 
         results.value.unshift({
           name: outName,
-          details: `FAAC 2.2 (libfaac & mp4write) | M4A Container | ${bitrate.value} kbps ABR | AAC-${objectType.value.toUpperCase()} | ${sampleRate} Hz ${channels === 2 ? 'Stereo' : 'Mono'}`,
+          details: `FAAC 2.2 (libfaac & mp4write) | M4A Container | ${bitrate.value} kbps ABR | AAC-${objectType.value.toUpperCase()} | ${sampleRate} Hz ${formatChannelLayout(channels)}`,
           url: url,
           rawBuffer: outputBuffer
         })
@@ -628,57 +573,6 @@ async function startEncoding() {
 .result-meta {
   font-size: 0.75rem;
   color: #64748b;
-}
-
-.gapless-box {
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 8px;
-  padding: 0.6rem 0.85rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-@media (min-width: 640px) {
-  .gapless-box {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-}
-
-.gapless-title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #34d399;
-  display: block;
-}
-
-.gapless-desc {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  display: block;
-}
-
-.loop-btn {
-  background: #10b981;
-  color: #0f172a;
-  border: none;
-  border-radius: 6px;
-  padding: 0.4rem 0.85rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.loop-btn.active {
-  background: #ef4444;
-  color: #ffffff;
 }
 
 .result-actions {
