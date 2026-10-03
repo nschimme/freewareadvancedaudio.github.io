@@ -34,7 +34,8 @@ RUN mkdir -p /build/out_wasm && \
     emcc -O2 /build/faac_src/build_wasm/libfaac/libfaac.a /build/faac_src/build_wasm/frontend/libfrontend.a \
       -I/build/faac_src/include -I/build/faac_src/frontend \
       -s EXPORTED_FUNCTIONS='["_init_encode_options","_free_encode_options","_run_encoding_session_ext","_faac_params_init","_faac_encoder_open","_faac_encoder_get_info","_faac_encoder_encode","_faac_encoder_close","_malloc","_free"]' \
-      -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue","FS","UTF8ToString","stringToUTF8"]' \
+      -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue","FS","UTF8ToString","stringToUTF8","addFunction","removeFunction"]' \
+      -s ALLOW_TABLE_GROWTH=1 \
       -s FORCE_FILESYSTEM=1 \
       -s MODULARIZE=1 -s EXPORT_NAME="FAACModule" \
       -o /build/out_wasm/faac.js

@@ -281,9 +281,42 @@ self.onmessage = async function(e) {
         if (objectType === 'he-v1') objTypeNum = 5;
         faac.setValue(optsPtr + 32, objTypeNum, 'i32');
 
-        self.postMessage({ type: 'progress', progress: 60, status: 'Encoding M4A container with gapless metadata...' });
+        self.postMessage({ type: 'progress', progress: 30, status: 'Encoding M4A container with gapless metadata...' });
 
-        const code = faac._run_encoding_session_ext(optsPtr, 0);
+        let callbacksPtr = 0;
+        let cbFuncPtr = 0;
+
+        if (faac.addFunction) {
+          try {
+            cbFuncPtr = faac.addFunction((infoPtr, userData) => {
+              const currentLow = faac.getValue(infoPtr + 0, 'i32');
+              const currentHigh = faac.getValue(infoPtr + 4, 'i32');
+              const totalLow = faac.getValue(infoPtr + 8, 'i32');
+              const totalHigh = faac.getValue(infoPtr + 12, 'i32');
+
+              const current = (currentLow >>> 0) + (currentHigh * 4294967296);
+              const total = (totalLow >>> 0) + (totalHigh * 4294967296);
+
+              if (total > 0) {
+                const pct = Math.min(98, Math.max(30, Math.floor((current / total) * 100)));
+                self.postMessage({ type: 'progress', progress: pct, status: 'Encoding M4A container via FAAC progress.c... (' + pct + '%)' });
+              }
+              return 1;
+            }, 'iii');
+
+            callbacksPtr = faac._malloc(32);
+            for (let i = 0; i < 32; i++) faac.setValue(callbacksPtr + i, 0, 'i8');
+            faac.setValue(callbacksPtr + 0, cbFuncPtr, 'i32');
+          } catch (cbErr) {
+            console.warn('Progress callback setup notice:', cbErr);
+          }
+        }
+
+        const code = faac._run_encoding_session_ext(optsPtr, callbacksPtr);
+
+        if (callbacksPtr) faac._free(callbacksPtr);
+        if (cbFuncPtr && faac.removeFunction) faac.removeFunction(cbFuncPtr);
+
         if (code === 0) {
           encodedBytes = faac.FS.readFile('/output.m4a');
         }
