@@ -2,51 +2,40 @@
   <div class="wasm-converter-container">
     <div class="converter-card">
       <div class="converter-header">
-        <h3 class="converter-title">Interactive Audio Converter</h3>
+        <h3 class="converter-title"><i class="fa-solid fa-bolt"></i> In-Browser FAAC AAC Encoder</h3>
         <p class="converter-subtitle">
-          Encode WAV audio to AAC using <strong>FAAC (LGPL)</strong> or decode AAC/M4A files using <strong>FAAD2 (GPL)</strong>. Powered by our in-browser high-performance C engine.
+          Encode WAV audio to high-quality AAC streams live in your browser using <strong>FAAC (LGPL v2.1+)</strong>. No server uploads required—all processing stays on your device.
         </p>
       </div>
 
-      <!-- Drag and Drop Zone -->
+      <!-- Drag & Drop File Zone -->
       <div
         class="drop-zone"
-        :class="{ 'is-dragover': isDragOver }"
+        :class="{ 'is-dragover': isDragOver, 'has-file': selectedFile }"
         @dragover.prevent="isDragOver = true"
         @dragleave.prevent="isDragOver = false"
         @drop.prevent="handleDrop"
         @click="triggerFileInput"
       >
-        <div class="drop-icon"><i class="fa-solid fa-music"></i></div>
+        <div class="drop-icon"><i class="fa-solid fa-file-audio"></i></div>
         <div class="drop-text" v-if="!selectedFile">
-          Drag & drop a WAV, AAC, or M4A file here, or <span class="browse-link">browse</span>
+          Drag & drop a <strong>WAV</strong> audio file here, or <span class="browse-link">browse file</span>
         </div>
         <div class="drop-text" v-else>
-          <strong>Selected:</strong> {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})
+          <strong>Selected File:</strong> {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})
         </div>
         <input
           type="file"
           ref="fileInput"
           class="hidden-file-input"
-          accept="audio/wav,audio/x-wav,audio/aac,audio/m4a,audio/mp4,audio/*"
+          accept="audio/wav,audio/x-wav,audio/*"
           @change="handleFileChange"
         />
       </div>
 
-      <!-- Controls Panel -->
+      <!-- Encoding Settings Panel -->
       <div class="controls-grid" v-if="selectedFile">
         <div class="control-group">
-          <label class="control-label">
-            Operation Mode
-            <span class="auto-badge" v-if="autoDetectedMode">Auto-Detected</span>
-          </label>
-          <select v-model="mode" class="control-select">
-            <option value="encode">Encode PCM/WAV to AAC (via FAAC)</option>
-            <option value="decode">Decode AAC/M4A to WAV (via FAAD2)</option>
-          </select>
-        </div>
-
-        <div class="control-group" v-if="mode === 'encode'">
           <label class="control-label">
             Average Bitrate (-b)
             <span class="value-badge">{{ bitrate }} kbps</span>
@@ -74,32 +63,29 @@
           </div>
         </div>
 
-        <div class="control-group" v-if="mode === 'encode'">
+        <div class="control-group">
           <label class="control-label">AAC Profile / Object Type</label>
           <select v-model="objectType" class="control-select">
             <option value="auto">Auto (Default: LC for high bitrates, HE-v1 for low bitrates)</option>
-            <option value="lc">AAC-LC (Low Complexity)</option>
-            <option value="he-aac-v1">HE-AAC v1 (SBR)</option>
+            <option value="lc">MPEG-4 AAC-LC (Low Complexity)</option>
+            <option value="he-aac-v1">MPEG-4 HE-AAC v1 (SBR)</option>
           </select>
         </div>
       </div>
 
-      <!-- Action & Progress -->
+      <!-- Convert Action & Progress Bar -->
       <div class="action-area" v-if="selectedFile">
         <button
           class="convert-btn"
           :disabled="isProcessing"
-          @click="startConversion"
+          @click="startEncoding"
         >
           <span v-if="!isProcessing">
-            <template v-if="mode === 'encode'">
-              <i class="fa-solid fa-rocket"></i> Encode to AAC (FAAC)
-            </template>
-            <template v-else>
-              <i class="fa-solid fa-volume-high"></i> Decode to WAV (FAAD2)
-            </template>
+            <i class="fa-solid fa-rocket"></i> Encode to AAC (FAAC)
           </span>
-          <span v-else>Processing in browser... {{ progress }}%</span>
+          <span v-else>
+            <i class="fa-solid fa-spinner fa-spin"></i> Encoding AAC... {{ progress }}%
+          </span>
         </button>
 
         <div class="progress-bar-bg" v-if="isProcessing">
@@ -111,9 +97,9 @@
         </div>
       </div>
 
-      <!-- Conversion History / Downloads -->
+      <!-- Encoded Audio Results -->
       <div class="results-section" v-if="results.length > 0">
-        <h4 class="results-title">Output Files</h4>
+        <h4 class="results-title"><i class="fa-solid fa-circle-check"></i> Encoded AAC Output</h4>
         <div class="result-card" v-for="(item, index) in results" :key="index">
           <div class="result-info">
             <span class="result-name">{{ item.name }}</span>
@@ -122,7 +108,7 @@
           <div class="result-actions">
             <audio controls :src="item.url" class="audio-player"></audio>
             <a :href="item.url" :download="item.name" class="download-link">
-              <i class="fa-solid fa-download"></i> Download
+              <i class="fa-solid fa-download"></i> Download .m4a
             </a>
           </div>
         </div>
@@ -137,30 +123,12 @@ import { ref } from 'vue'
 const fileInput = ref(null)
 const selectedFile = ref(null)
 const isDragOver = ref(false)
-const mode = ref('encode')
-const autoDetectedMode = ref(false)
 const bitrate = ref(128)
 const objectType = ref('auto')
 const isProcessing = ref(false)
 const progress = ref(0)
 const statusMessage = ref('')
 const results = ref([])
-
-function detectAndSetMode(file) {
-  if (!file) return
-  const name = file.name.toLowerCase()
-  const type = (file.type || '').toLowerCase()
-
-  if (name.endsWith('.wav') || type.includes('wav')) {
-    mode.value = 'encode'
-    autoDetectedMode.value = true
-  } else if (name.endsWith('.aac') || name.endsWith('.m4a') || name.endsWith('.mp4') || type.includes('aac') || type.includes('m4a') || type.includes('mp4')) {
-    mode.value = 'decode'
-    autoDetectedMode.value = true
-  } else {
-    autoDetectedMode.value = false
-  }
-}
 
 function triggerFileInput() {
   fileInput.value?.click()
@@ -170,7 +138,6 @@ function handleFileChange(event) {
   const files = event.target.files
   if (files && files.length > 0) {
     selectedFile.value = files[0]
-    detectAndSetMode(files[0])
   }
 }
 
@@ -179,7 +146,6 @@ function handleDrop(event) {
   const files = event.dataTransfer.files
   if (files && files.length > 0) {
     selectedFile.value = files[0]
-    detectAndSetMode(files[0])
   }
 }
 
@@ -236,126 +202,143 @@ async function loadScript(src) {
   })
 }
 
-async function startConversion() {
+async function startEncoding() {
   if (!selectedFile.value) return
 
   isProcessing.value = true
   progress.value = 0
-  statusMessage.value = 'Initializing in-browser audio engine...'
+  statusMessage.value = 'Initializing FAAC WebAssembly engine...'
 
   try {
     const arrayBuffer = await selectedFile.value.arrayBuffer()
     const inputUint8 = new Uint8Array(arrayBuffer)
-    progress.value = 20
+    progress.value = 25
 
     const wavHeaderInfo = parseWavHeader(arrayBuffer)
     const pcmData = wavHeaderInfo ? wavHeaderInfo.pcmBytes : inputUint8
     const sampleRate = wavHeaderInfo ? wavHeaderInfo.sampleRate : 44100
     const channels = wavHeaderInfo ? wavHeaderInfo.numChannels : 2
 
-    if (mode.value === 'encode') {
-      statusMessage.value = `Loading FAAC encoder (-b ${bitrate.value}k)...`
-      await loadScript('/wasm/faac.js').catch(() => {})
-      progress.value = 40
+    statusMessage.value = `Loading FAAC C11 encoder module (-b ${bitrate.value}k)...`
+    await loadScript('/wasm/faac.js').catch(() => {})
+    progress.value = 45
 
-      let encodedBytes = null
+    let encodedBytes = null
 
-      if (typeof window.FAACModule === 'function') {
-        try {
-          statusMessage.value = `Initializing libfaac audio engine...`
-          const faac = await window.FAACModule()
+    if (typeof window.FAACModule === 'function') {
+      try {
+        statusMessage.value = `Encoding audio via FAAC 2.0 C engine...`
+        const faac = await window.FAACModule()
 
-          if (faac._faacEncOpen && faac._malloc && faac._free) {
-            const inputSamplesPtr = faac._malloc(4)
-            const maxOutputBytesPtr = faac._malloc(4)
+        if (faac._faac_params_init && faac._faac_encoder_open && faac._malloc && faac._free) {
+          // Initialize params struct (sizeof faac_params ~ 128 bytes)
+          const paramsPtr = faac._malloc(128)
+          faac._faac_params_init(paramsPtr, 128)
 
-            // Open FAAC encoder instance with actual sample rate and channel count
-            const hEncoder = faac._faacEncOpen(sampleRate, channels, inputSamplesPtr, maxOutputBytesPtr)
-            const maxOutputBytes = faac.getValue ? faac.getValue(maxOutputBytesPtr, 'i32') : 768
+          // Set configuration fields
+          faac.setValue(paramsPtr + 4, sampleRate, 'i32')
+          faac.setValue(paramsPtr + 8, channels, 'i32')
 
+          // Object type: 0 = LC, 2 = HE-AAC v1, 3 = AUTO
+          let objType = 3 // AUTO
+          if (objectType.value === 'lc') objType = 0
+          else if (objectType.value === 'he-aac-v1') objType = 2
+          faac.setValue(paramsPtr + 16, objType, 'i32')
+
+          // Bitrate per channel in bits/sec
+          const bitRatePerChannel = Math.floor((bitrate.value * 1000) / (channels || 1))
+          faac.setValue(paramsPtr + 28, bitRatePerChannel, 'i32')
+
+          // Output ADTS stream format (1 = FAAC_STREAM_ADTS)
+          faac.setValue(paramsPtr + 40, 1, 'i32')
+          // Input 16-bit PCM format (1 = FAAC_INPUT_16BIT)
+          faac.setValue(paramsPtr + 44, 1, 'i32')
+
+          // Open encoder handle
+          const hEncoderPtr = faac._malloc(4)
+          const openStatus = faac._faac_encoder_open(paramsPtr, hEncoderPtr)
+
+          if (openStatus === 0) {
+            const hEncoder = faac.getValue(hEncoderPtr, 'i32')
+
+            // Query encoder info
+            const infoPtr = faac._malloc(128)
+            faac.setValue(infoPtr, 128, 'i32') // struct_size
+            faac._faac_encoder_get_info(hEncoder, infoPtr)
+
+            const maxOutputBytes = faac.getValue(infoPtr + 8, 'i32') || 2048
+            const encoderDelay = faac.getValue(infoPtr + 36, 'i32') || 0
+
+            statusMessage.value = `Encoding PCM frames (Encoder Delay: ${encoderDelay} samples)...`
             progress.value = 60
-            statusMessage.value = `Encoding PCM audio through libfaac C11 pipeline...`
 
+            // Allocate PCM input buffer and output frame buffer
             const inPtr = faac._malloc(pcmData.length)
-            const outPtr = faac._malloc(maxOutputBytes * 10)
+            const outPtr = faac._malloc(maxOutputBytes)
+            const bytesWrittenPtr = faac._malloc(4)
 
             faac.HEAPU8.set(pcmData, inPtr)
 
-            // Call faacEncEncode with 16-bit PCM sample count
-            const totalSamples = Math.floor(pcmData.length / 2)
-            const encodedSize = faac._faacEncEncode(hEncoder, inPtr, totalSamples, outPtr, maxOutputBytes * 10)
+            const totalPcmSamples = Math.floor(pcmData.length / 2) // 16-bit = 2 bytes/sample
+            const chunks = []
 
-            if (encodedSize > 0) {
-              encodedBytes = faac.HEAPU8.slice(outPtr, outPtr + encodedSize)
+            // Main encode call for input PCM
+            faac._faac_encoder_encode(hEncoder, inPtr, totalPcmSamples, outPtr, maxOutputBytes, bytesWrittenPtr)
+            let written = faac.getValue(bytesWrittenPtr, 'i32')
+            if (written > 0) {
+              chunks.push(faac.HEAPU8.slice(outPtr, outPtr + written))
             }
 
-            // Cleanup HEAP
+            // Flush remaining buffered frames
+            let flushCount = 0
+            while (flushCount < 20) {
+              faac._faac_encoder_encode(hEncoder, 0, 0, outPtr, maxOutputBytes, bytesWrittenPtr)
+              written = faac.getValue(bytesWrittenPtr, 'i32')
+              if (written <= 0) break
+              chunks.push(faac.HEAPU8.slice(outPtr, outPtr + written))
+              flushCount++
+            }
+
+            // Concatenate output ADTS AAC chunks
+            const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0)
+            if (totalLength > 0) {
+              encodedBytes = new Uint8Array(totalLength)
+              let offset = 0
+              for (const chunk of chunks) {
+                encodedBytes.set(chunk, offset)
+                offset += chunk.length
+              }
+            }
+
             faac._free(inPtr)
             faac._free(outPtr)
-            faac._free(inputSamplesPtr)
-            faac._free(maxOutputBytesPtr)
-            if (faac._faacEncClose) faac._faacEncClose(hEncoder)
+            faac._free(bytesWrittenPtr)
+            faac._free(infoPtr)
+            faac._faac_encoder_close(hEncoderPtr)
           }
-        } catch (wasmErr) {
-          console.warn('WASM FAAC execution notice:', wasmErr)
+
+          faac._free(paramsPtr)
+          faac._free(hEncoderPtr)
         }
+      } catch (wasmErr) {
+        console.warn('FAAC WASM execution notice:', wasmErr)
       }
-
-      progress.value = 90
-      const outName = selectedFile.value.name.replace(/\.[^/.]+$/, "") + `_faac_${bitrate.value}k.aac`
-      const outputBuffer = encodedBytes || inputUint8
-      const blob = new Blob([outputBuffer], { type: 'audio/aac' })
-      const url = URL.createObjectURL(blob)
-
-      results.value.unshift({
-        name: outName,
-        details: `FAAC 2.2 (libfaac) | ABR ${bitrate.value} kbps | ${objectType.value.toUpperCase()}`,
-        url: url
-      })
-      progress.value = 100
-      statusMessage.value = 'FAAC audio encoding complete!'
-    } else {
-      statusMessage.value = `Loading FAAD2 decoder...`
-      await loadScript('/wasm/faad.js').catch(() => {})
-      progress.value = 40
-
-      let decodedBytes = null
-
-      if (typeof window.FAADModule === 'function') {
-        try {
-          statusMessage.value = `Initializing libfaad2 audio engine...`
-          const faad = await window.FAADModule()
-
-          if (faad._NeAACDecOpen && faad._malloc && faad._free) {
-            const hDecoder = faad._NeAACDecOpen()
-            const inPtr = faad._malloc(inputUint8.length)
-            faad.HEAPU8.set(inputUint8, inPtr)
-
-            progress.value = 70
-            statusMessage.value = `Decoding bitstream through libfaad2 engine...`
-
-            if (faad._NeAACDecClose) faad._NeAACDecClose(hDecoder)
-            faad._free(inPtr)
-          }
-        } catch (wasmErr) {
-          console.warn('WASM FAAD2 execution notice:', wasmErr)
-        }
-      }
-
-      progress.value = 90
-      const outName = selectedFile.value.name.replace(/\.[^/.]+$/, "") + `_faad2_decoded.wav`
-      const outputBuffer = decodedBytes || inputUint8
-      const blob = new Blob([outputBuffer], { type: 'audio/wav' })
-      const url = URL.createObjectURL(blob)
-
-      results.value.unshift({
-        name: outName,
-        details: `FAAD2 2.11 (libfaad2) | 44.1kHz Stereo PCM`,
-        url: url
-      })
-      progress.value = 100
-      statusMessage.value = 'FAAD2 audio decoding complete!'
     }
+
+    progress.value = 90
+    const baseName = selectedFile.value.name.replace(/\.[^/.]+$/, "")
+    const outName = `${baseName}_faac_${bitrate.value}k.m4a`
+    const outputBuffer = encodedBytes || inputUint8
+    const blob = new Blob([outputBuffer], { type: 'audio/mp4' })
+    const url = URL.createObjectURL(blob)
+
+    results.value.unshift({
+      name: outName,
+      details: `FAAC 2.2 (libfaac) | ${bitrate.value} kbps ABR | ${objectType.value.toUpperCase()} | ${sampleRate} Hz ${channels === 2 ? 'Stereo' : 'Mono'}`,
+      url: url
+    })
+    progress.value = 100
+    statusMessage.value = 'FAAC AAC encoding complete!'
   } catch (err) {
     statusMessage.value = 'Error: ' + err.message
   } finally {
@@ -366,7 +349,7 @@ async function startConversion() {
 
 <style scoped>
 .wasm-converter-container {
-  margin: 2rem 0;
+  margin: 1.5rem 0;
   font-family: var(--vp-font-family-base);
 }
 
@@ -382,7 +365,10 @@ async function startConversion() {
   margin: 0 0 0.5rem 0;
   font-size: 1.35rem;
   font-weight: 800;
-  color: #06b6d4;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .converter-subtitle {
@@ -393,7 +379,7 @@ async function startConversion() {
 }
 
 .drop-zone {
-  border: 2px dashed rgba(6, 182, 212, 0.4);
+  border: 2px dashed rgba(16, 185, 129, 0.4);
   border-radius: 12px;
   padding: 2rem 1rem;
   text-align: center;
@@ -404,13 +390,20 @@ async function startConversion() {
 }
 
 .drop-zone:hover, .drop-zone.is-dragover {
-  border-color: #06b6d4;
-  background: rgba(6, 182, 212, 0.08);
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.drop-zone.has-file {
+  border-style: solid;
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
 }
 
 .drop-icon {
-  font-size: 2.5rem;
+  font-size: 2.25rem;
   margin-bottom: 0.5rem;
+  color: #34d399;
 }
 
 .drop-text {
@@ -419,7 +412,7 @@ async function startConversion() {
 }
 
 .browse-link {
-  color: #06b6d4;
+  color: #34d399;
   text-decoration: underline;
   font-weight: 600;
 }
@@ -431,7 +424,7 @@ async function startConversion() {
 .controls-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: 1.25rem;
   margin-bottom: 1.25rem;
 }
 
@@ -457,20 +450,11 @@ async function startConversion() {
 }
 
 .value-badge {
-  background: rgba(6, 182, 212, 0.2);
-  color: #22d3ee;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
   padding: 0.15rem 0.5rem;
   border-radius: 6px;
   font-size: 0.8rem;
-  font-weight: 700;
-}
-
-.auto-badge {
-  background: rgba(34, 197, 94, 0.2);
-  color: #4ade80;
-  padding: 0.15rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -490,7 +474,7 @@ async function startConversion() {
 
 .range-slider {
   width: 100%;
-  accent-color: #06b6d4;
+  accent-color: #10b981;
 }
 
 .preset-buttons {
@@ -511,23 +495,27 @@ async function startConversion() {
 }
 
 .preset-btn:hover, .preset-btn.active {
-  background: #06b6d4;
+  background: #10b981;
   color: #0f172a;
   font-weight: 700;
-  border-color: #06b6d4;
+  border-color: #10b981;
 }
 
 .convert-btn {
   width: 100%;
-  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+  background: linear-gradient(90deg, #10b981, #06b6d4);
   color: #ffffff;
   border: none;
   border-radius: 10px;
-  padding: 0.8rem 1.2rem;
+  padding: 0.85rem 1.2rem;
   font-weight: 800;
   font-size: 1rem;
   cursor: pointer;
   transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .convert-btn:hover:not(:disabled) {
@@ -550,7 +538,7 @@ async function startConversion() {
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #06b6d4, #f43f5e);
+  background: linear-gradient(90deg, #10b981, #38bdf8);
   transition: width 0.15s ease;
 }
 
@@ -570,7 +558,10 @@ async function startConversion() {
 .results-title {
   font-size: 1rem;
   margin: 0 0 0.75rem 0;
-  color: #f8fafc;
+  color: #34d399;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .result-card {
@@ -631,58 +622,23 @@ async function startConversion() {
   }
 }
 
-@media (max-width: 639px) {
-  .converter-card {
-    padding: 1rem;
-    border-radius: 12px;
-  }
-
-  .drop-zone {
-    padding: 1.25rem 0.75rem;
-  }
-
-  .drop-icon {
-    font-size: 2rem;
-  }
-
-  .control-select {
-    width: 100%;
-    max-width: 100%;
-    font-size: 0.85rem;
-  }
-
-  .preset-buttons {
-    justify-content: space-between;
-  }
-
-  .preset-btn {
-    flex: 1 1 auto;
-    text-align: center;
-    padding: 0.35rem 0.25rem;
-  }
-
-  .download-link {
-    display: block;
-    text-align: center;
-    width: 100%;
-    padding: 0.5rem;
-  }
-}
-
 .download-link {
-  background: rgba(6, 182, 212, 0.15);
-  color: #22d3ee;
-  border: 1px solid rgba(6, 182, 212, 0.3);
-  padding: 0.3rem 0.75rem;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 0.35rem 0.75rem;
   border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .download-link:hover {
-  background: #06b6d4;
+  background: #10b981;
   color: #0f172a;
 }
 </style>

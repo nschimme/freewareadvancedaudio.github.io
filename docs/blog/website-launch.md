@@ -4,7 +4,7 @@
 
 Welcome to the new official website for the **Freeware Advanced Audio** organization!
 
-We are excited to announce a complete refresh of our online presence, documentation, and web demonstration tools for **FAAC** and **FAAD2**.
+We are excited to announce a complete refresh of our online presence, documentation, and web demonstration tools for **FAAC** and **FAAD**.
 
 ---
 
@@ -23,9 +23,9 @@ If you remember FAAC from over a decade ago, you might recall historical discuss
 - **SBR & HE-AAC Support**: Spectral Band Replication for low-bitrate encoding.
 - **Superior Throughput**: Outstanding encoding speed with 3-5x performance headroom.
 
-### 3. Interactive In-Browser Converter
+### 3. Interactive In-Browser Encoder
 
-You can now test FAAC AAC encoding and FAAD2 decoding **directly inside your web browser** on our new [Interactive Playground](/playground) or right on the [Homepage](/). No installation required!
+You can now test FAAC AAC encoding **directly inside your web browser** on our new [Interactive Playground](/playground). No installation required!
 
 ### 4. Comprehensive Documentation
 

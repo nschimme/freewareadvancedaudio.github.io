@@ -1,6 +1,6 @@
-# Interactive In-Browser Audio Converter
+# Interactive In-Browser AAC Encoder
 
-Experience **FAAC** (LGPL AAC Encoder) and **FAAD2** (GPL AAC Decoder) running live directly inside your web browser.
+Test **FAAC (LGPL v2.1+ AAC Encoder)** live directly inside your web browser.
 
 ---
 
@@ -10,7 +10,7 @@ Experience **FAAC** (LGPL AAC Encoder) and **FAAD2** (GPL AAC Decoder) running l
 
 ## Features & Capabilities
 
-- **Zero Server Uploads**: Processing occurs locally inside your browser threads.
-- **FAAC Average Bitrate (-b)**: Select target ABR rates from 32 kbps to 320 kbps.
-- **Profile Support**: Supports AAC-LC (Low Complexity) and HE-AAC v1 (SBR).
-- **Download & Audition**: Instant browser audio playback and downloadable `.m4a` / `.wav` outputs.
+- **100% Client-Side Privacy**: Audio processing occurs locally inside your browser—zero file uploads to external servers.
+- **Average Bitrate Control (-b)**: Fine-tune target ABR bitrates from 32 kbps to 320 kbps.
+- **Profile Support**: Supports MPEG-4 AAC-LC (Low Complexity) and HE-AAC v1 (SBR) profiles.
+- **Instant Audition & Download**: Audition encoded AAC streams directly in-browser and download `.m4a` audio files instantly.

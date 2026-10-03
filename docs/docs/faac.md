@@ -43,7 +43,7 @@ For complete options and flags, view the dedicated [FAAC Command-Line Manual](/d
 
 ## C API Reference (`libfaac`)
 
-Link against `-lfaac` and include `<faac.h>`.
+FAAC 2.0 introduces a modern, thread-safe C API. Link against `-lfaac` and include `<faac.h>`.
 
 ### Integration Lifecycle
 
@@ -54,59 +54,82 @@ Link against `-lfaac` and include `<faac.h>`.
 #include <faac.h>
 
 int main(void) {
-    unsigned long inputSamples, maxOutputBytes;
+    faac_params params;
+    faac_encoder *hEncoder = NULL;
 
-    // 1. Open encoder handle (44.1 kHz, 2 channels)
-    faacEncHandle hEncoder = faacEncOpen(44100, 2, &inputSamples, &maxOutputBytes);
-    if (!hEncoder) return 1;
+    // 1. Initialize parameter struct (zeroes memory and stamps struct_size)
+    faac_params_init(&params, sizeof(params));
+    params.sample_rate = 44100;
+    params.num_channels = 2;
+    params.bit_rate = 64000; // Bitrate per channel (64 kbps x 2 = 128 kbps stereo)
+    params.object_type = FAAC_OBJ_LOW; // AAC-LC
+    params.output_format = FAAC_STREAM_ADTS;
+    params.input_format = FAAC_INPUT_16BIT;
 
-    // 2. Configure encoder (128 kbps stereo ABR, AAC-LC)
-    faacEncConfigurationPtr config = faacEncGetCurrentConfiguration(hEncoder);
-    config->bitRate = 64000;      // Bitrate per channel (64 kbps = 128 kbps stereo)
-    config->aacObjectType = LOW;  // AAC-LC Profile
-    config->mpegVersion = MPEG4;  // MPEG-4 AAC
-    faacEncSetConfiguration(hEncoder, config);
+    // 2. Open encoder instance
+    faac_status st = faac_encoder_open(&params, &hEncoder);
+    if (st != FAAC_OK) {
+        fprintf(stderr, "Encoder open failed: %s\n", faac_strerror(st));
+        return 1;
+    }
 
-    // 3. Allocate buffers and encode frame
-    int32_t *pcmInput = malloc(inputSamples * sizeof(int32_t));
-    unsigned char *aacOutput = malloc(maxOutputBytes);
+    // 3. Query resolved encoder properties & gapless priming delay
+    faac_encoder_info info = { .struct_size = sizeof(info) };
+    faac_encoder_get_info(hEncoder, &info);
 
-    int bytesEncoded = faacEncEncode(hEncoder, pcmInput, inputSamples, aacOutput, maxOutputBytes);
+    printf("Frame samples: %u, Max output bytes: %u, Encoder delay: %u samples\n",
+           info.frame_samples, info.max_output_bytes, info.encoder_delay);
 
-    // 4. Cleanup
+    // 4. Allocate buffers and encode PCM frames
+    uint32_t pcmSamples = info.frame_samples * params.num_channels;
+    int16_t *pcmInput = calloc(pcmSamples, sizeof(int16_t));
+    uint8_t *aacOutput = malloc(info.max_output_bytes);
+    uint32_t bytesWritten = 0;
+
+    st = faac_encoder_encode(hEncoder, pcmInput, pcmSamples, aacOutput, info.max_output_bytes, &bytesWritten);
+
+    // 5. Cleanup
     free(pcmInput);
     free(aacOutput);
-    faacEncClose(hEncoder);
+    faac_encoder_close(&hEncoder);
     return 0;
 }
 ```
 
 ### Core API Functions
 
-#### `faacEncOpen`
+#### `faac_params_init`
 ```c
-faacEncHandle faacEncOpen(unsigned long sampleRate, unsigned int numChannels,
-                          unsigned long *inputSamples, unsigned long *maxOutputBytes);
+faac_status faac_params_init(faac_params *p, uint32_t caller_size);
 ```
-Initializes an encoder handle. Returns required PCM samples per frame in `inputSamples` and maximum output buffer size in `maxOutputBytes`.
+Zeroes parameter memory and sets `struct_size` to ensure ABI compatibility across versions.
 
-#### `faacEncGetCurrentConfiguration` / `faacEncSetConfiguration`
+#### `faac_encoder_open`
 ```c
-faacEncConfigurationPtr faacEncGetCurrentConfiguration(faacEncHandle hEncoder);
-int faacEncSetConfiguration(faacEncHandle hEncoder, faacEncConfigurationPtr config);
+faac_status faac_encoder_open(const faac_params *p, faac_encoder **out);
 ```
-Gets and sets encoder parameters (bitrate, object type, TNS, M/S stereo).
+Validates supplied configuration parameters and initializes an encoder instance handle in `*out`.
 
-#### `faacEncEncode`
+#### `faac_encoder_get_info`
 ```c
-int faacEncEncode(faacEncHandle hEncoder, int32_t *inputBuffer,
-                  unsigned int samplesInput, unsigned char *outputBuffer,
-                  unsigned int bufferSize);
+faac_status faac_encoder_get_info(faac_encoder *enc, faac_encoder_info *out);
 ```
-Encodes a frame of 32-bit PCM audio samples into an AAC packet. Returns output byte count.
+Queries resolved encoder properties, including `frame_samples`, `max_output_bytes`, and gapless priming delay (`encoder_delay`).
 
-#### `faacEncClose`
+#### `faac_encoder_encode`
 ```c
-void faacEncClose(faacEncHandle hEncoder);
+faac_status faac_encoder_encode(faac_encoder *enc,
+                                const void *in, uint32_t in_samples,
+                                uint8_t *out, uint32_t out_cap,
+                                uint32_t *bytes_written);
 ```
-Closes encoder instance and releases allocated resources.
+Encodes PCM audio samples into an AAC bitstream packet. Pass `in = NULL` or `in_samples = 0` to flush remaining buffered frames at end-of-stream.
+
+#### Gapless Playback & Priming Delay (`encoder_delay`)
+FAAC 2.0 tracks exact encoder priming delay in `info.encoder_delay` (in output sample units). When muxing into MP4 containers (`.m4a`), use `encoder_delay` and padding sample counts to write gapless metadata atoms (`iTunSMPB` or edit lists), matching the gapless handling implemented in `faac` CLI.
+
+#### `faac_encoder_close`
+```c
+faac_status faac_encoder_close(faac_encoder **enc);
+```
+Destroys encoder instance and sets handle to `NULL` to guard against double-free errors.

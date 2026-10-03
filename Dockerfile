@@ -9,9 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && pip3 install --no-cache-dir meson \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy git submodule repositories
+# Copy FAAC git submodule repository
 COPY vendor/faac /build/faac_src
-COPY vendor/faad2 /build/faad2_src
 
 # Create Meson cross file for Emscripten FAAC build with cpu_family
 RUN echo "[binaries]" > /build/emscripten.cross && \
@@ -30,23 +29,13 @@ RUN cd /build/faac_src && \
     meson setup build_wasm --cross-file /build/emscripten.cross -Ddefault_library=static && \
     ninja -C build_wasm
 
-# Build libfaad2 WASM
-RUN mkdir -p /build/faad2_build && cd /build/faad2_build && \
-    emcmake cmake /build/faad2_src -DBUILD_SHARED_LIBS=OFF && \
-    emmake make -j$(nproc)
-
-# Compile Emscripten JS/WASM output modules
+# Compile Emscripten JS/WASM FAAC output module
 RUN mkdir -p /build/out_wasm && \
     emcc -O2 /build/faac_src/build_wasm/libfaac/libfaac.a -I/build/faac_src/include \
-      -s EXPORTED_FUNCTIONS='["_faacEncOpen","_faacEncApplyConfig","_faacEncEncode","_faacEncClose","_malloc","_free"]' \
+      -s EXPORTED_FUNCTIONS='["_faac_params_init","_faac_encoder_open","_faac_encoder_get_info","_faac_encoder_encode","_faac_encoder_close","_malloc","_free"]' \
       -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue"]' \
       -s MODULARIZE=1 -s EXPORT_NAME="FAACModule" \
-      -o /build/out_wasm/faac.js && \
-    emcc -O2 /build/faad2_build/libfaad.a -I/build/faad2_src/include \
-      -s EXPORTED_FUNCTIONS='["_NeAACDecOpen","_NeAACDecGetCurrentConfiguration","_NeAACDecSetConfiguration","_NeAACDecInit","_NeAACDecDecode","_NeAACDecClose","_malloc","_free"]' \
-      -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue"]' \
-      -s MODULARIZE=1 -s EXPORT_NAME="FAADModule" \
-      -o /build/out_wasm/faad.js
+      -o /build/out_wasm/faac.js
 
 # Development stage
 FROM node:20-slim AS app
@@ -65,7 +54,7 @@ COPY --from=builder /build/out_wasm/ /app/docs/public/wasm/
 
 EXPOSE 5173 4173
 
-CMD ["npm", "run", "docs:dev", "--", "--host", "0.0.0.0"]
+CMD ["npm run docs:generate-cli && npm run docs:dev -- --host 0.0.0.0"]
 
 # Static site builder stage for production deployment
 FROM app AS site-builder

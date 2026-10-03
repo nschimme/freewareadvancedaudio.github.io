@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'Freeware Advanced Audio',
-  description: 'Official documentation and WebAssembly playground for FAAC (LGPL v2.1+ AAC Encoder) and FAAD (GPL v2+/LGPL v2.1+ AAC Decoder).',
+  description: 'Official documentation and interactive online audio converter for FAAC (LGPL v2.1+ AAC Encoder) and FAAD (AAC Decoder). Fast, low-footprint open-source C audio codecs.',
   cleanUrls: true,
   appearance: 'force-dark',
   head: [
