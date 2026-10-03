@@ -59,7 +59,7 @@
           </div>
           <div class="preset-buttons">
             <button
-              v-for="preset in [64, 96, 128, 160, 192, 256]"
+              v-for="preset in [32, 48, 64, 96, 128, 160, 192, 256, 320]"
               :key="preset"
               class="preset-btn"
               :class="{ active: bitrate === preset }"
