@@ -5,6 +5,9 @@ export default defineConfig({
   description: 'Official documentation and interactive online audio converter for FAAC (LGPL v2.1+ AAC Encoder) and FAAD (AAC Decoder). Fast, low-footprint open-source C audio codecs.',
   cleanUrls: true,
   appearance: 'force-dark',
+  sitemap: {
+    hostname: 'https://freewareadvancedaudio.org'
+  },
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
     ['link', { rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css' }],
