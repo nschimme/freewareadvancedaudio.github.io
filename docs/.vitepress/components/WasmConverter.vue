@@ -163,87 +163,29 @@ function formatChannelLayout(channels) {
   return `${channels} Channels`
 }
 
-function writeString(view, offset, string) {
-  for (let i = 0; i < string.length; i++) {
-    view.setUint8(offset + i, string.charCodeAt(i))
-  }
-}
-
-function audioBufferToWavBuffer(audioBuffer) {
+function audioBufferToPcm16(audioBuffer) {
   const numChannels = audioBuffer.numberOfChannels
-  const sampleRate = audioBuffer.sampleRate
   const length = audioBuffer.length
-  const bytesPerSample = 2 // 16-bit
-  const blockAlign = numChannels * bytesPerSample
-  const byteRate = sampleRate * blockAlign
-  const dataSize = length * blockAlign
-  const headerSize = 44
-  const totalSize = headerSize + dataSize
+  const pcm16 = new Int16Array(length * numChannels)
 
-  const buffer = new ArrayBuffer(totalSize)
-  const view = new DataView(buffer)
-
-  writeString(view, 0, 'RIFF')
-  view.setUint32(4, 36 + dataSize, true)
-  writeString(view, 8, 'WAVE')
-
-  writeString(view, 12, 'fmt ')
-  view.setUint32(16, 16, true)
-  view.setUint16(20, 1, true)
-  view.setUint16(22, numChannels, true)
-  view.setUint32(24, sampleRate, true)
-  view.setUint32(28, byteRate, true)
-  view.setUint16(32, blockAlign, true)
-  view.setUint16(34, 16, true)
-
-  writeString(view, 36, 'data')
-  view.setUint32(40, dataSize, true)
-
-  let offset = 44
+  let offset = 0
   for (let i = 0; i < length; i++) {
     for (let channel = 0; channel < numChannels; channel++) {
       let sample = audioBuffer.getChannelData(channel)[i]
       sample = Math.max(-1, Math.min(1, sample))
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true)
-      offset += 2
+      pcm16[offset++] = sample < 0 ? sample * 0x8000 : sample * 0x7FFF
     }
   }
 
-  return buffer
+  return pcm16
 }
 
-function parseWavHeader(buffer) {
-  if (!buffer || buffer.byteLength < 44) return null
-  const dataView = new DataView(buffer)
-  const riff = String.fromCharCode(...new Uint8Array(buffer, 0, 4))
-  const wave = String.fromCharCode(...new Uint8Array(buffer, 8, 4))
-  if (riff !== 'RIFF' || wave !== 'WAVE') return null
-
-  let offset = 12
-  let sampleRate = 44100
-  let numChannels = 2
-
-  while (offset < buffer.byteLength - 8) {
-    const chunkId = String.fromCharCode(...new Uint8Array(buffer, offset, 4))
-    const chunkSize = dataView.getUint32(offset + 4, true)
-    if (chunkId === 'fmt ') {
-      numChannels = dataView.getUint16(offset + 10, true)
-      sampleRate = dataView.getUint32(offset + 12, true)
-    } else if (chunkId === 'data') {
-      break
-    }
-    offset += 8 + chunkSize
-  }
-
-  return { sampleRate, numChannels }
-}
-
-// Inline Worker Code for FAAC WASM encoding using encode_engine.c & progress.c
+// Inline Worker Code driving FAAC & mp4write C APIs directly
 const workerCode = `
 self.onmessage = async function(e) {
-  const { inputBuffer, bitrate, objectType, sampleRate, channels, baseUrl } = e.data;
+  const { pcm16Data, bitrate, objectType, sampleRate, channels, baseUrl } = e.data;
 
-  self.postMessage({ type: 'progress', progress: 10, status: 'Initializing WASM background worker...' });
+  self.postMessage({ type: 'progress', progress: 5, status: 'Initializing FAAC WASM engine...' });
 
   try {
     if (!self.FAACModule) {
@@ -251,89 +193,122 @@ self.onmessage = async function(e) {
       importScripts(scriptUrl);
     }
 
-    self.postMessage({ type: 'progress', progress: 30, status: 'Loading FAAC engine in background thread...' });
-
+    self.postMessage({ type: 'progress', progress: 15, status: 'Instantiating FAAC C API handle...' });
     const faac = await self.FAACModule();
-    let encodedBytes = null;
 
-    if (faac.FS && (faac._run_encoding_session_ext || faac._faac_encoder_open)) {
-      faac.FS.writeFile('/input.wav', new Uint8Array(inputBuffer));
+    // Initialize faac_params struct (sizeof faac_params ~ 128 bytes)
+    const paramsPtr = faac._malloc(128);
+    faac._faac_params_init(paramsPtr, 128);
 
-      if (faac._init_encode_options && faac._run_encoding_session_ext) {
-        const optsPtr = faac._malloc(128);
-        faac._init_encode_options(optsPtr);
+    faac.setValue(paramsPtr + 4, sampleRate, 'i32');
+    faac.setValue(paramsPtr + 8, channels, 'i32');
 
-        const inPath = faac._malloc(32);
-        faac.stringToUTF8('/input.wav', inPath, 32);
-        const outPath = faac._malloc(32);
-        faac.stringToUTF8('/output.m4a', outPath, 32);
+    // FAAC_OBJ_LOW = 1, FAAC_OBJ_HEAAC = 5
+    const objTypeNum = (objectType === 'he-v1') ? 5 : 1;
+    faac.setValue(paramsPtr + 16, objTypeNum, 'i32');
 
-        faac.setValue(optsPtr + 0, inPath, 'i32');
-        faac.setValue(optsPtr + 4, outPath, 'i32');
-        faac.setValue(optsPtr + 8, 1, 'i8'); // container_mp4
+    const bitRatePerChan = Math.floor((bitrate * 1000) / (channels || 1));
+    faac.setValue(paramsPtr + 28, bitRatePerChan, 'i32');
 
-        const bitRatePerChan = Math.floor((bitrate * 1000) / (channels || 1));
-        faac.setValue(optsPtr + 52, 0, 'i16');
-        faac.setValue(optsPtr + 56, bitRatePerChan, 'i32');
+    // FAAC_STREAM_RAW = 0 (elementary stream for MP4 container)
+    faac.setValue(paramsPtr + 40, 0, 'i32');
+    // FAAC_INPUT_16BIT = 1
+    faac.setValue(paramsPtr + 44, 1, 'i32');
 
-        // object_type in encode_options struct: LOW = 1, HEAAC = 5
-        let objTypeNum = 1;
-        if (objectType === 'he-v1') objTypeNum = 5;
-        faac.setValue(optsPtr + 32, objTypeNum, 'i32');
+    const hEncoderPtr = faac._malloc(4);
+    if (faac._faac_encoder_open(paramsPtr, hEncoderPtr) !== 0) {
+      throw new Error('faac_encoder_open failed');
+    }
+    const hEncoder = faac.getValue(hEncoderPtr, 'i32');
 
-        self.postMessage({ type: 'progress', progress: 30, status: 'Encoding M4A container with gapless metadata...' });
+    // Query resolved encoder info
+    const infoPtr = faac._malloc(128);
+    faac.setValue(infoPtr, 128, 'i32');
+    faac._faac_encoder_get_info(hEncoder, infoPtr);
 
-        let callbacksPtr = 0;
-        let cbFuncPtr = 0;
+    const frameSamples = faac.getValue(infoPtr + 4, 'i32') || 1024; // samples per channel
+    const maxOutputBytes = faac.getValue(infoPtr + 8, 'i32') || 2048;
+    const ascPtr = faac.getValue(infoPtr + 16, 'i32');
+    const ascSize = faac.getValue(infoPtr + 20, 'i32');
+    const encoderDelay = faac.getValue(infoPtr + 36, 'i32') || 1024;
 
-        if (faac.addFunction) {
-          try {
-            cbFuncPtr = faac.addFunction((infoPtr, userData) => {
-              const currentLow = faac.getValue(infoPtr + 0, 'i32');
-              const currentHigh = faac.getValue(infoPtr + 4, 'i32');
-              const totalLow = faac.getValue(infoPtr + 8, 'i32');
-              const totalHigh = faac.getValue(infoPtr + 12, 'i32');
+    // Open MP4 container output
+    const outPathPtr = faac._malloc(32);
+    faac.stringToUTF8('/output.m4a', outPathPtr, 32);
+    faac._mp4_open(outPathPtr, 1);
 
-              const current = (currentLow >>> 0) + (currentHigh * 4294967296);
-              const total = (totalLow >>> 0) + (totalHigh * 4294967296);
+    faac._mp4_set_format(sampleRate, channels, 16);
+    if (ascPtr && ascSize > 0) {
+      faac._mp4_set_decoder_config(ascPtr, ascSize);
+    }
+    const encNamePtr = faac._malloc(32);
+    faac.stringToUTF8('FAAC 2.2', encNamePtr, 32);
+    faac._mp4_set_encoder(encNamePtr);
 
-              if (total > 0) {
-                const pct = Math.min(98, Math.max(30, Math.floor((current / total) * 100)));
-                self.postMessage({ type: 'progress', progress: pct, status: 'Encoding M4A container via FAAC progress.c... (' + pct + '%)' });
-              }
-              return 1;
-            }, 'iii');
+    const pcmInput = new Int16Array(pcm16Data);
+    const totalPcmSamples = Math.floor(pcmInput.length / channels);
+    const samplesPerFrameTotal = frameSamples * channels;
 
-            callbacksPtr = faac._malloc(32);
-            for (let i = 0; i < 32; i++) faac.setValue(callbacksPtr + i, 0, 'i8');
-            faac.setValue(callbacksPtr + 0, cbFuncPtr, 'i32');
-          } catch (cbErr) {
-            console.warn('Progress callback setup notice:', cbErr);
-          }
-        }
+    const inBufPtr = faac._malloc(samplesPerFrameTotal * 2);
+    const outBufPtr = faac._malloc(maxOutputBytes);
+    const bytesWrittenPtr = faac._malloc(4);
 
-        const code = faac._run_encoding_session_ext(optsPtr, callbacksPtr);
+    let processedSamples = 0;
+    self.postMessage({ type: 'progress', progress: 20, status: 'Encoding PCM frames directly via faac.h & mp4write.h...' });
 
-        if (callbacksPtr) faac._free(callbacksPtr);
-        if (cbFuncPtr && faac.removeFunction) faac.removeFunction(cbFuncPtr);
+    while (processedSamples < totalPcmSamples) {
+      const remainingSamples = totalPcmSamples - processedSamples;
+      const currentSamples = Math.min(frameSamples, remainingSamples);
+      const currentSamplesTotal = currentSamples * channels;
 
-        if (code === 0) {
-          encodedBytes = faac.FS.readFile('/output.m4a');
-        }
+      const chunk = pcmInput.subarray(processedSamples * channels, (processedSamples + currentSamples) * channels);
+      faac.HEAP16.set(chunk, inBufPtr / 2);
 
-        faac._free(inPath);
-        faac._free(outPath);
-        if (faac._free_encode_options) faac._free_encode_options(optsPtr);
-        faac._free(optsPtr);
+      faac._faac_encoder_encode(hEncoder, inBufPtr, currentSamplesTotal, outBufPtr, maxOutputBytes, bytesWrittenPtr);
+      const written = faac.getValue(bytesWrittenPtr, 'i32');
+
+      if (written > 0) {
+        faac._mp4_write_frame(outBufPtr, written, frameSamples);
       }
 
-      try {
-        faac.FS.unlink('/input.wav');
-        faac.FS.unlink('/output.m4a');
-      } catch (err) {}
+      processedSamples += currentSamples;
+      const pct = Math.min(95, Math.max(20, Math.floor((processedSamples / totalPcmSamples) * 100)));
+      self.postMessage({ type: 'progress', progress: pct, status: 'Encoding M4A container... (' + pct + '%)' });
     }
 
-    self.postMessage({ type: 'progress', progress: 95, status: 'Finalizing M4A audio stream...' });
+    // Flush remaining buffered frames
+    let flushPass = 0;
+    while (flushPass < 20) {
+      faac._faac_encoder_encode(hEncoder, 0, 0, outBufPtr, maxOutputBytes, bytesWrittenPtr);
+      const written = faac.getValue(bytesWrittenPtr, 'i32');
+      if (written <= 0) break;
+      faac._mp4_write_frame(outBufPtr, written, frameSamples);
+      flushPass++;
+    }
+
+    // Set iTunes gapless metadata
+    const paddingSamples = (frameSamples - (totalPcmSamples % frameSamples)) % frameSamples;
+    faac._mp4_set_gapless(encoderDelay, paddingSamples, totalPcmSamples);
+
+    faac._mp4_finish();
+    faac._mp4_close();
+
+    faac._free(inBufPtr);
+    faac._free(outBufPtr);
+    faac._free(bytesWrittenPtr);
+    faac._free(infoPtr);
+    faac._free(outPathPtr);
+    faac._free(encNamePtr);
+    faac._faac_encoder_close(hEncoderPtr);
+    faac._free(paramsPtr);
+    faac._free(hEncoderPtr);
+
+    const encodedBytes = faac.FS.readFile('/output.m4a');
+    try {
+      faac.FS.unlink('/output.m4a');
+    } catch (err) {}
+
+    self.postMessage({ type: 'progress', progress: 98, status: 'Finalizing M4A container...' });
 
     if (encodedBytes) {
       self.postMessage({ type: 'complete', encodedBytes: encodedBytes.buffer }, [encodedBytes.buffer]);
@@ -355,32 +330,21 @@ async function startEncoding() {
 
   isProcessing.value = true
   progress.value = 0
-  statusMessage.value = 'Reading audio file...'
+  statusMessage.value = 'Decoding input audio via Web Audio API...'
 
   try {
     const rawArrayBuffer = await selectedFile.value.arrayBuffer()
-    progress.value = 15
+    progress.value = 10
 
-    let wavArrayBuffer = rawArrayBuffer
-    let sampleRate = 44100
-    let channels = 2
-
-    const wavInfo = parseWavHeader(rawArrayBuffer)
-    if (wavInfo) {
-      sampleRate = wavInfo.sampleRate
-      channels = wavInfo.numChannels
-    } else {
-      statusMessage.value = 'Decoding audio via Web Audio API...'
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-      const decodedBuffer = await audioCtx.decodeAudioData(rawArrayBuffer.slice(0))
-      sampleRate = decodedBuffer.sampleRate
-      channels = decodedBuffer.numberOfChannels
-      wavArrayBuffer = audioBufferToWavBuffer(decodedBuffer)
-      if (audioCtx.close) await audioCtx.close()
-    }
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    const decodedBuffer = await audioCtx.decodeAudioData(rawArrayBuffer.slice(0))
+    const sampleRate = decodedBuffer.sampleRate
+    const channels = decodedBuffer.numberOfChannels
+    const pcm16Data = audioBufferToPcm16(decodedBuffer)
+    if (audioCtx.close) await audioCtx.close()
 
     statusMessage.value = 'Preparing Web Worker encoding task...'
-    progress.value = 25
+    progress.value = 15
 
     const blob = new Blob([workerCode], { type: 'application/javascript' })
     const workerUrl = URL.createObjectURL(blob)
@@ -404,7 +368,7 @@ async function startEncoding() {
 
         results.value.unshift({
           name: outName,
-          details: `FAAC 2.2 (libfaac & mp4write) | M4A Container | ${bitrate.value} kbps ABR | AAC-${objectType.value.toUpperCase()} | ${sampleRate} Hz ${formatChannelLayout(channels)}`,
+          details: `FAAC 2.2 (faac.h & mp4write.h) | M4A Container | ${bitrate.value} kbps ABR | AAC-${objectType.value.toUpperCase()} | ${sampleRate} Hz ${formatChannelLayout(channels)}`,
           url: url,
           rawBuffer: outputBuffer
         })
@@ -421,13 +385,13 @@ async function startEncoding() {
 
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
     worker.postMessage({
-      inputBuffer: wavArrayBuffer,
+      pcm16Data: pcm16Data.buffer,
       bitrate: bitrate.value,
       objectType: objectType.value,
       sampleRate,
       channels,
       baseUrl
-    }, [wavArrayBuffer])
+    }, [pcm16Data.buffer])
 
   } catch (err) {
     statusMessage.value = 'Error: ' + err.message
