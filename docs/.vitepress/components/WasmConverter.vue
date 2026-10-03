@@ -4,7 +4,7 @@
       <div class="converter-header">
         <h3 class="converter-title"><i class="fa-solid fa-bolt"></i> In-Browser FAAC AAC/M4A Converter</h3>
         <p class="converter-subtitle">
-          Convert WAV audio to genuine <strong>M4A (MP4 container)</strong> audio with gapless playback metadata live in your browser using <strong>FAAC (LGPL v2.1+)</strong>. Processing is offloaded to a background Web Worker so the page stays smooth and responsive.
+          Convert <strong>any audio format</strong> (WAV, MP3, FLAC, OGG, AAC, M4A, WEBM) to genuine <strong>M4A (MP4 container)</strong> audio with gapless playback metadata live in your browser using <strong>FAAC (LGPL v2.1+)</strong>. Processing is offloaded to a background Web Worker so the page stays smooth and responsive.
         </p>
       </div>
 
@@ -19,7 +19,7 @@
       >
         <div class="drop-icon"><i class="fa-solid fa-file-audio"></i></div>
         <div class="drop-text" v-if="!selectedFile">
-          Drag & drop a <strong>WAV</strong> audio file here, or <span class="browse-link">browse file</span>
+          Drag & drop <strong>any audio file</strong> (WAV, MP3, FLAC, OGG, M4A...) here, or <span class="browse-link">browse file</span>
         </div>
         <div class="drop-text" v-else>
           <strong>Selected File:</strong> {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})
@@ -28,7 +28,7 @@
           type="file"
           ref="fileInput"
           class="hidden-file-input"
-          accept="audio/wav,audio/x-wav,audio/*"
+          accept="audio/*,.wav,.mp3,.flac,.ogg,.m4a,.aac,.webm,.wma"
           @change="handleFileChange"
         />
       </div>
@@ -163,6 +163,55 @@ function formatChannelLayout(channels) {
   return `${channels} Channels`
 }
 
+function writeString(view, offset, string) {
+  for (let i = 0; i < string.length; i++) {
+    view.setUint8(offset + i, string.charCodeAt(i))
+  }
+}
+
+function audioBufferToWavBuffer(audioBuffer) {
+  const numChannels = audioBuffer.numberOfChannels
+  const sampleRate = audioBuffer.sampleRate
+  const length = audioBuffer.length
+  const bytesPerSample = 2 // 16-bit
+  const blockAlign = numChannels * bytesPerSample
+  const byteRate = sampleRate * blockAlign
+  const dataSize = length * blockAlign
+  const headerSize = 44
+  const totalSize = headerSize + dataSize
+
+  const buffer = new ArrayBuffer(totalSize)
+  const view = new DataView(buffer)
+
+  writeString(view, 0, 'RIFF')
+  view.setUint32(4, 36 + dataSize, true)
+  writeString(view, 8, 'WAVE')
+
+  writeString(view, 12, 'fmt ')
+  view.setUint32(16, 16, true)
+  view.setUint16(20, 1, true)
+  view.setUint16(22, numChannels, true)
+  view.setUint32(24, sampleRate, true)
+  view.setUint32(28, byteRate, true)
+  view.setUint16(32, blockAlign, true)
+  view.setUint16(34, 16, true)
+
+  writeString(view, 36, 'data')
+  view.setUint32(40, dataSize, true)
+
+  let offset = 44
+  for (let i = 0; i < length; i++) {
+    for (let channel = 0; channel < numChannels; channel++) {
+      let sample = audioBuffer.getChannelData(channel)[i]
+      sample = Math.max(-1, Math.min(1, sample))
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true)
+      offset += 2
+    }
+  }
+
+  return buffer
+}
+
 function parseWavHeader(buffer) {
   if (!buffer || buffer.byteLength < 44) return null
   const dataView = new DataView(buffer)
@@ -173,9 +222,6 @@ function parseWavHeader(buffer) {
   let offset = 12
   let sampleRate = 44100
   let numChannels = 2
-  let bitsPerSample = 16
-  let dataOffset = 44
-  let dataSize = buffer.byteLength - 44
 
   while (offset < buffer.byteLength - 8) {
     const chunkId = String.fromCharCode(...new Uint8Array(buffer, offset, 4))
@@ -183,17 +229,13 @@ function parseWavHeader(buffer) {
     if (chunkId === 'fmt ') {
       numChannels = dataView.getUint16(offset + 10, true)
       sampleRate = dataView.getUint32(offset + 12, true)
-      bitsPerSample = dataView.getUint16(offset + 22, true)
     } else if (chunkId === 'data') {
-      dataOffset = offset + 8
-      dataSize = chunkSize
       break
     }
     offset += 8 + chunkSize
   }
 
-  const pcmBytes = new Uint8Array(buffer, dataOffset, Math.min(dataSize, buffer.byteLength - dataOffset))
-  return { sampleRate, numChannels, bitsPerSample, pcmBytes }
+  return { sampleRate, numChannels }
 }
 
 // Inline Worker Code for FAAC WASM encoding using encode_engine.c & progress.c
@@ -266,7 +308,11 @@ self.onmessage = async function(e) {
       self.postMessage({ type: 'error', message: 'FAAC encoding produced no output bytes.' });
     }
   } catch (err) {
-    self.postMessage({ type: 'error', message: err.message || 'Worker execution failed' });
+    let msg = err.message || 'Worker execution failed';
+    if (msg.includes('importScripts') || msg.includes('failed to load') || msg.includes('script')) {
+      msg = 'FAAC WebAssembly engine binary (/wasm/faac.js) not present in local dev directory. Compile WASM using Docker ("docker compose up").';
+    }
+    self.postMessage({ type: 'error', message: msg });
   }
 };
 `
@@ -276,13 +322,32 @@ async function startEncoding() {
 
   isProcessing.value = true
   progress.value = 0
-  statusMessage.value = 'Preparing Web Worker encoding task...'
+  statusMessage.value = 'Reading audio file...'
 
   try {
-    const arrayBuffer = await selectedFile.value.arrayBuffer()
-    const wavHeaderInfo = parseWavHeader(arrayBuffer)
-    const sampleRate = wavHeaderInfo ? wavHeaderInfo.sampleRate : 44100
-    const channels = wavHeaderInfo ? wavHeaderInfo.numChannels : 2
+    const rawArrayBuffer = await selectedFile.value.arrayBuffer()
+    progress.value = 15
+
+    let wavArrayBuffer = rawArrayBuffer
+    let sampleRate = 44100
+    let channels = 2
+
+    const wavInfo = parseWavHeader(rawArrayBuffer)
+    if (wavInfo) {
+      sampleRate = wavInfo.sampleRate
+      channels = wavInfo.numChannels
+    } else {
+      statusMessage.value = 'Decoding audio via Web Audio API...'
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+      const decodedBuffer = await audioCtx.decodeAudioData(rawArrayBuffer.slice(0))
+      sampleRate = decodedBuffer.sampleRate
+      channels = decodedBuffer.numberOfChannels
+      wavArrayBuffer = audioBufferToWavBuffer(decodedBuffer)
+      if (audioCtx.close) await audioCtx.close()
+    }
+
+    statusMessage.value = 'Preparing Web Worker encoding task...'
+    progress.value = 25
 
     const blob = new Blob([workerCode], { type: 'application/javascript' })
     const workerUrl = URL.createObjectURL(blob)
@@ -323,13 +388,13 @@ async function startEncoding() {
 
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
     worker.postMessage({
-      inputBuffer: arrayBuffer,
+      inputBuffer: wavArrayBuffer,
       bitrate: bitrate.value,
       objectType: objectType.value,
       sampleRate,
       channels,
       baseUrl
-    }, [arrayBuffer])
+    }, [wavArrayBuffer])
 
   } catch (err) {
     statusMessage.value = 'Error: ' + err.message
