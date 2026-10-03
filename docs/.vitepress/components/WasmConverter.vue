@@ -185,7 +185,7 @@ const workerCode = `
 self.onmessage = async function(e) {
   const { pcm16Data, bitrate, objectType, sampleRate, channels, baseUrl } = e.data;
 
-  self.postMessage({ type: 'progress', progress: 5, status: 'Initializing FAAC WASM engine...' });
+  self.postMessage({ type: 'progress', progress: 5, status: 'Initializing audio converter...' });
 
   try {
     if (!self.FAACModule) {
@@ -193,7 +193,7 @@ self.onmessage = async function(e) {
       importScripts(scriptUrl);
     }
 
-    self.postMessage({ type: 'progress', progress: 15, status: 'Instantiating FAAC C API handle...' });
+    self.postMessage({ type: 'progress', progress: 15, status: 'Configuring audio encoder...' });
     const faac = await self.FAACModule();
 
     // Initialize faac_params struct (sizeof faac_params ~ 128 bytes)
@@ -267,7 +267,7 @@ self.onmessage = async function(e) {
     const bytesWrittenPtr = faac._malloc(4);
 
     let processedSamples = 0;
-    self.postMessage({ type: 'progress', progress: 20, status: 'Encoding PCM frames directly via faac.h & mp4write.h...' });
+    self.postMessage({ type: 'progress', progress: 20, status: 'Encoding audio frames...' });
 
     while (processedSamples < totalPcmSamples) {
       const remainingSamples = totalPcmSamples - processedSamples;
@@ -286,7 +286,7 @@ self.onmessage = async function(e) {
 
       processedSamples += currentSamples;
       const pct = Math.min(95, Math.max(20, Math.floor((processedSamples / totalPcmSamples) * 100)));
-      self.postMessage({ type: 'progress', progress: pct, status: 'Encoding M4A container... (' + pct + '%)' });
+      self.postMessage({ type: 'progress', progress: pct, status: 'Encoding M4A audio... (' + pct + '%)' });
     }
 
     // Flush remaining buffered frames
@@ -321,7 +321,7 @@ self.onmessage = async function(e) {
       faac.FS.unlink('/output.m4a');
     } catch (err) {}
 
-    self.postMessage({ type: 'progress', progress: 98, status: 'Finalizing M4A container...' });
+    self.postMessage({ type: 'progress', progress: 98, status: 'Finalizing M4A audio stream...' });
 
     if (encodedBytes) {
       self.postMessage({ type: 'complete', encodedBytes: encodedBytes.buffer, version: versionStr }, [encodedBytes.buffer]);
@@ -329,9 +329,9 @@ self.onmessage = async function(e) {
       self.postMessage({ type: 'error', message: 'FAAC encoding produced no output bytes.' });
     }
   } catch (err) {
-    let msg = err.message || 'Worker execution failed';
+    let msg = err.message || 'Conversion failed';
     if (msg.includes('importScripts') || msg.includes('failed to load') || msg.includes('script')) {
-      msg = 'FAAC WebAssembly engine binary (/wasm/faac.js) not present in local dev directory. Compile WASM using Docker ("docker compose up").';
+      msg = 'Audio converter module (/wasm/faac.js) not found. Build local static assets or run "docker compose up".';
     }
     self.postMessage({ type: 'error', message: msg });
   }
@@ -381,7 +381,7 @@ async function startEncoding() {
 
         results.value.unshift({
           name: outName,
-          details: `FAAC ${msg.version || '2.x'} (libfaac & mp4write) | M4A Container | ${bitrate.value} kbps ABR | AAC-${objectType.value.toUpperCase()} | ${sampleRate} Hz ${formatChannelLayout(channels)}`,
+          details: `${bitrate.value} kbps ABR • AAC-${objectType.value.toUpperCase()} • ${sampleRate} Hz • ${formatChannelLayout(channels)}`,
           url: url,
           rawBuffer: outputBuffer
         })
