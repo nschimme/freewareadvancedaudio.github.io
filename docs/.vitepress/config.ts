@@ -56,8 +56,8 @@ export default defineConfig({
       { icon: 'github', link: 'https://github.com/FreewareAdvancedAudio' }
     ],
     footer: {
-      message: 'Freeware Advanced Audio Organization — FAAC (LGPL v2.1+) & FAAD (GPL v2+ / LGPL v2.1+)',
-      copyright: 'Copyright © 2026 Freeware Advanced Audio'
+      message: 'Documentation & website content licensed under CC-BY-SA 4.0. WebAssembly component code licensed under AGPL-3.0.',
+      copyright: 'Copyright © 2026 Freeware Advanced Audio Organization'
     }
   }
 })
