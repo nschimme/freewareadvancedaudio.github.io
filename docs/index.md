@@ -40,7 +40,7 @@ FAAC and FAAD excel in specialized environments where execution speed, memory co
 - **[Thingino Linux Firmware](https://thingino.com/)**: Deploys FAAC for low-overhead, real-time AAC audio stream encoding on IP cameras and embedded Linux SoCs.
 
 ### <i class="fa-solid fa-layer-group"></i> Media Frameworks & Streaming Pipelines
-- **[GStreamer](https://gstreamer.freedesktop.org/)**: Official `gst-plugins-bad` elements (`faac` and `faad`) provide low-latency AAC encoding and decoding in enterprise multimedia pipelines.
+- **[GStreamer](https://gstreamer.freedesktop.org/)**: Official GStreamer plugin elements (`faac` and `faad`) provide low-latency AAC audio encoding and decoding in enterprise multimedia pipelines.
 - **[VLC Media Player](https://www.videolan.org/vlc/)**: Integrates FAAD decoder modules for lightweight, cross-platform AAC audio stream playback.
 
 ### <i class="fa-solid fa-compact-disc"></i> Cross-Platform Tools & Codec Packs
