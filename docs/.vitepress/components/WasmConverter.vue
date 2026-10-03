@@ -199,13 +199,14 @@ function parseWavHeader(buffer) {
 // Inline Worker Code for FAAC WASM encoding using encode_engine.c & progress.c
 const workerCode = `
 self.onmessage = async function(e) {
-  const { inputBuffer, bitrate, objectType, sampleRate, channels } = e.data;
+  const { inputBuffer, bitrate, objectType, sampleRate, channels, baseUrl } = e.data;
 
   self.postMessage({ type: 'progress', progress: 10, status: 'Initializing WASM background worker...' });
 
   try {
     if (!self.FAACModule) {
-      importScripts('/wasm/faac.js');
+      const scriptUrl = baseUrl ? new URL('/wasm/faac.js', baseUrl).href : '/wasm/faac.js';
+      importScripts(scriptUrl);
     }
 
     self.postMessage({ type: 'progress', progress: 30, status: 'Loading FAAC engine in background thread...' });
@@ -320,12 +321,14 @@ async function startEncoding() {
       }
     }
 
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
     worker.postMessage({
       inputBuffer: arrayBuffer,
       bitrate: bitrate.value,
       objectType: objectType.value,
       sampleRate,
-      channels
+      channels,
+      baseUrl
     }, [arrayBuffer])
 
   } catch (err) {
