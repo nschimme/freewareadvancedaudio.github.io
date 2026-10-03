@@ -18,16 +18,16 @@ hero:
 features:
   - icon: "<i class=\"fa-solid fa-bolt\"></i>"
     title: "Fast"
-    details: "Clocking in at over 500x realtime with SIMD vectorization, FAAC slashes server compute costs and maximizes battery efficiency on edge hardware."
+    details: "Delivers up to 500x+ realtime encoding and 490x+ realtime decoding throughput via SIMD vectorization, slashing compute overhead and power drain."
   - icon: "<i class=\"fa-solid fa-microchip\"></i>"
     title: "Small"
-    details: "With a compiled binary size under 75 KB and <2.5 MB peak RAM usage, FAAC is the ideal drop-in codec for IoT firmware and microcontrollers."
+    details: "Ultra-compact compiled footprint (<85 KB ROM, <2.8 MB peak RAM), offering drop-in C codec engines for IoT firmware, SoCs, and edge devices."
   - icon: "<i class=\"fa-solid fa-sliders\"></i>"
     title: "Quality"
-    details: "Delivers top-tier MOS scores and industry-leading transient fidelity (0.9494), capturing percussive attacks and speech without temporal smearing."
+    details: "Top-tier MOS ratings and transient precision (0.9494) for encoding, alongside full HE-AAC v1/v2 and 7.1 surround sound decoding."
   - icon: "<i class=\"fa-solid fa-code\"></i>"
     title: "Modern"
-    details: "Built on clean, ISO-free C11/C99 architecture under LGPL v2.1+ licensing, providing complete vendor independence and effortless integration."
+    details: "Clean, ISO-free C11/C99 architecture under open-source LGPL v2.1+ and GPL v2+ licensing, ensuring vendor independence and simple C API integration."
 ---
 
 <div class="home-technical-wrapper">
