@@ -23,8 +23,19 @@
 }
 
 /* Hero Section Custom Gradient Title */
-/* At top of homepage, make navbar background & border transparent so hamburger menu floats over cleanly without a dark bar pushing down.
-   Reveal header bar, background, logo, and title smoothly when scrolling down. */
+/* At top of homepage, make navbar overlay absolutely without taking layout space or pushing content down, so hamburger floats directly over the hero section until scrolled */
+.VPNav:has(.VPNavBar.home.top) {
+  position: absolute !important;
+  width: 100% !important;
+  pointer-events: none;
+}
+
+.VPNav:has(.VPNavBar.home.top) .VPNavBarHamburger,
+.VPNav:has(.VPNavBar.home.top) .VPNavBarMenu,
+.VPNav:has(.VPNavBar.home.top) .VPSocialLinks {
+  pointer-events: auto;
+}
+
 .VPNavBar.home {
   transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -82,7 +93,7 @@
 /* Mobile responsive adjustments for clean uncluttered layout */
 @media (max-width: 959px) {
   .VPHero {
-    padding-top: calc(var(--vp-nav-height, 64px) + 1.5rem) !important;
+    padding-top: 1.5rem !important;
     padding-bottom: 1.5rem !important;
   }
 
