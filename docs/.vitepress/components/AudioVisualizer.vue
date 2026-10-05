@@ -2,12 +2,15 @@
   <div class="visualizer-container">
     <div
       class="rack-bezel"
+      :class="{ 'is-paused': isPaused }"
       @mousemove="handlePointerMove"
       @mouseleave="handlePointerLeave"
-      @touchstart.passive="handlePointerMove"
-      @touchmove.passive="handlePointerMove"
-      @touchend="handlePointerLeave"
-      @click="handlePointerClick"
+      @touchstart.passive="handleTouchStart"
+      @touchmove.passive="handleTouchMove"
+      @touchend="handleTouchEnd"
+      @mousedown="handleMouseDown"
+      @mouseup="handleMouseUp"
+      @click="handleClick"
     >
       <div class="display-window">
         <!-- 90s Hardware Stereo Equalizer Display -->
@@ -106,8 +109,8 @@
 
         <!-- Codec Hardware VFD Feature Indicators -->
         <div class="vfd-indicators">
-          <span class="vfd-tag" :class="{ highlight: isInteractive }">
-            {{ isInteractive ? 'CODEC FEATURES' : 'FAAC / FAAD2' }}
+          <span class="vfd-tag" :class="{ highlight: isInteractive || isPaused, paused: isPaused }">
+            {{ isPaused ? '⏸ PAUSED' : (isInteractive ? 'CODEC FEATURES' : 'FAAC / FAAD') }}
           </span>
           <span class="vfd-tag highlight">
             {{ activeFreqTag }}
@@ -126,11 +129,20 @@ const barBaseHeights = [120, 200, 260, 320, 360, 330, 280, 230, 160, 110, 70]
 const barScales = ref([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 const animatedHeights = ref([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 const isInteractive = ref(false)
+const isPaused = ref(false)
 const activeFreqTag = ref('AAC-LC & HE-AAC')
 const waveYScale = ref(1)
 
 let animFrameId = null
 let clock = 0
+
+// Touch & Click tracking for Long Press vs Short Press / Mouse Click
+let pressTimer = null
+let pressStartTime = 0
+let startX = 0
+let startY = 0
+let longPressTriggered = false
+let isTouchAction = false
 
 function barGradientUrl(index) {
   if (index < 2 || index >= 8) return 'url(#bar-cyan)'
@@ -139,14 +151,16 @@ function barGradientUrl(index) {
 }
 
 function updateSpectrumAnimation() {
-  clock += 0.05
+  if (!isPaused.value) {
+    clock += 0.05
 
-  // Smooth stereo spectrum analyzer animation on equalizer bars
-  animatedHeights.value = barBaseHeights.map((_, i) => {
-    const freq = 1 + (i % 3) * 0.7
-    const oscillation = Math.sin(clock * freq + i * 0.8) * 0.22 + Math.cos(clock * 1.5 + i) * 0.15
-    return Math.max(0.65, 1 + oscillation)
-  })
+    // Smooth stereo spectrum analyzer animation on equalizer bars
+    animatedHeights.value = barBaseHeights.map((_, i) => {
+      const freq = 1 + (i % 3) * 0.7
+      const oscillation = Math.sin(clock * freq + i * 0.8) * 0.22 + Math.cos(clock * 1.5 + i) * 0.15
+      return Math.max(0.65, 1 + oscillation)
+    })
+  }
 
   animFrameId = requestAnimationFrame(updateSpectrumAnimation)
 }
@@ -157,13 +171,40 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (animFrameId) cancelAnimationFrame(animFrameId)
+  if (pressTimer) clearTimeout(pressTimer)
 })
+
+function togglePauseResume() {
+  isPaused.value = !isPaused.value
+  triggerPulseBurst()
+}
+
+function triggerPulseBurst() {
+  barScales.value = barScales.value.map(s => Math.min(1.5, s * 1.4))
+  waveYScale.value = 1.3
+  activeFreqTag.value = isPaused.value ? '⏸ PAUSED (TAP TO RESUME)' : '⚡ FAAC / FAAD'
+  setTimeout(() => {
+    if (!isInteractive.value) {
+      activeFreqTag.value = 'AAC-LC & HE-AAC'
+      waveYScale.value = 1
+      barScales.value = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    }
+  }, 1000)
+}
 
 function handlePointerMove(e) {
   isInteractive.value = true
   const rect = e.currentTarget.getBoundingClientRect()
-  const x = Math.max(0, Math.min(rect.width, (e.touches ? e.touches[0].clientX : e.clientX) - rect.left))
-  const y = Math.max(0, Math.min(rect.height, (e.touches ? e.touches[0].clientY : e.clientY) - rect.top))
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY
+
+  const x = Math.max(0, Math.min(rect.width, clientX - rect.left))
+  const y = Math.max(0, Math.min(rect.height, clientY - rect.top))
+
+  if (pressTimer && Math.hypot(clientX - startX, clientY - startY) > 10) {
+    clearTimeout(pressTimer)
+    pressTimer = null
+  }
 
   const normalizedX = x / rect.width
   const normalizedY = 1 - (y / rect.height)
@@ -193,19 +234,77 @@ function handlePointerMove(e) {
 
 function handlePointerLeave() {
   isInteractive.value = false
+  if (pressTimer) {
+    clearTimeout(pressTimer)
+    pressTimer = null
+  }
   activeFreqTag.value = 'AAC-LC & HE-AAC'
   waveYScale.value = 1
   barScales.value = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 }
 
-function handlePointerClick() {
-  // Fun pulse burst on click/tap
-  barScales.value = barScales.value.map(s => Math.min(1.5, s * 1.4))
-  waveYScale.value = 1.3
-  activeFreqTag.value = '⚡ FAAC 2.2+ / FAAD2'
+function startPress(clientX, clientY) {
+  longPressTriggered = false
+  pressStartTime = Date.now()
+  startX = clientX
+  startY = clientY
+
+  if (pressTimer) clearTimeout(pressTimer)
+  pressTimer = setTimeout(() => {
+    longPressTriggered = true
+    togglePauseResume()
+  }, 350)
+}
+
+function endPress() {
+  if (pressTimer) {
+    clearTimeout(pressTimer)
+    pressTimer = null
+  }
+}
+
+function handleTouchStart(e) {
+  isTouchAction = true
+  if (e.touches && e.touches[0]) {
+    startPress(e.touches[0].clientX, e.touches[0].clientY)
+    handlePointerMove(e)
+  }
+}
+
+function handleTouchMove(e) {
+  if (e.touches && e.touches[0]) {
+    handlePointerMove(e)
+  }
+}
+
+function handleTouchEnd() {
+  endPress()
+  const duration = Date.now() - pressStartTime
+  if (!longPressTriggered && duration < 350) {
+    // Short press / quick tap triggers current interaction pulse burst
+    triggerPulseBurst()
+  }
   setTimeout(() => {
-    if (!isInteractive.value) handlePointerLeave()
-  }, 1000)
+    isTouchAction = false
+  }, 300)
+  handlePointerLeave()
+}
+
+function handleMouseDown(e) {
+  if (isTouchAction) return
+  startPress(e.clientX, e.clientY)
+}
+
+function handleMouseUp() {
+  if (isTouchAction) return
+  endPress()
+}
+
+function handleClick() {
+  if (isTouchAction) return
+  if (!longPressTriggered) {
+    togglePauseResume()
+  }
 }
 </script>
 
@@ -238,6 +337,13 @@ function handlePointerClick() {
   box-shadow:
     0 20px 40px -5px rgba(6, 182, 212, 0.25),
     inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+.rack-bezel.is-paused {
+  border-color: #f59e0b;
+  box-shadow:
+    0 15px 35px -5px rgba(245, 158, 11, 0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
 }
 
 .display-window {
@@ -334,5 +440,11 @@ function handlePointerClick() {
   color: #22d3ee;
   border-color: rgba(6, 182, 212, 0.4);
   text-shadow: 0 0 8px rgba(6, 182, 212, 0.8);
+}
+
+.vfd-tag.paused {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.4);
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
 }
 </style>
