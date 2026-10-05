@@ -23,10 +23,21 @@
 }
 
 /* Hero Section Custom Gradient Title */
-/* Hide top-left logo and title at top of homepage, slide and fade in smoothly when scrolling */
+/* At top of homepage, make navbar background & border transparent so hamburger menu floats over cleanly without a dark bar pushing down.
+   Reveal header bar, background, logo, and title smoothly when scrolling down. */
+.VPNavBar.home {
+  transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .VPNavBar.home .VPNavBarTitle {
   transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   transform: translateY(0);
+}
+
+.VPNavBar.home.top {
+  background-color: transparent !important;
+  border-bottom-color: transparent !important;
+  box-shadow: none !important;
 }
 
 .VPNavBar.home.top .VPNavBarTitle {
@@ -98,8 +109,6 @@
     margin: 0 !important;
     text-align: left !important;
     letter-spacing: -0.02em !important;
-    font-kerning: normal !important;
-    font-feature-settings: "kern" 1 !important;
     -webkit-font-smoothing: antialiased !important;
     -moz-osx-font-smoothing: grayscale !important;
   }
@@ -112,8 +121,6 @@
     font-weight: 600 !important;
     color: var(--vp-c-text-1) !important;
     letter-spacing: -0.01em !important;
-    font-kerning: normal !important;
-    font-feature-settings: "kern" 1 !important;
     -webkit-font-smoothing: antialiased !important;
     -moz-osx-font-smoothing: grayscale !important;
   }
@@ -125,8 +132,6 @@
     padding: 0 !important;
     text-align: left !important;
     letter-spacing: -0.01em !important;
-    font-kerning: normal !important;
-    font-feature-settings: "kern" 1 !important;
     -webkit-font-smoothing: antialiased !important;
     -moz-osx-font-smoothing: grayscale !important;
   }
@@ -176,8 +181,6 @@
     font-size: 0.925rem !important;
     font-weight: 600 !important;
     letter-spacing: 0.01em !important;
-    font-kerning: normal !important;
-    font-feature-settings: "kern" 1 !important;
     -webkit-font-smoothing: antialiased !important;
     -moz-osx-font-smoothing: grayscale !important;
     text-align: center !important;
