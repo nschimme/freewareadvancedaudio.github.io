@@ -3,6 +3,10 @@
     <div
       class="rack-bezel"
       :class="{ 'is-paused': isPaused }"
+      role="button"
+      tabindex="0"
+      :aria-pressed="isPaused"
+      aria-label="Toggle audio visualizer animation"
       @mousemove="handlePointerMove"
       @mouseleave="handlePointerLeave"
       @touchstart.passive="handleTouchStart"
@@ -11,6 +15,8 @@
       @mousedown="handleMouseDown"
       @mouseup="handleMouseUp"
       @click="handleClick"
+      @keydown.enter.prevent="handleClick"
+      @keydown.space.prevent="handleClick"
     >
       <div class="display-window">
         <!-- 90s Hardware Stereo Equalizer Display -->
@@ -332,11 +338,14 @@ function handleClick() {
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.rack-bezel:hover {
+.rack-bezel:hover,
+.rack-bezel:focus-visible {
   border-color: #06b6d4;
   box-shadow:
     0 20px 40px -5px rgba(6, 182, 212, 0.25),
     inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  outline: 2px solid #06b6d4;
+  outline-offset: 2px;
 }
 
 .rack-bezel.is-paused {
