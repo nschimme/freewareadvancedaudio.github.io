@@ -23,37 +23,46 @@
 }
 
 /* Hero Section Custom Gradient Title */
-/* At top of homepage, make navbar overlay absolutely without taking layout space or pushing content down, so hamburger floats directly over the hero section until scrolled */
-.VPNav:has(.VPNavBar.home.top) {
-  position: absolute !important;
+/* On homepage, fixed header that floats over content transparently without pushing page down, keeping hamburger fixed, and showing header bar on scroll */
+.VPNav:has(.VPNavBar.home) {
+  position: fixed !important;
+  top: 0;
+  left: 0;
   width: 100% !important;
+  z-index: 20;
   pointer-events: none;
 }
 
-.VPNav:has(.VPNavBar.home.top) .VPNavBarHamburger,
-.VPNav:has(.VPNavBar.home.top) .VPNavBarMenu,
-.VPNav:has(.VPNavBar.home.top) .VPSocialLinks {
+.VPNav:has(.VPNavBar.home) .VPNavBarHamburger,
+.VPNav:has(.VPNavBar.home) .VPNavBarMenu,
+.VPNav:has(.VPNavBar.home) .VPSocialLinks,
+.VPNav:has(.VPNavBar.home) .VPNavBarTitle {
   pointer-events: auto;
 }
 
 .VPNavBar.home {
-  transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), backdrop-filter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: rgba(15, 23, 42, 0.85) !important;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--vp-c-divider) !important;
 }
 
 .VPNavBar.home .VPNavBarTitle {
   transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   transform: translateY(0);
+  opacity: 1;
 }
 
 .VPNavBar.home.top {
   background-color: transparent !important;
   border-bottom-color: transparent !important;
   box-shadow: none !important;
+  backdrop-filter: none;
 }
 
 .VPNavBar.home.top .VPNavBarTitle {
   opacity: 0;
-  transform: translateY(-12px);
+  transform: translateY(-8px);
   pointer-events: none;
 }
 
