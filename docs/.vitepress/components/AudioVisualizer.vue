@@ -12,6 +12,7 @@
       @touchstart.passive="handleTouchStart"
       @touchmove.passive="handleTouchMove"
       @touchend="handleTouchEnd"
+      @touchcancel="handleTouchCancel"
       @mousedown="handleMouseDown"
       @mouseup="handleMouseUp"
       @click="handleClick"
@@ -286,14 +287,36 @@ function handleTouchMove(e) {
 function handleTouchEnd() {
   endPress()
   const duration = Date.now() - pressStartTime
+  isInteractive.value = false
+
   if (!longPressTriggered && duration < 350) {
-    // Short press / quick tap triggers current interaction pulse burst
-    triggerPulseBurst()
+    if (isPaused.value) {
+      togglePauseResume()
+    } else {
+      triggerPulseBurst()
+    }
+  } else if (!isPaused.value) {
+    activeFreqTag.value = 'AAC-LC & HE-AAC'
+    waveYScale.value = 1
+    barScales.value = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  }
+
+  setTimeout(() => {
+    isTouchAction = false
+  }, 300)
+}
+
+function handleTouchCancel() {
+  endPress()
+  isInteractive.value = false
+  if (!isPaused.value) {
+    activeFreqTag.value = 'AAC-LC & HE-AAC'
+    waveYScale.value = 1
+    barScales.value = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
   }
   setTimeout(() => {
     isTouchAction = false
   }, 300)
-  handlePointerLeave()
 }
 
 function handleMouseDown(e) {
