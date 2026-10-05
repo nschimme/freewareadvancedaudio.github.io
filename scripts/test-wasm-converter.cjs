@@ -153,7 +153,7 @@ async function main() {
     fs.writeFileSync(path.join(outputDir, name), bytes);
     const fields = metadata(bytes);
     assert.equal(fields.timescale, Math.round(settings.sampleRate / divisor));
-    assert.equal(fields.sampleEntryRate, fields.timescale);
+    assert.equal(fields.sampleEntryRate, Math.min(65535, fields.timescale));
     assert.equal(fields.channels, settings.channels);
     assert.ok(fields.durations.every(([count, duration]) => count > 0 && duration === 1024));
     assert.equal(fields.duration, fields.durations.reduce((sum, [count, duration]) => sum + count * duration, 0));

@@ -2,9 +2,8 @@
   <div class="wasm-converter-container">
     <div class="converter-card">
       <div class="converter-header">
-        <h3 class="converter-title"><i class="fa-solid fa-bolt" aria-hidden="true"></i> Try FAAC: Audio to M4A</h3>
         <p class="converter-subtitle">
-          <strong>Your audio stays in your browser.</strong> Choose a file to decode it once, then compare settings and make multiple M4A encodes without decoding it again.
+          Choose a file to decode it once, then compare settings and make multiple M4A encodes without decoding it again.
         </p>
       </div>
 
