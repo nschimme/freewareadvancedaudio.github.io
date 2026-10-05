@@ -23,13 +23,15 @@
 }
 
 /* Hero Section Custom Gradient Title */
-/* Hide top-left logo and title at top of homepage, fade in when scrolling */
+/* Hide top-left logo and title at top of homepage, slide and fade in smoothly when scrolling */
 .VPNavBar.home .VPNavBarTitle {
-  transition: opacity 0.25s ease-in-out;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(0);
 }
 
 .VPNavBar.home.top .VPNavBarTitle {
   opacity: 0;
+  transform: translateY(-12px);
   pointer-events: none;
 }
 
