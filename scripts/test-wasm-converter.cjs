@@ -77,6 +77,7 @@ async function main() {
     { objectType: 'auto', expectedResolved: 'lc', channels: 2, sampleRate: 48000, bitrate: 128, samples: 48123 },
     { objectType: 'lc', expectedResolved: 'lc', channels: 1, sampleRate: 44100, bitrate: 96, samples: 44117 },
     { objectType: 'lc', expectedResolved: 'lc', channels: 2, sampleRate: 48000, bitrate: 128, samples: 48123 },
+    { objectType: 'lc', expectedResolved: 'lc', channels: 2, sampleRate: 96000, sampleFormat: 'float', bitrate: 256, samples: 96000 },
     { objectType: 'he-v1', expectedResolved: 'he-v1', channels: 1, sampleRate: 44100, bitrate: 48, samples: 44117 },
     { objectType: 'he-v1', expectedResolved: 'he-v1', channels: 2, sampleRate: 48000, bitrate: 64, samples: 48123 },
     { objectType: 'lc', expectedResolved: 'lc', channels: 2, sampleRate: 48000, bitrate: 128, samples: 123 },
@@ -90,10 +91,12 @@ async function main() {
     { objectType: 'lc', rateControl: 'cbr', expectedRateControl: 'cbr', channels: 2, sampleRate: 48000, bitrate: 128, samples: 48123 },
   ];
   for (const settings of cases) {
-    const pcm = new Int16Array(settings.samples * settings.channels);
+    const isFloat = settings.sampleFormat === 'float';
+    const pcm = isFloat ? new Float32Array(settings.samples * settings.channels) : new Int16Array(settings.samples * settings.channels);
     for (let i = 0; i < settings.samples; i++) {
       for (let ch = 0; ch < settings.channels; ch++) {
-        pcm[i * settings.channels + ch] = Math.round(12000 * Math.sin(2 * Math.PI * (440 + ch * 220) * i / settings.sampleRate));
+        const val = Math.sin(2 * Math.PI * (440 + ch * 220) * i / settings.sampleRate);
+        pcm[i * settings.channels + ch] = isFloat ? val * 0.5 : Math.round(12000 * val);
       }
     }
     const messages = [];
@@ -103,14 +106,19 @@ async function main() {
       postMessage(message) { messages.push(message); },
     };
     const context = vm.createContext({
-      self, URL, Int16Array,
+      self, URL, Int16Array, Float32Array,
       importScripts(url) {
         imported = url;
         self.FAACModule = () => createModule({ wasmBinary });
       },
     });
     vm.runInContext(workerSource, context);
-    await self.onmessage({ data: { ...settings, pcm16Data: pcm.buffer } });
+    const workerData = {
+      ...settings,
+      pcm16Data: !isFloat ? pcm.buffer : undefined,
+      pcmFloatData: isFloat ? pcm.buffer : undefined,
+    };
+    await self.onmessage({ data: workerData });
     assert.equal(imported, 'https://example.test/fork/wasm/faac.js');
     assert.equal(messages.find(message => message.type === 'error'), undefined,
                  JSON.stringify(messages.find(message => message.type === 'error')));

@@ -28,7 +28,7 @@
         </div>
         <div class="drop-text" v-else>
           <strong>Selected File:</strong> {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})
-          <span v-if="decodedAudio" class="source-meta"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Ready · {{ formatDuration(decodedAudio.duration) }} · {{ decodedAudio.sampleRate }} Hz · {{ formatChannelLayout(decodedAudio.channels) }}</span>
+          <span v-if="decodedAudio" class="source-meta"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Ready · {{ formatDuration(decodedAudio.duration) }} · {{ decodedAudio.sampleRate }} Hz · {{ formatChannelLayout(decodedAudio.channels) }} · {{ decodedAudio.bitDepth ? decodedAudio.bitDepth + '-bit' : (decodedAudio.isFloat ? '32-bit Float' : 'Native Precision') }}</span>
         </div>
         <input
           type="file"
@@ -275,6 +275,42 @@ function formatDuration(seconds) {
   return `${minutes}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`
 }
 
+function parseAudioHeader(arrayBuffer) {
+  if (!arrayBuffer || arrayBuffer.byteLength < 12) return { sampleRate: null, bitDepth: null }
+  const view = new DataView(arrayBuffer)
+  const bytes = new Uint8Array(arrayBuffer)
+
+  // 1. WAV ("RIFF" ... "WAVE")
+  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+    if (bytes[8] === 0x57 && bytes[9] === 0x41 && bytes[10] === 0x56 && bytes[11] === 0x45) {
+      let offset = 12
+      let sampleRate = null
+      let bitDepth = null
+      while (offset + 8 <= arrayBuffer.byteLength) {
+        const chunkId = String.fromCharCode(bytes[offset], bytes[offset+1], bytes[offset+2], bytes[offset+3])
+        const chunkSize = view.getUint32(offset + 4, true)
+        if (chunkId === 'fmt ' && chunkSize >= 16 && offset + 8 + chunkSize <= arrayBuffer.byteLength) {
+          sampleRate = view.getUint32(offset + 12, true)
+          bitDepth = view.getUint16(offset + 22, true)
+          return { sampleRate: sampleRate > 0 ? sampleRate : null, bitDepth: bitDepth > 0 ? bitDepth : null }
+        }
+        offset += 8 + chunkSize + (chunkSize % 2)
+      }
+    }
+  }
+
+  // 2. FLAC ("fLaC")
+  if (bytes[0] === 0x66 && bytes[1] === 0x4C && bytes[2] === 0x61 && bytes[3] === 0x43) {
+    if (arrayBuffer.byteLength >= 22) {
+      const sampleRate = (bytes[18] << 12) | (bytes[19] << 4) | (bytes[20] >> 4)
+      const bitDepth = (((bytes[20] & 0x0F) << 1) | (bytes[21] >> 7)) + 1
+      return { sampleRate: sampleRate > 0 ? sampleRate : null, bitDepth: bitDepth > 0 ? bitDepth : null }
+    }
+  }
+
+  return { sampleRate: null, bitDepth: null }
+}
+
 function audioBufferToPcm16(audioBuffer) {
   const numChannels = audioBuffer.numberOfChannels
   const length = audioBuffer.length
@@ -292,6 +328,21 @@ function audioBufferToPcm16(audioBuffer) {
   return pcm16
 }
 
+function audioBufferToFloat32(audioBuffer) {
+  const numChannels = audioBuffer.numberOfChannels
+  const length = audioBuffer.length
+  const pcmFloat = new Float32Array(length * numChannels)
+
+  let offset = 0
+  for (let i = 0; i < length; i++) {
+    for (let channel = 0; channel < numChannels; channel++) {
+      pcmFloat[offset++] = audioBuffer.getChannelData(channel)[i]
+    }
+  }
+
+  return pcmFloat
+}
+
 async function decodeSelectedFile(file, request) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext
   if (!AudioContextClass) {
@@ -302,12 +353,32 @@ async function decodeSelectedFile(file, request) {
   statusMessage.value = 'Decoding audio for reuse…'
   let audioCtx
   try {
-    audioCtx = new AudioContextClass()
-    const decodedBuffer = await audioCtx.decodeAudioData(await file.arrayBuffer())
+    const fileBuffer = await file.arrayBuffer()
+    const { sampleRate: nativeRate, bitDepth: parsedBitDepth } = parseAudioHeader(fileBuffer)
+
+    if (nativeRate) {
+      try {
+        audioCtx = new AudioContextClass({ sampleRate: nativeRate })
+      } catch {
+        audioCtx = new AudioContextClass()
+      }
+    } else {
+      audioCtx = new AudioContextClass()
+    }
+
+    const decodedBuffer = await audioCtx.decodeAudioData(fileBuffer)
     if (request !== decodeRequest) return
-    const pcm16Data = audioBufferToPcm16(decodedBuffer)
+
+    const isHighPrecision = parsedBitDepth && parsedBitDepth > 16
+    const sampleFormat = isHighPrecision ? 'float' : 'int16'
+    const pcmData = isHighPrecision
+      ? audioBufferToFloat32(decodedBuffer)
+      : audioBufferToPcm16(decodedBuffer)
+
     decodedAudio.value = {
-      pcm16Data,
+      pcmData,
+      sampleFormat,
+      bitDepth: parsedBitDepth || (isHighPrecision ? 24 : 16),
       sampleRate: decodedBuffer.sampleRate,
       channels: decodedBuffer.numberOfChannels,
       duration: decodedBuffer.duration,
@@ -333,7 +404,7 @@ async function startEncoding() {
   statusMessage.value = 'Preparing Web Worker encoding task…'
 
   try {
-    const { pcm16Data, sampleRate, channels, duration } = decodedAudio.value
+    const { pcmData, sampleFormat, sampleRate, channels, duration, bitDepth } = decodedAudio.value
     progress.value = 5
     const workerUrl = new URL(withBase('/wasm/faac-worker.js'), window.location.origin).href
     const worker = new Worker(workerUrl)
@@ -366,7 +437,7 @@ async function startEncoding() {
             label: 'Encoding',
             value: `${profileName} · ${modeLabel} · ${msg.resolvedRateControl === 'vbr' ? `Quality ${msg.resolvedQuality}` : `Target ${Math.round(msg.resolvedBitrate / 1000)} kbps`}`,
           },
-          { label: 'Input', value: `${sampleRate} Hz · ${formatChannelLayout(channels)} · ${formatDuration(duration)}` },
+          { label: 'Input', value: `${sampleRate} Hz · ${bitDepth ? bitDepth + '-bit · ' : ''}${formatChannelLayout(channels)} · ${formatDuration(duration)}` },
           { label: 'Output', value: `${formatFileSize(outputBuffer.byteLength)} · ~${Math.round(averageKbps)} kbps` },
         ]
         results.value.unshift({
@@ -390,9 +461,12 @@ async function startEncoding() {
       worker.terminate()
     }
 
-    const workerPcm = pcm16Data.slice()
+    const workerPcm = pcmData.slice()
+    const isFloat = sampleFormat === 'float'
     worker.postMessage({
-      pcm16Data: workerPcm.buffer,
+      pcm16Data: !isFloat ? workerPcm.buffer : undefined,
+      pcmFloatData: isFloat ? workerPcm.buffer : undefined,
+      sampleFormat,
       bitrate: bitrate.value,
       rateControl: rateControl.value,
       quantQuality: quantQuality.value,
