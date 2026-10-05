@@ -23,6 +23,16 @@
 }
 
 /* Hero Section Custom Gradient Title */
+/* Hide top-left logo and title at top of homepage, fade in when scrolling */
+.VPNavBar.home .VPNavBarTitle {
+  transition: opacity 0.25s ease-in-out;
+}
+
+.VPNavBar.home.top .VPNavBarTitle {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .VPHero .name {
   background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #f43f5e 100%) !important;
   -webkit-background-clip: text !important;
