@@ -38,6 +38,24 @@
         />
       </div>
 
+      <!-- Original Audio Player -->
+      <div v-if="selectedFile && originalAudioUrl" class="original-audio-card">
+        <div class="original-audio-header">
+          <span class="original-audio-title">
+            <i class="fa-solid fa-music" aria-hidden="true"></i> Original Audio Preview
+          </span>
+          <span class="original-audio-subtitle">Source for A/B comparison</span>
+        </div>
+        <audio
+          ref="originalPlayer"
+          controls
+          :src="originalAudioUrl"
+          class="audio-player"
+          @play="onPlayOriginal"
+          aria-label="Original audio preview"
+        ></audio>
+      </div>
+
       <!-- Bitrate or quality is the primary control; less common choices stay available in More settings. -->
       <div class="primary-setting" v-if="selectedFile">
         <div class="control-group">
@@ -153,7 +171,7 @@
           </div>
 
           <div class="result-actions">
-            <audio ref="resultPlayers" controls :src="item.url" class="audio-player"></audio>
+            <audio ref="resultPlayers" controls :src="item.url" class="audio-player" @play="onPlayResult(results.indexOf(item))"></audio>
             <div class="result-action-buttons">
               <a :href="item.url" :download="item.name" class="icon-action download-link"
                 :aria-label="`Download ${item.name}`" title="Download output">
@@ -173,11 +191,13 @@
 </template>
 
 <script setup>
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, onUnmounted, ref } from 'vue'
 import { withBase } from 'vitepress'
 
 const fileInput = ref(null)
 const selectedFile = ref(null)
+const originalAudioUrl = ref(null)
+const originalPlayer = ref(null)
 const decodedAudio = ref(null)
 const isDecoding = ref(false)
 let decodeRequest = 0
@@ -248,12 +268,46 @@ function handleDrop(event) {
 }
 
 function selectFile(file) {
+  if (originalAudioUrl.value) {
+    if (originalPlayer.value) originalPlayer.value.pause()
+    URL.revokeObjectURL(originalAudioUrl.value)
+    originalAudioUrl.value = null
+  }
   selectedFile.value = file
+  originalAudioUrl.value = URL.createObjectURL(file)
   decodedAudio.value = null
   statusMessage.value = ''
   const request = ++decodeRequest
   void decodeSelectedFile(file, request)
 }
+
+function onPlayOriginal() {
+  for (const player of resultPlayers.value) {
+    if (player && !player.paused) {
+      player.pause()
+    }
+  }
+}
+
+function onPlayResult(currentIndex) {
+  if (originalPlayer.value && !originalPlayer.value.paused) {
+    originalPlayer.value.pause()
+  }
+  resultPlayers.value.forEach((player, idx) => {
+    if (idx !== currentIndex && player && !player.paused) {
+      player.pause()
+    }
+  })
+}
+
+onUnmounted(() => {
+  if (originalAudioUrl.value) {
+    URL.revokeObjectURL(originalAudioUrl.value)
+  }
+  for (const item of results.value) {
+    if (item?.url) URL.revokeObjectURL(item.url)
+  }
+})
 
 function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' B'
@@ -398,7 +452,8 @@ async function decodeSelectedFile(file, request) {
 async function startEncoding() {
   if (!selectedFile.value || !decodedAudio.value || isDecoding.value) return
 
-  for (const player of resultPlayers.value) player.pause()
+  if (originalPlayer.value) originalPlayer.value.pause()
+  for (const player of resultPlayers.value) player?.pause()
 
   isProcessing.value = true
   progress.value = 0
@@ -543,6 +598,38 @@ async function startEncoding() {
   border-style: solid;
   border-color: #10b981;
   background: rgba(16, 185, 129, 0.12);
+}
+
+.original-audio-card {
+  background: #0f172a;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.original-audio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.original-audio-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #34d399;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.original-audio-subtitle {
+  color: #94a3b8;
+  font-size: 0.78rem;
 }
 
 .drop-icon {
