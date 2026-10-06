@@ -1,29 +1,26 @@
 ---
-title: Introducing the FAAD3 Decoder Rewrite
-description: FAAD's C11 rewrite brings an LGPL-licensed decoder library, a modern frame API, and current AAC profile support.
+title: Introducing the FAAD Decoder Rewrite
+description: Why FAAD was rewritten as a modern C11 decoder library, how its new library boundary works, and where to find integration and comparison details.
 ---
 
-# Introducing the FAAD3 Decoder Rewrite
+# Introducing the FAAD Decoder Rewrite
 
 *Published: October 2026*
 
-FAAD has been rewritten as **FAAD3**, replacing the earlier FAAD2 decoder implementation with a modern C11 library and command-line tool. The current FAAD library is licensed under **LGPL v2.1 or later**, providing an LGPL option for applications that previously evaluated the GPL-licensed FAAD2 release.
+FAAD has been rewritten as a C11 AAC decoder library and command-line tool under **LGPL v2.1 or later**. The project now has a clear boundary between decoding AAC frames and handling media files around them.
 
-The rewrite also brings a new C API. Applications use `<faad.h>` and the `faad_decode_frame()` interface; FAAD2's `NeAACDec*` API is not source or ABI compatible. The API guide documents caller-owned decoder state, frame input, output formats, and migration points.
+## A decoder that fits into an application
 
-## FAAD3 and FAAD2 benchmark results
+An application already has its own ideas about files, containers, buffering, and audio output. The FAAD library now focuses on decoding ADTS frames or raw AAC access units into PCM; the host application owns the surrounding media pipeline. The `faad` command-line tool provides the file-oriented workflow.
 
-The supplied [decoder leaderboard](https://gist.github.com/nschimme/71953ca296cdfa9800e99fc806f191b5) reports an overall objective MOS of 4.231 for FAAD3 and 4.224 for FAAD2 2.11.3. Their 1st-percentile MOS is tied at 1.451, and their stereo fidelity, mean SNR, and timing error are also close. These scores do not establish a perceptible difference.
+That separation gives developers a choice: use the command-line tool for files and scripts, or embed the library inside an existing player or media service. The [FAAD overview](/docs/faad) describes its supported audio and build options; the [CLI manual](/docs/faad-cli) and [C API reference](/docs/libfaad) cover each integration path.
 
-In the same report, FAAD3 measures 1,011.2× realtime throughput against 515.8× for FAAD2, with a 161.9 KB ROM image against 296.3 KB. Peak RAM is higher: 2.6 MB against 2.1 MB. These are aggregate results for the builds and scenarios in the linked report, not guarantees for other hardware or configurations.
+## A deliberate break with FAAD2
 
-FAAD supports AAC-LC and HE-AAC v1. HE-AAC v2 Parametric Stereo is available when SBR and PS support are enabled in the build. The library focuses on frame decoding; container and file handling live in the `faad` command-line frontend or in the host application.
+The rewrite does not preserve FAAD2's `NeAACDec*` API or ABI. Applications built against FAAD2 need a source port and rebuild. Stream and profile support also differs, so check the [supported streams](/docs/libfaad#supported-streams) before migrating.
 
-## Get started
+## Follow the evidence
 
-- [Install FAAC and FAAD](/docs/install)
-- [FAAD command-line reference](/docs/faad-cli)
-- [libfaad C API reference](/docs/libfaad)
-- [Choose an encoder or decoder](/docs/comparison)
+The decoder comparison and tested-versions pages are the references for measured quality, speed, footprint, memory use, and the exact builds behind those results. Start with the [FAAD and FAAD2 comparison](/docs/comparison#faad3-and-faad2-benchmark-comparison), then see [tested versions](/docs/tested-versions) for snapshot details.
 
-The [FAAD2 comparison and migration notes](/docs/libfaad#porting-from-the-legacy-neaacdec-api) cover the version boundary and API changes. This announcement focuses on the implementation and integration changes; performance figures should be taken from current, reproducible measurements for the target platform.
+For license history and patent context, see [software licenses and patent rights](/docs/comparison#software-licenses-and-patent-rights). To install the tools and libraries, visit [installation](/docs/install).

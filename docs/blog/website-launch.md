@@ -43,6 +43,6 @@ If older FAAC releases disappointed you, we welcome your scrutiny of the current
 
 ## Future Roadmap
 
-We continue to tune FAAC and have now released **FAAD3**, a C11 rewrite of the earlier FAAD2 decoder. Current FAAD uses **LGPL v2.1+**. Read [the FAAD3 announcement](/blog/faad3-release) and the [FAAD API guide](/docs/libfaad).
+We continue to tune FAAC and have released **FAAD**, a C11 rewrite of the earlier FAAD2 decoder. FAAD uses **LGPL v2.1+**. Read [the FAAD announcement](/blog/faad3-release) and the [FAAD API guide](/docs/libfaad).
 
 Stay tuned for more updates!
