@@ -1,8 +1,6 @@
 ---
 title: libfaac C API Reference
-description: Upstream C library guide for libfaac, generated from the vendored FAAC documentation.
+description: C API guide for embedding FAAC AAC encoding in applications, including build, linking, supported streams, and function reference.
 ---
-
-This reference is generated from [`vendor/faac/docs/libfaac.md`](https://github.com/nschimme/faac/blob/faad-upstream/docs/libfaac.md).
 
 <!-- @include: ./libfaac-api-gen.md -->

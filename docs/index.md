@@ -92,11 +92,13 @@ Available libraries and features depend on each project's version and build. Rep
 
 Use a package manager or build from source. The [installation guide](/docs/install) explains the options and why package versions matter.
 
-### Which library and license do I need?
+### Which software license do FAAC and FAAD use?
 
-FAAC is the encoder; FAAD is the decoder. Both libraries use LGPL v2.1+. See the [version comparison](/docs/comparison#software-licenses-and-patent-rights) for legacy release details. Software licensing and codec patent rights are separate questions.
+FAAC is the encoder; FAAD is the decoder. Both libraries use LGPL v2.1+. See the [version comparison](/docs/comparison#software-licenses-and-patent-rights) for legacy release details.
 
-The foundational AAC-LC and HE-AAC v1 patents have expired. HE-AAC v2 adds Parametric Stereo patents expiring in 2029. See [patent status by profile](/docs/comparison#patent-status-by-aac-profile) for the distinctions and jurisdiction considerations.
+### Do AAC patents affect my use?
+
+Patent considerations depend on the AAC profile and jurisdiction. See [patent status by profile](/docs/comparison#patent-status-by-aac-profile).
 
 ### How can I help improve quality?
 

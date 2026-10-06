@@ -85,7 +85,7 @@ xHE-AAC and [Opus](https://opus-codec.org/) overlap in streaming uses; Opus also
 
 ## Software licenses and patent rights {data-icon="scale-balanced"}
 
-FAAC and current FAAD (FAAD3) use LGPL v2.1+. Earlier FAAD2 releases used GPL v2+; check the license shipped with any legacy version. FDK-AAC has a custom license that [Fedora classifies as non-free](https://fedoraproject.org/wiki/Licensing/FDK-AAC). Software copyright and codec patents are separate.
+FAAC 2.0 and later, and FAAD, use LGPL v2.1+. Earlier FAAC releases included code under different terms. Earlier FAAD2 releases used GPL v2+. Check the license shipped with the exact version you use. FDK-AAC has a custom license that [Fedora classifies as non-free](https://fedoraproject.org/wiki/Licensing/FDK-AAC). Software copyright and codec patents are separate.
 
 ### Patent status by AAC profile
 
