@@ -171,7 +171,7 @@
           </div>
 
           <div class="result-actions">
-            <audio ref="resultPlayers" controls :src="item.url" class="audio-player" @play="onPlayResult(results.indexOf(item))"></audio>
+            <audio ref="resultPlayers" controls :src="item.url" class="audio-player" @play="onPlayResult($event.target)"></audio>
             <div class="result-action-buttons">
               <a :href="item.url" :download="item.name" class="icon-action download-link"
                 :aria-label="`Download ${item.name}`" title="Download output">
@@ -191,7 +191,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { withBase } from 'vitepress'
 
 const fileInput = ref(null)
@@ -224,6 +224,7 @@ const resultPlayers = ref([])
 const convertButton = ref(null)
 const discardButtons = ref([])
 const resultAnnouncement = ref('')
+let activeWorker = null
 const maxQuantQuality = computed(() => objectType.value === 'he-v1' ? 75 : 5000)
 const qualityPresets = computed(() => [20, 30, 40, 50, 60, 75, 100, 150, 200, 300, 500, 800].filter(value => value <= maxQuantQuality.value))
 
@@ -267,6 +268,26 @@ function handleDrop(event) {
   }
 }
 
+function clearResults() {
+  for (const item of results.value) {
+    if (item?.url) URL.revokeObjectURL(item.url)
+  }
+  results.value = []
+}
+
+function handleBeforeUnload(event) {
+  if (results.value.length > 0) {
+    event.preventDefault()
+    event.returnValue = ''
+  }
+}
+
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', handleBeforeUnload)
+  }
+})
+
 function selectFile(file) {
   if (originalAudioUrl.value) {
     if (originalPlayer.value) originalPlayer.value.pause()
@@ -289,24 +310,29 @@ function onPlayOriginal() {
   }
 }
 
-function onPlayResult(currentIndex) {
+function onPlayResult(targetAudio) {
   if (originalPlayer.value && !originalPlayer.value.paused) {
     originalPlayer.value.pause()
   }
-  resultPlayers.value.forEach((player, idx) => {
-    if (idx !== currentIndex && player && !player.paused) {
+  for (const player of resultPlayers.value) {
+    if (player && player !== targetAudio && !player.paused) {
       player.pause()
     }
-  })
+  }
 }
 
 onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('beforeunload', handleBeforeUnload)
+  }
+  if (activeWorker) {
+    activeWorker.terminate()
+    activeWorker = null
+  }
   if (originalAudioUrl.value) {
     URL.revokeObjectURL(originalAudioUrl.value)
   }
-  for (const item of results.value) {
-    if (item?.url) URL.revokeObjectURL(item.url)
-  }
+  clearResults()
 })
 
 function formatFileSize(bytes) {
@@ -464,6 +490,7 @@ async function startEncoding() {
     progress.value = 5
     const workerUrl = new URL(withBase('/wasm/faac-worker.js'), window.location.origin).href
     const worker = new Worker(workerUrl)
+    activeWorker = worker
 
     worker.onmessage = (e) => {
       const msg = e.data
@@ -471,6 +498,7 @@ async function startEncoding() {
         progress.value = msg.progress
         statusMessage.value = msg.status
       } else if (msg.type === 'complete') {
+        activeWorker = null
         progress.value = 100
         statusMessage.value = 'FAAC M4A encoding complete!'
         isProcessing.value = false
@@ -505,6 +533,7 @@ async function startEncoding() {
 
         worker.terminate()
       } else if (msg.type === 'error') {
+        activeWorker = null
         statusMessage.value = 'Worker Error: ' + msg.message
         isProcessing.value = false
         worker.terminate()
@@ -512,6 +541,7 @@ async function startEncoding() {
     }
 
     worker.onerror = () => {
+      activeWorker = null
       statusMessage.value = 'The audio converter could not run. Please reload the page and try again.'
       isProcessing.value = false
       worker.terminate()
