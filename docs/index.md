@@ -29,14 +29,14 @@ features:
     linkText: "Compare code and memory"
   - icon: "<i class=\"fa-solid fa-headphones feature-icon feature-icon--violet\" aria-hidden=\"true\"></i>"
     title: "Competitive audio quality"
-    details: "Leading aggregate objective quality scores in published testing. Fine-tuned across speech, music, and difficult passages."
-    link: "/docs/optimization"
-    linkText: "See quality results"
-  - icon: "<i class=\"fa-solid fa-code feature-icon feature-icon--cyan\" aria-hidden=\"true\"></i>"
-    title: "Open development"
-    details: "Source code, CLI guides, and C APIs for AAC encoding and decoding. Check the license and release status for the library you plan to use."
-    link: "/docs/install"
-    linkText: "Choose your library"
+    details: "Tuned across speech, music, and difficult passages, FAAC leads published quality scores; FAAD scores highly in decoding."
+    link: "/docs/optimization#how-audio-quality-is-tuned"
+    linkText: "How quality is tuned"
+  - icon: "<i class=\"fa-solid fa-scale-balanced feature-icon feature-icon--cyan\" aria-hidden=\"true\"></i>"
+    title: "Open source, LGPL licensed"
+    details: "Use FAAC or FAAD in a closed-source app while meeting LGPL v2.1+ requirements."
+    link: "/docs/comparison#software-licenses-and-patent-rights"
+    linkText: "Review licensing"
 ---
 
 <div class="home-technical-wrapper vp-doc">

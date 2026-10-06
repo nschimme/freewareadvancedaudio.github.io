@@ -76,17 +76,17 @@ export default defineConfig({
         ]
       },
       {
-        text: 'C Library APIs',
-        items: [
-          { text: 'libfaac C API', link: '/docs/libfaac' },
-          { text: 'libfaad C API', link: '/docs/libfaad' }
-        ]
-      },
-      {
         text: 'CLI Manuals',
         items: [
           { text: 'FAAC CLI Manpage', link: '/docs/faac-cli' },
           { text: 'FAAD CLI Manpage', link: '/docs/faad-cli' }
+        ]
+      },
+      {
+        text: 'C Library APIs',
+        items: [
+          { text: 'libfaac C API', link: '/docs/libfaac' },
+          { text: 'libfaad C API', link: '/docs/libfaad' }
         ]
       },
       {
