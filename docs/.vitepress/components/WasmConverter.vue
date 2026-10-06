@@ -302,7 +302,7 @@ function parseAudioHeader(arrayBuffer) {
   if (bytes[0] === 0x66 && bytes[1] === 0x4C && bytes[2] === 0x61 && bytes[3] === 0x43) {
     if (arrayBuffer.byteLength >= 22) {
       const sampleRate = (bytes[18] << 12) | (bytes[19] << 4) | (bytes[20] >> 4)
-      const bitDepth = (((bytes[20] & 0x0F) << 1) | (bytes[21] >> 7)) + 1
+      const bitDepth = (((bytes[20] & 0x01) << 4) | (bytes[21] >> 4)) + 1
       return { sampleRate: sampleRate > 0 ? sampleRate : null, bitDepth: bitDepth > 0 ? bitDepth : null }
     }
   }
@@ -359,7 +359,7 @@ async function decodeSelectedFile(file, request) {
       try {
         audioCtx = new AudioContextClass({ sampleRate: nativeRate })
       } catch {
-        audioCtx = new AudioContextClass()
+        throw new Error(`This browser cannot decode audio at ${nativeRate} Hz.`)
       }
     } else {
       audioCtx = new AudioContextClass()

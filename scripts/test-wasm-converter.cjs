@@ -53,11 +53,16 @@ function metadata(bytes) {
 }
 
 function writeWav(filename, pcm, settings) {
+  const isFloat = settings.sampleFormat === 'float';
+  const formatTag = isFloat ? 3 : 1; // 3 = WAVE_FORMAT_FLOAT, 1 = WAVE_FORMAT_PCM
+  const bitsPerSample = isFloat ? 32 : 16;
+  const blockAlign = settings.channels * (bitsPerSample / 8);
+  const byteRate = settings.sampleRate * blockAlign;
   const header = Buffer.alloc(44);
   header.write('RIFF'); header.writeUInt32LE(36 + pcm.byteLength, 4); header.write('WAVEfmt ', 8);
-  header.writeUInt32LE(16, 16); header.writeUInt16LE(1, 20); header.writeUInt16LE(settings.channels, 22);
-  header.writeUInt32LE(settings.sampleRate, 24); header.writeUInt32LE(settings.sampleRate * settings.channels * 2, 28);
-  header.writeUInt16LE(settings.channels * 2, 32); header.writeUInt16LE(16, 34);
+  header.writeUInt32LE(16, 16); header.writeUInt16LE(formatTag, 20); header.writeUInt16LE(settings.channels, 22);
+  header.writeUInt32LE(settings.sampleRate, 24); header.writeUInt32LE(byteRate, 28);
+  header.writeUInt16LE(blockAlign, 32); header.writeUInt16LE(bitsPerSample, 34);
   header.write('data', 36); header.writeUInt32LE(pcm.byteLength, 40);
   fs.writeFileSync(filename, Buffer.concat([header, Buffer.from(pcm.buffer)]));
 }
