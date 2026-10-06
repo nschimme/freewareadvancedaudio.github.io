@@ -12,19 +12,20 @@ const encoders = [
 ]
 const encoderMetrics = [
   { key: 'speed' as const, title: 'Encoding throughput', icon: 'gauge-high', value: '507×', unit: 'realtime', summary: '3.3× the measured FDK-AAC throughput', max: 506.9, format: (n: number) => `${n.toFixed(1)}×`, note: 'Aggregate throughput · higher is better' },
-  { key: 'footprint' as const, title: 'Encoder footprint', icon: 'microchip', value: '73', unit: 'KB', summary: 'About 8% of the measured FDK-AAC footprint', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Code + constants + initialized data · lower is better' }
+  { key: 'footprint' as const, title: 'Encoder code footprint', icon: 'microchip', value: '92%', unit: 'less code', summary: 'FAAC 73.4 KB vs FDK-AAC 940.5 KB', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Code + constants + initialized data · lower is better' }
 ]
 const decoders = [
-  { name: 'FAAD3', speed: 490.3, footprint: 136.0 },
-  { name: 'LibHelix', speed: 426.1, footprint: 121.4 },
-  { name: 'FAAD2', speed: 376.8, footprint: 296.3 },
-  { name: 'FDK-AAC', speed: 344.1, footprint: 940.5 },
-  { name: 'Apple AAC', speed: 174.4, footprint: 100.3 },
-  { name: 'FFmpeg AAC', speed: 135.1, footprint: 274.5 }
+  // Match the encoder card order, then append decoder-only implementations.
+  { name: 'FAAD3', speed: 1011.2, footprint: 161.9 },
+  { name: 'FDK AAC', speed: 896.2, footprint: 940.5 },
+  { name: 'Apple AAC', speed: 1049.7, footprint: 100.3 },
+  { name: 'FFmpeg AAC', speed: 597.5, footprint: 274.9 },
+  { name: 'FAAD2', speed: 515.8, footprint: 296.3 },
+  { name: 'Helix AAC', speed: 812.4, footprint: 121.4 }
 ]
 const decoderMetrics = [
-  { key: 'speed' as const, title: 'Decoding throughput', icon: 'gauge-high', value: '490×', unit: 'realtime', summary: 'FAAD3 · 15% higher throughput than LibHelix', max: 490.3, format: (n: number) => `${n.toFixed(1)}×`, note: 'Aggregate throughput · higher is better' },
-  { key: 'footprint' as const, title: 'Decoder footprint', icon: 'microchip', value: '54%', unit: 'less code', summary: 'FAAD3 compared with FAAD2 · 136 KB', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Helix and Apple were smaller · lower is better' }
+  { key: 'speed' as const, title: 'Decoding throughput', icon: 'gauge-high', value: '1,011×', unit: 'realtime', summary: '1.96× the throughput of FAAD2', max: 1049.7, format: (n: number) => `${n.toFixed(1)}×`, note: 'Aggregate throughput · higher is better' },
+  { key: 'footprint' as const, title: 'Decoder code footprint', icon: 'microchip', value: '45%', unit: 'less code', summary: 'FAAD3 161.9 KB vs FAAD2 296.3 KB', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Code + read-only + initialized data · lower is better' }
 ]
 const metrics = computed(() => props.view === 'decoder' ? decoderMetrics : encoderMetrics)
 const implementations = computed(() => props.view === 'decoder' ? decoders : encoders)
@@ -43,7 +44,7 @@ const displayScore = (score: number) => (Math.round(score * 100) / 100).toFixed(
 </script>
 
 <template>
-  <div v-if="view !== 'quality'" class="resource-cards" :aria-label="view === 'decoder' ? 'Measured decoder throughput and footprint' : 'Measured encoder throughput and footprint'">
+  <div v-if="view !== 'quality'" class="resource-cards" :aria-label="view === 'decoder' ? 'Measured AAC decoder throughput and footprint' : 'Measured encoder throughput and footprint'">
     <article v-for="metric in metrics" :key="metric.key" class="metric-card">
       <div class="metric-heading"><i :class="`fa-solid fa-${metric.icon}`" aria-hidden="true"></i><h3>{{ metric.title }}</h3></div>
       <div class="metric-value">{{ metric.value }} <span>{{ metric.unit }}</span></div>

@@ -6,8 +6,16 @@ const origin = process.env.SITE_ORIGIN || 'https://freewareadvancedaudio.github.
 export default defineConfig({
   base,
   title: 'Freeware Advanced Audio',
-  description: 'Official documentation and interactive online audio converter for FAAC (LGPL v2.1+ AAC Encoder) and FAAD (AAC Decoder). Fast, compact open-source AAC encoder and decoder libraries in C.',
+  description: 'Official documentation and interactive online audio converter for FAAC and FAAD, LGPL-licensed AAC encoder and decoder libraries in C.',
   cleanUrls: true,
+  vite: {
+    server: {
+      watch: {
+        usePolling: process.env.VITEPRESS_POLLING === '1',
+        interval: 500
+      }
+    }
+  },
   markdown: {
     config(md) {
       // Add decoration at render time so anchors and outline labels stay plain text.
@@ -53,7 +61,7 @@ export default defineConfig({
         text: 'Downloads',
         items: [
           { text: 'FAAC Encoder Releases', link: 'https://github.com/FreewareAdvancedAudio/faac/releases' },
-          { text: 'FAAD Decoder Releases', link: 'https://github.com/FreewareAdvancedAudio/faad2/releases' }
+          { text: 'FAAD Decoder Releases', link: 'https://github.com/nschimme/faac/releases' }
         ]
       },
       { text: 'Blog', link: '/blog/' }
@@ -68,6 +76,13 @@ export default defineConfig({
         ]
       },
       {
+        text: 'C Library APIs',
+        items: [
+          { text: 'libfaac C API', link: '/docs/libfaac' },
+          { text: 'libfaad C API', link: '/docs/libfaad' }
+        ]
+      },
+      {
         text: 'CLI Manuals',
         items: [
           { text: 'FAAC CLI Manpage', link: '/docs/faac-cli' },
@@ -78,6 +93,7 @@ export default defineConfig({
         text: 'Compare & Evaluate',
         items: [
           { text: 'Choose an Encoder or Decoder', link: '/docs/comparison' },
+          { text: 'Tested Versions', link: '/docs/tested-versions' },
           { text: 'AAC Benchmark Results', link: '/docs/optimization' },
           { text: 'Listening-Test Guide', link: '/docs/listening' }
         ]

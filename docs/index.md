@@ -47,13 +47,13 @@ features:
 
 <BenchmarkShowcase view="resources" />
 
-### FAAD3: faster decoding, leaner than FAAD2
+### FAAD: faster decoding for efficient playback
 
 <BenchmarkShowcase view="decoder" />
 
-FAAD3 targets modern processors with floating-point units and is a development engine. LibHelix uses fixed-point arithmetic, making it an option for legacy hardware without an efficient FPU; it lacks HE-AAC v2 Parametric Stereo support.
+In the published comparison, FAAD3 decodes nearly **2× as fast** as FAAD2 with **45% less code**, leaving more processing headroom for the rest of an app.
 
-Measured on a MacBook Pro M1 in the **September 29, 2026 benchmark snapshot**. Results depend on the build and hardware. [See tested versions, quality graphs, memory use, and published evidence](/docs/optimization).
+**Encoder snapshot · September 29, 2026 · MacBook Pro M1, 32 GB.** Decoder figures come from a separate leaderboard. Results depend on the tested builds and hardware. See the [tested versions and measurements](/docs/tested-versions) and [full decoder comparison](/docs/comparison#faad3-and-faad2-benchmark-comparison).
 
 ## Hear FAAC with your own music {data-icon="headphones"}
 
@@ -68,7 +68,7 @@ See the [AAC benchmark results](/docs/optimization) for measured quality, speed,
 | What you want to do | Start here |
 | :--- | :--- |
 | Encode music, speech, or streaming audio | [Install FAAC](/docs/install), then try the [CLI and C API](/docs/faac) |
-| Play or decode existing AAC files | [FAAD decoder guide](/docs/faad), including FAAD2 and FAAD3 release distinctions |
+| Play or decode existing AAC files | [FAAD decoder guide](/docs/faad) and [libfaad API reference](/docs/libfaad) |
 | Choose an encoder or decoder for your application | [Implementation selection guide](/docs/comparison), including hardware, profiles, and licensing |
 | Compare speed, footprint, and objective quality | [AAC benchmark results](/docs/optimization) |
 | Hear FAAC with your own music | [Browser converter](/playground), with an optional [listening guide](/docs/listening) |
@@ -81,10 +81,10 @@ From camera firmware to desktop audio tools, these projects integrate FAAC or FA
 | :--- | :--- |
 | [Thingino](https://github.com/themactep/thingino-firmware/blob/stable/package/faac/faac.mk) | Packages FAAC for open-source firmware for Ingenic IP cameras. |
 | GStreamer | Provides [FAAC encoding](https://gstreamer.freedesktop.org/documentation/faac/index.html) and [FAAD decoding](https://gstreamer.freedesktop.org/documentation/faad/index.html) elements for multimedia pipelines. |
-| [VLC Media Player](https://github.com/videolan/vlc/blob/master/modules/codec/faad.c) | Includes a FAAD2-based AAC decoder module. |
-| [fre:ac](https://github.com/enzo1982/freac/blob/master/Readme) | Integrates FAAC and FAAD2 for AAC conversion in its audio converter and CD ripper. |
+| [VLC Media Player](https://github.com/videolan/vlc/blob/master/modules/codec/faad.c) | Includes a FAAD AAC decoder integration. |
+| [fre:ac](https://github.com/enzo1982/freac/blob/master/Readme) | Uses FAAC and FAAD for AAC conversion in its audio converter and CD ripper. |
 
-Available libraries and features depend on each project's version and build. Report reproducible library problems in [FAAC issues](https://github.com/FreewareAdvancedAudio/faac/issues) or [FAAD issues](https://github.com/FreewareAdvancedAudio/faad2/issues), including your library version and settings.
+Available libraries and features depend on each project's version and build. Report reproducible library problems in [FAAC and FAAD issues](https://github.com/nschimme/faac/issues), including your library version and settings.
 
 ## Quick questions {data-icon="circle-question"}
 
@@ -94,7 +94,7 @@ Use a package manager or build from source. The [installation guide](/docs/insta
 
 ### Which library and license do I need?
 
-FAAC is the encoder; FAAD is the decoder family. FAAC uses LGPL v2.1+, released FAAD2 uses GPL v2+, and next-generation FAAD3 uses LGPL v2.1+. Check the license shipped with your chosen version. Software licensing and codec patent rights are separate questions.
+FAAC is the encoder; FAAD is the decoder. Both libraries use LGPL v2.1+. See the [version comparison](/docs/comparison#software-licenses-and-patent-rights) for legacy release details. Software licensing and codec patent rights are separate questions.
 
 The foundational AAC-LC and HE-AAC v1 patents have expired. HE-AAC v2 adds Parametric Stereo patents expiring in 2029. See [patent status by profile](/docs/comparison#patent-status-by-aac-profile) for the distinctions and jurisdiction considerations.
 

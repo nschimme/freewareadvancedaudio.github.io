@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for Freeware Advanced Audio build & web server
+# Multi-stage Dockerfile for the FAAC WebAssembly encoder and website
 FROM emscripten/emsdk:3.1.6 AS builder
 
 WORKDIR /build
@@ -26,7 +26,7 @@ RUN echo "[binaries]" > /build/emscripten.cross && \
 
 # Build libfaac WASM
 RUN cd /build/faac_src && \
-    meson setup build_wasm --cross-file /build/emscripten.cross -Ddefault_library=static && \
+    meson setup build_wasm --cross-file /build/emscripten.cross -Ddefault_library=static -Ddecoder=false && \
     ninja -C build_wasm
 
 COPY scripts/wasm-api.c /build/wasm-api.c
@@ -64,7 +64,7 @@ COPY --from=builder /build/out_wasm/ /opt/faac-wasm/
 
 EXPOSE 5173 4173
 
-CMD ["sh", "-lc", "cp /opt/faac-wasm/* docs/public/wasm/ && npm run docs:dev -- --host 0.0.0.0"]
+CMD ["sh", "-lc", "cp /opt/faac-wasm/* docs/public/wasm/ && exec npm run docs:dev -- --host 0.0.0.0"]
 
 # Static site builder stage for production deployment
 FROM app AS site-builder

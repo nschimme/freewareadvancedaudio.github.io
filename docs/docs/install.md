@@ -1,17 +1,17 @@
 ---
 title: Installation Guide — FAAC & FAAD
-description: Complete installation guide for FAAC (AAC Encoder) and FAAD (AAC Decoder) across macOS Homebrew, Linux package managers, and building from source via Meson, CMake, or Autotools.
+description: Install the current FAAC AAC encoder and FAAD decoder from source or use available operating-system packages.
 ---
 
 # Installation Guide
 
-Install **FAAC** (Encoder) and **FAAD** (Decoder) via macOS Homebrew, Linux package managers, or build directly from source.
+Install **FAAC** (encoder) and **FAAD** (decoder). Current source builds provide both libraries and command-line tools from the same repository.
 
 ---
 
 ## Check the version before integrating {data-icon="circle-info"}
 
-Package versions and availability vary by operating-system release and enabled repositories. Inspect the installed CLI help and headers: newer profiles, container features, and the documented FAAC API may require a newer source build. The decoder packages below provide released **FAAD2**, not the FAAD3 development engine.
+Operating-system package names and versions vary. Some repositories still package the legacy FAAD2 decoder under names such as `faad2`; those packages do not provide the current FAAD API. Build from source for the current `<faad.h>` interface. See the [version comparison](/docs/comparison#choose-a-decoder-for-your-hardware) for details.
 
 ## macOS (Homebrew) {data-icon="laptop"}
 
@@ -21,7 +21,7 @@ Install using Homebrew on macOS:
 # Install FAAC AAC Encoder
 brew install faac
 
-# Install FAAD AAC Decoder
+# Install the decoder package available in Homebrew (check its version)
 brew install faad2
 ```
 
@@ -49,31 +49,20 @@ sudo pacman -S faac faad2
 
 ---
 
-## Building from Source {data-icon="code"}
+## Build current FAAC and FAAD from source {data-icon="code"}
 
-Source code repositories and official release archives:
-- **FAAC Repository & Releases**: [github.com/FreewareAdvancedAudio/faac](https://github.com/FreewareAdvancedAudio/faac)
-- **FAAD Repository & Releases**: [github.com/FreewareAdvancedAudio/faad2](https://github.com/FreewareAdvancedAudio/faad2)
+Current combined source for FAAC and FAAD:
+- **FAAC and FAAD Source**: [github.com/nschimme/faac/tree/faad-upstream](https://github.com/nschimme/faac/tree/faad-upstream)
 
-### Building FAAC (Meson / Ninja)
+### Building FAAC and FAAD (Meson / Ninja)
 
 ```bash
-git clone https://github.com/FreewareAdvancedAudio/faac.git
+git clone --branch faad-upstream --single-branch https://github.com/nschimme/faac.git
 cd faac
 
-meson setup build
-ninja -C build
-sudo ninja -C build install
+meson setup build -Dencoder=true -Ddecoder=true
+meson compile -C build
+sudo meson install -C build
 ```
 
-### Building FAAD (CMake / Make)
-
-```bash
-git clone https://github.com/FreewareAdvancedAudio/faad2.git
-cd faad2
-
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-sudo make install
-```
+Use `-Dencoder=false` or `-Ddecoder=false` to build only one library. See the [FAAC](/docs/faac), [FAAD](/docs/faad), [`libfaac`](/docs/libfaac), and [`libfaad`](/docs/libfaad) guides for capabilities and API details.

@@ -1,17 +1,17 @@
 ---
-title: AAC Benchmarks — FAAC & FAAD Speed, Size & Quality
-description: "Published AAC encoder and decoder benchmarks: FAAC versus FDK-AAC, FFmpeg, and Apple; FAAD2 and FAAD3 versus Helix. Compare throughput, footprint, and low-bitrate quality."
+title: FAAC Benchmarks — Speed, Size & Quality
+description: "Published AAC encoder benchmarks and quality methodology for FAAC versus FDK-AAC, FFmpeg, and Apple."
 ---
 
-# AAC Benchmarks: Speed, Size, and Quality
+# FAAC Benchmarks: Speed, Size, and Quality
 
-Compare **measured encoding speed, code footprint, low-bitrate quality, and decoder performance**. The results below are a published benchmark snapshot; the methods explain how these measurements guide FAAC tuning.
+Compare **measured encoding speed, code footprint, and low-bitrate quality**. The results below are a published encoder benchmark snapshot; the methods explain how these measurements guide FAAC tuning.
 
 ## FAAC encoder speed and footprint {data-icon="gauge-high"}
 
 <BenchmarkShowcase view="resources" />
 
-**Benchmark snapshot · September 29, 2026 · MacBook Pro M1, 32 GB.** The aggregate report covers 27 scenarios. Tested builds: FAAC 2.2.0 (`6acbe23a`), FDK-AAC 2.0.3 through fdkaac 1.0.9, Apple AAC 27.0, and FFmpeg `g3fc4f99a79` with experimental NMR. [Published measurements](https://github.com/nschimme/faac-benchmark/discussions/90).
+**Benchmark snapshot · September 29, 2026 · MacBook Pro M1, 32 GB.** The leaderboard reports results for 27 of 33 configured scenarios. See [tested versions and measurements](/docs/tested-versions) or the [published leaderboard and per-scenario results](https://github.com/nschimme/faac-benchmark/discussions/90).
 
 ## Low-bitrate quality: FAAC vs FFmpeg {data-icon="headphones"}
 
@@ -20,25 +20,6 @@ See FAAC's HE-AAC v1 results against FFmpeg's native LC encoder, or select LC vs
 <BenchmarkShowcase view="quality" />
 
 Average scores from the same snapshot. See the report for [profile breakdowns and bitrate accuracy](https://github.com/nschimme/faac-benchmark/discussions/90).
-
-## Decoder performance: FAAD vs Helix and others {data-icon="circle-play"}
-
-<BenchmarkShowcase view="decoder" />
-
-The same [published report](https://github.com/nschimme/faac-benchmark/discussions/90#decoder-leaderboard) compares **released FAAD2** and the **FAAD3 development engine** with other AAC decoders.
-
-| Decoder | Throughput ↑ | Code footprint ↓ | Peak RAM ↓ |
-| :--- | ---: | ---: | ---: |
-| **FAAD2 2.11.3** | **376.8×** | **296.3 KB** | **2.1 MB** |
-| **FAAD3 (`f9fbcb76`)** | **490.3×** | **136.0 KB** | **2.8 MB** |
-| Helix AAC 1.0 (LibHelix) | 426.1× | 121.4 KB | 1.9 MB |
-| FDK AAC 2.0.0 | 344.1× | 940.5 KB | 4.2 MB |
-| FFmpeg AAC (`g3fc4f99a79`) | 135.1× | 274.5 KB | 16.8 MB |
-| Apple AAC 27.0 | 174.4× | 100.3 KB | 8.3 MB |
-
-**The tradeoff:** FAAD3 was faster and used less code storage than FAAD2, with higher peak RAM. Helix was faster and smaller than FAAD2; FAAD3 was faster than Helix, with a larger footprint.
-
-Helix lacks HE-AAC v2 Parametric Stereo (PS) support. For FPU versus fixed-point hardware guidance and release requirements, see [choosing a decoder](/docs/comparison#choose-a-decoder-for-your-hardware).
 
 ## How audio quality is tuned {data-icon="headphones"}
 
