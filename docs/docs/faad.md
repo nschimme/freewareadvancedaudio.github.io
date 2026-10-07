@@ -7,25 +7,20 @@ description: FAAD is an LGPL v2.1+ C11 AAC decoder for AAC-LC and HE-AAC. Explor
 
 **FAAD (Freeware Advanced Audio Decoder)** is a C11 AAC decoder library and command-line tool, licensed under **LGPL v2.1 or later**. Use `faad` to convert supported AAC files to PCM audio, or integrate `libfaad` to decode AAC frames inside an application.
 
-## AAC profiles and build options
+## AAC decoding capabilities
 
-FAAD decodes **AAC-LC**, **HE-AAC v1**, and **HE-AAC v2 Parametric Stereo** in its default build. SBR and PS can be disabled at build time; `faad_get_library_info()` reports the capabilities of the library you are using.
+FAAD supports **AAC-LC**, **HE-AAC v1**, and **HE-AAC v2 Parametric Stereo** when enabled in the build; it does not support xHE-AAC. The library decodes AAC frames supplied by the application and returns PCM, while the command-line tool handles file conversion, including supported container input. See the [supported streams and build requirements](/docs/libfaad#supported-streams) for details.
 
-## Library and command-line use
-
-The C library decodes AAC frames supplied by the application and returns PCM. It does not parse MP4/M4A containers; the host application supplies the AAC frames. The `faad` command-line tool handles file conversion, including container input supported by the build.
+## Choose how to use FAAD
 
 | If you want to… | Go to… |
 | :--- | :--- |
 | Decode files from a terminal | [FAAD command-line manual](/docs/faad-cli) |
 | Embed AAC decoding in a C application | [libfaad C API reference](/docs/libfaad) |
 | Build FAAD from source | [Installation guide](/docs/install) |
+| Port an application from FAAD2 | [FAAD2 migration notes](/docs/libfaad#porting-from-the-legacy-neaacdec-api) |
 | Compare profiles, implementations, and licenses | [Encoder and decoder comparison](/docs/comparison) |
 
-## Migrating from FAAD2
-
-FAAD uses the `<faad.h>` C API, which differs from FAAD2's legacy `NeAACDec*` API. Applications need a source-level port and rebuild. Read the [FAAD2 migration notes](/docs/libfaad#porting-from-the-legacy-neaacdec-api) before changing an existing integration.
-
-## Decoder performance and quality
+## Evaluate decoder performance and quality
 
 See [tested versions](/docs/tested-versions) for decoder measurements and their build notes. Use the [implementation comparison](/docs/comparison) to compare profiles and licensing.

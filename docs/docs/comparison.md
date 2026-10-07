@@ -11,16 +11,32 @@ Choose by **use case, hardware, required AAC profiles, and license**. FAAC encod
 
 | Your requirement | Start here |
 | :--- | :--- |
-| AAC/M4A output from a C application | FAAC |
-| AAC playback in a C application | FAAD |
-| Lossless music storage or masters | FLAC; retain the original PCM information |
-| Interactive voice or WebRTC | Opus; evaluate delay and communications requirements |
-| HE-AAC v2 encoding | FDK-AAC or Apple AudioToolbox; see the encoder matrix |
+| AAC/M4A output from a C application | [Choose an AAC encoder](#choose-an-aac-encoder-for-your-application) |
+| AAC playback in a C application | [Choose a decoder](#choose-a-decoder-for-your-hardware) |
+| HE-AAC v2 encoding | [Choose an AAC encoder](#choose-an-aac-encoder-for-your-application) |
+| Apple-platform AAC application | AudioToolbox; compare the [encoder](#aac-encoders) and [decoder](#aac-decoders) matrices |
+| Existing FFmpeg pipeline | Choose an AAC encoder or decoder available in your FFmpeg build; compare the [encoder](#aac-encoders) and [decoder](#aac-decoders) matrices |
+| Lossless music storage or masters | [FLAC](https://www.xiph.org/flac/); retain the original PCM information |
+| Interactive voice or WebRTC | [Opus](#xhe-aac-digital-radio-mondiale-and-opus); evaluate delay and communications requirements |
+| Low-bitrate speech and music streaming | Compare [xHE-AAC and Opus](#xhe-aac-digital-radio-mondiale-and-opus) for playback support and licensing |
 | Digital Radio Mondiale (DRM) | A DRM-aware encoder and receiver stack; see [DRM notes](#xhe-aac-digital-radio-mondiale-and-opus) |
-| Low-bitrate speech and music streaming | Compare xHE-AAC and Opus for playback support and licensing |
-| Existing FFmpeg pipeline | Use an encoder available in your FFmpeg build |
-| Apple-platform application | AudioToolbox; see the matrices for supported profiles |
-| Playback on MP3-only hardware | LAME MP3 |
+| Playback on MP3-only hardware | [LAME MP3 encoder](https://lame.sourceforge.io/) |
+
+**Want to hear the difference?** [Try the browser converter](/playground) with your own audio, then use the comparisons below to narrow your choice.
+
+## Choose an AAC encoder for your application {data-icon="compass"}
+
+Choose based on the profile you need and the platform you are targeting. The capability matrix below shows supported profiles and build-dependent options.
+
+| Your requirement | Encoder to evaluate |
+| :--- | :--- |
+| AAC/M4A output from a C application | [FAAC](/docs/faac) |
+| HE-AAC v2 (Parametric Stereo) | FDK-AAC or Apple AudioToolbox; see [patent notes](#patent-status-by-aac-profile) |
+| Existing FFmpeg pipeline | An AAC encoder available in your FFmpeg build |
+| Apple-platform application | AudioToolbox |
+| Digital Radio Mondiale (DRM) | A DRM-aware encoder and receiver stack; see [DRM notes](#xhe-aac-digital-radio-mondiale-and-opus) |
+
+For lossless music storage or masters, use [FLAC](https://www.xiph.org/flac/) and retain the original PCM. For interactive voice or WebRTC, evaluate Opus and its delay characteristics. For low-bitrate speech and music streaming, compare xHE-AAC and Opus for playback support and licensing. If you need playback on MP3-only hardware, use an MP3 encoder such as [LAME](https://lame.sourceforge.io/).
 
 ## Choose a decoder for your hardware {data-icon="microchip"}
 
@@ -35,6 +51,8 @@ Choose by **use case, hardware, required AAC profiles, and license**. FAAC encod
 An FPU is a hardware floating-point unit. Desktop throughput does not predict microcontroller performance. See the [FAAD guide](/docs/faad) and [libfaad reference](/docs/libfaad) for build options.
 
 ## Library capabilities {data-icon="layer-group"}
+
+Use these matrices to compare profile support across encoders and decoders. Support can depend on the specific build; notes below call out the main qualifications.
 
 ### AAC encoders
 
@@ -82,12 +100,6 @@ Profile support does not guarantee every transport, sample rate, or channel layo
 
 For measured decoder quality, speed, memory, and footprint, see the [decoder snapshot](/docs/tested-versions).
 
-## xHE-AAC, Digital Radio Mondiale, and Opus {data-icon="tower-broadcast"}
-
-**DRM can carry AAC with SBR/PS or xHE-AAC; FAAC does not encode xHE-AAC.** Legacy FAAD2 offers optional DRM decoding, and FDK-AAC supports DRM/DRM+ audio transport. A complete receiver also needs radio demodulation and service signaling. See [Fraunhofer's xHE-AAC overview](https://www.iis.fraunhofer.de/en/ff/amm/broadcast-streaming/xheaac.html) and the [DRM system specification](https://www.etsi.org/deliver/etsi_es/201900_201999/201980/04.03.00_50/es_201980v040300m.pdf).
-
-xHE-AAC and [Opus](https://opus-codec.org/) overlap in streaming uses; Opus also serves interactive voice and conferencing. Compare delay, playback support, and licensing.
-
 ## Software licenses and patent rights {data-icon="scale-balanced"}
 
 | Implementation | Software license |
@@ -115,8 +127,8 @@ These profile distinctions apply across implementations, including FFmpeg. Paten
 
 Via LA states that it does not charge patent license fees for distributing AAC bitstreams, including broadcasts and streams. Encoder and decoder products have separate licensing considerations.
 
-## Validate your choice {data-icon="circle-check"}
+## xHE-AAC, Digital Radio Mondiale, and Opus {data-icon="tower-broadcast"}
 
-1. **Check your budget:** use the [AAC benchmark results](/docs/optimization) as a starting point, then measure CPU, code size, and RAM on your target.
-2. **Check the sound:** [try the converter](/playground) or follow the [listening-test guide](/docs/listening) at your intended bitrate.
-3. **Integrate:** follow the [FAAC encoder guide](/docs/faac), [FAAD decoder guide](/docs/faad), or [installation guide](/docs/install).
+For streaming or broadcast use cases beyond the profiles in the matrices, compare format support, licensing, and the full transport stack. **DRM can carry AAC with SBR/PS or xHE-AAC; FAAC does not encode xHE-AAC.** Legacy FAAD2 offers optional DRM decoding, and FDK-AAC supports DRM/DRM+ audio transport. A complete receiver also needs radio demodulation and service signaling. See [Fraunhofer's xHE-AAC overview](https://www.iis.fraunhofer.de/en/ff/amm/broadcast-streaming/xheaac.html) and the [DRM system specification](https://www.etsi.org/deliver/etsi_es/201900_201999/201980/04.03.00_50/es_201980v040300m.pdf).
+
+xHE-AAC and [Opus](https://opus-codec.org/) overlap in streaming uses; Opus also serves interactive voice and conferencing. Compare delay, playback support, and licensing.
