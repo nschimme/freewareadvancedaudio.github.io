@@ -9,7 +9,7 @@ description: FAAD is an LGPL v2.1+ C11 AAC decoder for AAC-LC and HE-AAC. Explor
 
 ## AAC profiles and build options
 
-FAAD decodes **AAC-LC** and **HE-AAC v1**. **HE-AAC v2 Parametric Stereo** is available when the library is built with SBR and PS support enabled. Check the options used by your build when you depend on a particular profile.
+FAAD decodes **AAC-LC**, **HE-AAC v1**, and **HE-AAC v2 Parametric Stereo** in its default build. SBR and PS can be disabled at build time; `faad_get_library_info()` reports the capabilities of the library you are using.
 
 ## Library and command-line use
 
@@ -28,4 +28,4 @@ FAAD uses the `<faad.h>` C API, which differs from FAAD2's legacy `NeAACDec*` AP
 
 ## Decoder performance and quality
 
-Published results compare decode quality, speed, memory use, and code footprint across AAC implementations. FAAD's comparison with FAAD2 and notes on the tested builds are in the [decoder comparison](/docs/comparison#faad3-and-faad2-benchmark-comparison) and [tested versions](/docs/tested-versions).
+See [tested versions](/docs/tested-versions) for decoder measurements and their build notes. Use the [implementation comparison](/docs/comparison) to compare profiles and licensing.

@@ -84,7 +84,7 @@ From camera firmware to desktop audio tools, these projects integrate FAAC or FA
 | [VLC Media Player](https://github.com/videolan/vlc/blob/master/modules/codec/faad.c) | Includes a FAAD AAC decoder integration. |
 | [fre:ac](https://github.com/enzo1982/freac/blob/master/Readme) | Uses FAAC and FAAD for AAC conversion in its audio converter and CD ripper. |
 
-Available libraries and features depend on each project's version and build. Report reproducible library problems in [FAAC and FAAD issues](https://github.com/nschimme/faac/issues), including your library version and settings.
+Available libraries and features depend on each project's version and build. Report reproducible library problems in [FAAC and FAAD issues](https://github.com/FreewareAdvancedAudio/faac/issues), including your library version and settings.
 
 ## Quick questions {data-icon="circle-question"}
 

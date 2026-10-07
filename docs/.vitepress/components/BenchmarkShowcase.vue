@@ -30,6 +30,8 @@ const decoderMetrics = [
 const metrics = computed(() => props.view === 'decoder' ? decoderMetrics : encoderMetrics)
 const implementations = computed(() => props.view === 'decoder' ? decoders : encoders)
 const profile = ref<'lc' | 'he'>('he')
+const bitrateRange = ref<'low' | 'high'>('low')
+const highComparator = ref<'fdk' | 'ffmpeg'>('fdk')
 const faacLabel = computed(() => profile.value === 'lc' ? 'FAAC · LC' : 'FAAC · HE v1')
 const quality = [
   { rate: 24, lc: 2.715, he: 3.427, ffmpeg: 2.515 },
@@ -39,7 +41,15 @@ const quality = [
   { rate: 56, lc: 4.258, he: 4.309, ffmpeg: 4.129 },
   { rate: 64, lc: 4.379, he: 4.414, ffmpeg: 4.279 }
 ]
-const qualityWidth = (score: number) => `${(score - 1) / 4 * 100}%`
+// Published AAC-LC averages for transparency and archival bitrates.
+const highQuality = [
+  { rate: 128, faac: 4.8336, fdk: 4.8331, ffmpeg: 4.7918 },
+  { rate: 160, faac: 4.9053, fdk: 4.8856, ffmpeg: 4.8745 },
+  { rate: 192, faac: 4.9427, fdk: 4.9300, ffmpeg: 4.9241 },
+  { rate: 256, faac: 4.9761, fdk: 4.9553, ffmpeg: 4.9626 },
+  { rate: 320, faac: 4.9889, fdk: 4.9624, ffmpeg: 4.9749 }
+]
+const qualityWidth = (score: number, high = false) => `${(score - (high ? 4 : 1)) / (high ? 1 : 4) * 100}%`
 const displayScore = (score: number) => (Math.round(score * 100) / 100).toFixed(2)
 </script>
 
@@ -60,36 +70,38 @@ const displayScore = (score: number) => (Math.round(score * 100) / 100).toFixed(
   </div>
 
   <figure v-else class="quality-chart" aria-labelledby="quality-chart-caption">
-    <figcaption id="quality-chart-caption">48 kHz stereo · 24–64 kbps</figcaption>
-    <div class="profile-controls" role="group" aria-label="FAAC profile to compare with FFmpeg LC">
+    <figcaption id="quality-chart-caption">48 kHz stereo · {{ bitrateRange === 'low' ? '24–64 kbps' : 'High bitrate · 128–320 kbps' }}</figcaption>
+    <div class="profile-controls range-controls" role="group" aria-label="Quality benchmark bitrate range">
+      <button type="button" :aria-pressed="bitrateRange === 'low'" @click="bitrateRange = 'low'">Low bitrate · 24–64 kbps</button>
+      <button type="button" :aria-pressed="bitrateRange === 'high'" @click="bitrateRange = 'high'; profile = 'lc'">High bitrate · 128–320 kbps</button>
+    </div>
+    <div v-if="bitrateRange === 'low'" class="profile-controls" role="group" aria-label="FAAC profile to compare with FFmpeg LC">
       <button type="button" :aria-pressed="profile === 'he'" @click="profile = 'he'">FAAC HE v1 vs FFmpeg LC</button>
       <button type="button" :aria-pressed="profile === 'lc'" @click="profile = 'lc'">LC vs LC</button>
     </div>
-    <p class="chart-note">Average objective MOS · higher is better</p>
-    <div class="quality-axis" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
-    <div v-for="point in quality" :key="point.rate" class="quality-group">
+    <div v-else class="profile-controls" role="group" aria-label="AAC-LC encoder comparison">
+      <button type="button" :aria-pressed="highComparator === 'fdk'" @click="highComparator = 'fdk'">FAAC vs FDK-AAC</button>
+      <button type="button" :aria-pressed="highComparator === 'ffmpeg'" @click="highComparator = 'ffmpeg'">FAAC vs FFmpeg</button>
+    </div>
+    <p class="chart-note">Average objective MOS</p>
+    <div class="quality-axis" :class="{ 'high-quality-axis': bitrateRange === 'high' }" aria-hidden="true"><span>{{ bitrateRange === 'high' ? '4.0' : '1' }}</span><span>{{ bitrateRange === 'high' ? '4.25' : '2' }}</span><span>{{ bitrateRange === 'high' ? '4.5' : '3' }}</span><span>{{ bitrateRange === 'high' ? '4.75' : '4' }}</span><span>5</span></div>
+    <div class="quality-axis-hints" :class="{ 'high-quality-axis': bitrateRange === 'high' }" role="img" aria-label="Lower scores are worse; higher scores are better"><span>Worse</span><span>Better</span></div>
+    <div v-for="point in (bitrateRange === 'low' ? quality : highQuality)" :key="point.rate" class="quality-group">
       <div class="rate-label">{{ point.rate }} <span>kbps</span></div>
       <div class="quality-pair">
-        <div class="quality-row faac-row">
-          <span class="encoder-label">{{ faacLabel }}</span>
-          <div class="quality-track" aria-hidden="true"><div :style="{width: qualityWidth(point[profile])}"></div></div>
-          <strong>{{ displayScore(point[profile]) }}</strong>
+        <div class="quality-row faac-row" :class="{ 'high-quality-row': bitrateRange === 'high' }">
+          <span class="encoder-label">{{ bitrateRange === 'high' ? 'FAAC · LC' : faacLabel }}</span>
+          <div class="quality-track" aria-hidden="true"><div :style="{width: qualityWidth(bitrateRange === 'high' ? point.faac : point[profile], bitrateRange === 'high')}"></div></div>
+          <strong>{{ displayScore(bitrateRange === 'high' ? point.faac : point[profile]) }}</strong>
         </div>
-        <div class="quality-row ffmpeg-row">
-          <span class="encoder-label">FFmpeg · LC</span>
-          <div class="quality-track" aria-hidden="true"><div :style="{width: qualityWidth(point.ffmpeg)}"></div></div>
-          <strong>{{ displayScore(point.ffmpeg) }}</strong>
+        <div class="quality-row" :class="[bitrateRange === 'high' ? 'fdk-row high-quality-row' : 'ffmpeg-row']">
+          <span class="encoder-label">{{ bitrateRange === 'high' ? (highComparator === 'fdk' ? 'FDK-AAC · LC' : 'FFmpeg · LC') : 'FFmpeg · LC' }}</span>
+          <div class="quality-track" aria-hidden="true"><div :style="{width: qualityWidth(bitrateRange === 'high' ? point[highComparator] : point.ffmpeg, bitrateRange === 'high')}"></div></div>
+          <strong>{{ displayScore(bitrateRange === 'high' ? point[highComparator] : point.ffmpeg) }}</strong>
         </div>
       </div>
     </div>
-    <p class="chart-note profile-note" aria-live="polite">{{ profile === 'lc' ? 'Both encoders use AAC-LC.' : 'Different profiles: FAAC uses HE-AAC v1; the tested FFmpeg native encoder uses AAC-LC.' }} Bitrates are requested targets, not matched actual payload rates. Scores are model estimates, not listening-test results.</p>
-    <details class="quality-data">
-      <summary>View all scores</summary>
-      <table>
-        <thead><tr><th>Target kbps</th><th>FAAC LC</th><th>FAAC HE v1</th><th>FFmpeg LC</th></tr></thead>
-        <tbody><tr v-for="point in quality" :key="point.rate"><td>{{ point.rate }}</td><td>{{ point.lc.toFixed(3) }}</td><td>{{ point.he.toFixed(3) }}</td><td>{{ point.ffmpeg.toFixed(3) }}</td></tr></tbody>
-      </table>
-    </details>
+    <p class="chart-note profile-note" aria-live="polite">{{ bitrateRange === 'high' ? 'Both encoders use AAC-LC.' : profile === 'lc' ? 'Both encoders use AAC-LC.' : 'Different profiles: FAAC uses HE-AAC v1; the tested FFmpeg native encoder uses AAC-LC.' }} Bitrates are requested targets, not matched actual payload rates. Scores are model estimates, not listening-test results.</p>
   </figure>
 </template>
 
@@ -114,9 +126,10 @@ const displayScore = (score: number) => (Math.round(score * 100) / 100).toFixed(
 .profile-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
 .profile-controls button { padding: 7px 12px; border: 1px solid var(--vp-c-divider); border-radius: 8px; color: var(--vp-c-text-2); font-size: 12px; line-height: 18px; }
 .profile-controls button[aria-pressed="true"] { color: var(--audio-icon-cyan); background: var(--vp-c-brand-soft); border-color: var(--vp-c-brand-1); }
-.profile-controls button:focus-visible, .quality-data summary:focus-visible { outline: 2px solid var(--audio-icon-cyan); outline-offset: 3px; }
+.profile-controls button:focus-visible { outline: 2px solid var(--audio-icon-cyan); outline-offset: 3px; }
 .quality-chart .chart-note { font-size: 12px; line-height: 20px; color: var(--vp-c-text-2); margin: 12px 0; }
-.quality-axis { display: flex; justify-content: space-between; margin: 18px 42px 8px 164px; color: var(--vp-c-text-3); font-size: 11px; }
+.quality-axis { display: flex; justify-content: space-between; margin: 18px 42px 0 164px; color: var(--vp-c-text-3); font-size: 11px; }
+.quality-axis-hints { display: flex; justify-content: space-between; margin: 8px 42px 8px 164px; color: var(--vp-c-text-2); font-size: 10px; line-height: 14px; }
 .quality-group { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--vp-c-divider); }
 .rate-label { align-self: center; font-size: 16px; font-weight: 600; line-height: 20px; }
 .rate-label span { display: block; font-size: 11px; font-weight: 400; color: var(--vp-c-text-3); }
@@ -125,12 +138,12 @@ const displayScore = (score: number) => (Math.round(score * 100) / 100).toFixed(
 .quality-row strong { text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; }
 .faac-row { color: var(--audio-icon-cyan); }
 .ffmpeg-row { color: var(--audio-icon-violet); }
+.high-quality-axis { margin-left: 164px; }
+.high-quality-row { grid-template-columns: 96px minmax(0, 1fr) 34px; }
+.fdk-row { color: var(--audio-icon-violet); }
 .quality-track { height: 10px; background: rgba(148, 163, 184, 0.1); border-radius: 3px; }
 .quality-track > div { height: 100%; border-radius: inherit; background: currentColor; }
 .quality-chart .profile-note { margin-top: 20px; }
-.quality-data { margin-top: 16px; font-size: 13px; }
-.quality-data summary { cursor: pointer; color: var(--vp-c-text-2); }
-.quality-data table { font-size: 12px; }
 @media (max-width: 640px) {
   .resource-cards { grid-template-columns: 1fr; }
   .metric-card, .quality-chart { padding: 18px; }
@@ -139,5 +152,7 @@ const displayScore = (score: number) => (Math.round(score * 100) / 100).toFixed(
   .quality-row { grid-template-columns: minmax(0, 1fr) 34px; gap: 4px 8px; }
   .encoder-label { grid-column: 1 / -1; }
   .quality-axis { margin-left: 44px; }
+  .quality-axis-hints { margin-left: 44px; }
+  .high-quality-axis { margin-left: 44px; }
 }
 </style>

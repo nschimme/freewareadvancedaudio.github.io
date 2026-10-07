@@ -33,7 +33,7 @@ The [decoder leaderboard](https://gist.github.com/nschimme/71953ca296cdfa9800e99
 | FAAD2 | 2.11.3 | 1.451 | 4.224 | 0.9600 | 23.7 dB | 0.33 ms | 515.8× realtime | 2.1 MB | 296.3 KB |
 | Helix AAC | 1.0 | — | — | — | — | — | 812.4× realtime | 1.9 MB | 121.4 KB |
 
-The quality measures shown for FAAD3 and FAAD2 are close and do not establish an audible preference. In this snapshot FAAD3 delivers about 1.96× FAAD2's throughput and uses 45% less ROM image, with 0.5 MB more peak RAM. The report records one FDK runaway; Helix had 14 crashes and one timeout, and did not support HE-AAC v2 Parametric Stereo in single-channel scenarios. Consult the [full FAAD3 and FAAD2 comparison](/docs/comparison#faad3-and-faad2-benchmark-comparison) for interpretation and scope.
+The quality measures shown for FAAD3 and FAAD2 are close and do not establish an audible preference. In this snapshot FAAD3 delivers about 1.96× FAAD2's throughput and uses 45% less ROM image, with 0.5 MB more peak RAM. The report records one FDK runaway; Helix had 14 crashes and one timeout, and did not support HE-AAC v2 Parametric Stereo in single-channel scenarios. For profile and licensing guidance, see the [implementation comparison](/docs/comparison).
 
 ## How to read these figures
 
