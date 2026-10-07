@@ -26,9 +26,9 @@ Choose by **use case, hardware, required AAC profiles, and license**. FAAC encod
 
 | Your target | Decoder to evaluate | Why |
 | :--- | :--- | :--- |
-| General purpose AAC decoding | [FAAD](/docs/faad) | C11 decoder; LGPL v2.1+. |
-| Legacy processor or microcontroller without an efficient FPU | [LibHelix](https://github.com/earlephilhower/ESP8266Audio/blob/master/src/libhelix-aac/aacdec.c) | Fixed-point decoder for low-FPU targets. |
-| HE-AAC v2 Parametric Stereo on a fixed-point target | [Legacy FAAD2](https://github.com/FreewareAdvancedAudio/faad2) | PS support; verify the target build and GPL v2+ terms. |
+| General-purpose decoding or microcontroller with an FPU | [FAAD](/docs/faad) | C11 decoder; LGPL v2.1+. |
+| Microcontroller without an FPU | [LibHelix](https://github.com/earlephilhower/ESP8266Audio/blob/master/src/libhelix-aac/aacdec.c) | Fixed-point decoder with a smaller footprint than legacy FAAD2. |
+| HE-AAC v2 Parametric Stereo on a constrained target | [Legacy FAAD2](https://github.com/FreewareAdvancedAudio/faad2) | Adds PS support, with a larger footprint than LibHelix; verify the target build. |
 | Existing FFmpeg application | The available libavcodec decoder | Reuse the media framework already in your pipeline. |
 | Native Apple application | AudioToolbox | Use the platform's audio APIs and query available formats. |
 
@@ -62,7 +62,7 @@ FFmpeg builds can also include FDK-AAC or Apple AudioToolbox encoders. See [FFmp
 | AAC SSR | — | † | — | — | — | — |
 | AAC-LTP | — | ✓ | ✓ | — | — | — |
 | HE-AAC v1 (SBR) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| HE-AAC v2 (SBR + PS) | † | ✓ | ✓ | ✓ | — | ✓ |
+| HE-AAC v2 (SBR + PS) | ✓ | ✓ | ✓ | ✓ | — | ✓ |
 | ER-LC / ER-LTP | — | ✓ | — | — | — | — |
 | AAC-LD | — | ✓ | — | ✓ | — | ✓ |
 | AAC-ELD | — | — | † | ✓ | — | ✓ |
@@ -74,7 +74,7 @@ FFmpeg builds can also include FDK-AAC or Apple AudioToolbox encoders. See [FFmp
 <details>
 <summary>Profile support notes</summary>
 
-“Main,” “SSR,” and “LTP” are AAC profiles; SBR and PS extend the LC core to HE-AAC v1 and v2. Legacy FAAD2 Main is unavailable in fixed-point builds, SSR is disabled by default, and DRM support is optional. FAAD's HE-AAC v2 support requires SBR and PS; FFmpeg ELD and USAC support depends on its build.
+“Main,” “SSR,” and “LTP” are AAC profiles; SBR and PS extend the LC core to HE-AAC v1 and v2. FAAD and legacy FAAD2 include HE-AAC v2 decoding in their default builds. FAAD's PS support can be disabled at build time; legacy FAAD2 Main is unavailable in fixed-point builds, SSR is disabled by default, and DRM support is optional. FFmpeg ELD and USAC support depends on its build.
 
 Profile support does not guarantee every transport, sample rate, or channel layout. Check the selected release and build. Apple rates and channel layouts depend on the requested format; see [Apple's format identifiers](https://developer.apple.com/documentation/coreaudiotypes/audio-format-identifiers).
 
@@ -90,7 +90,17 @@ xHE-AAC and [Opus](https://opus-codec.org/) overlap in streaming uses; Opus also
 
 ## Software licenses and patent rights {data-icon="scale-balanced"}
 
-FAAC 2.0 and later, and FAAD, use LGPL v2.1+. Earlier FAAC releases included code under different terms. Check the license shipped with the exact version you use. FDK-AAC has a custom license that [Fedora classifies as non-free](https://fedoraproject.org/wiki/Licensing/FDK-AAC). Software copyright and codec patents are separate.
+| Implementation | Software license |
+| :--- | :--- |
+| FAAC 2.0 and later | LGPL v2.1 or later. |
+| FAAD 3.0 and later | LGPL v2.1 or later. |
+| FDK-AAC | [Custom license](https://github.com/mstorsjo/fdk-aac/blob/master/NOTICE) with redistribution and source-availability conditions; it grants no patent rights. [Fedora treats it as not allowed for new packages](https://docs.fedoraproject.org/tr/legal/not-allowed-licenses/), with an exception for continued packaging of `fdk-aac-free`. |
+| LibHelix | [RealNetworks Public Source License (RPSL)](https://github.com/earlephilhower/ESP8266Audio/blob/master/src/libhelix-aac/aacdec.c), unless separately licensed under the RealNetworks Community Source License (RCSL). |
+| FFmpeg | Build-dependent: LGPL v2.1+ by default; GPL v2+ when GPL components are enabled. See [FFmpeg's licensing guidance](https://www.ffmpeg.org/legal.html). |
+| Legacy FAAD2 | GPL v2 or later. |
+| Legacy FAAC 1.x | Included ISO MPEG-4 reference code under terms distinct from the LGPL; check the exact release. |
+
+Check the license shipped with the exact version you use. Software copyright and codec patents are separate; see the patent notes below.
 
 ### Patent status by AAC profile
 
