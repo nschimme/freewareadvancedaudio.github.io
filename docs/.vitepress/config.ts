@@ -31,8 +31,9 @@ export default defineConfig({
           ? renderHeading(tokens, idx, options, env, self)
           : self.renderToken(tokens, idx, options)
         const icon = tokens[idx].attrGet('data-icon')
+        const iconStyle = ['apple', 'linux', 'windows'].includes(icon) ? 'fa-brands' : 'fa-solid'
         return opening + (icon && /^[a-z-]+$/.test(icon)
-          ? `<i class="fa-solid fa-${icon} section-icon" aria-hidden="true"></i> `
+          ? `<i class="${iconStyle} fa-${icon} section-icon" aria-hidden="true"></i> `
           : '')
       }
     }
@@ -54,16 +55,10 @@ export default defineConfig({
     siteTitle: 'Freeware Advanced Audio',
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Documentation', link: '/docs/faac' },
       { text: 'Try FAAC', link: '/playground' },
+      { text: 'Download', link: '/docs/install' },
+      { text: 'Documentation', link: '/docs/faac' },
       { text: 'Choose an Implementation', link: '/docs/comparison' },
-      {
-        text: 'Downloads',
-        items: [
-          { text: 'FAAC Encoder Releases', link: 'https://github.com/FreewareAdvancedAudio/faac/releases' },
-          { text: 'FAAD Decoder Releases', link: 'https://github.com/nschimme/faac/releases' }
-        ]
-      },
       { text: 'Blog', link: '/blog/' }
     ],
     sidebar: [
