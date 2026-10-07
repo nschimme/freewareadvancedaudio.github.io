@@ -52,7 +52,12 @@ function parseMacroArgs(line) {
 
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
-    if (char === '"') {
+    if (char === '\\' && line[i + 1] === ' ') {
+      // Roff uses an escaped space to keep words together in macro arguments.
+      // Preserve it here; unescapeRoff() converts it to a literal space later.
+      current += '\\ ';
+      i++;
+    } else if (char === '"') {
       inQuotes = !inQuotes;
     } else if (char === ' ' && !inQuotes) {
       if (current.length > 0) {
