@@ -107,6 +107,7 @@ For measured decoder quality, speed, memory, and footprint, see the [decoder sna
 | FAAC 2.0 and later | LGPL v2.1 or later. |
 | FAAD 3.0 and later | LGPL v2.1 or later. |
 | FDK-AAC | [Custom license](https://github.com/mstorsjo/fdk-aac/blob/master/NOTICE) with redistribution and source-availability conditions; it grants no patent rights. [Fedora treats it as not allowed for new packages](https://docs.fedoraproject.org/tr/legal/not-allowed-licenses/), with an exception for continued packaging of `fdk-aac-free`. |
+| Opus reference implementation | [Three-clause BSD license](https://www.opus-codec.org/license/); royalty-free patent licenses also apply. |
 | LibHelix | [RealNetworks Public Source License (RPSL)](https://github.com/earlephilhower/ESP8266Audio/blob/master/src/libhelix-aac/aacdec.c), unless separately licensed under the RealNetworks Community Source License (RCSL). |
 | FFmpeg | Build-dependent: LGPL v2.1+ by default; GPL v2+ when GPL components are enabled. See [FFmpeg's licensing guidance](https://www.ffmpeg.org/legal.html). |
 | Legacy FAAD2 | GPL v2 or later. |
