@@ -3,7 +3,7 @@ layout: home
 hero:
   name: "Freeware Advanced Audio"
   text: "Fast, compact AAC encoding and decoding in C"
-  tagline: "FAAC encoding and FAAD decoding for embedded devices, media applications, and listeners who want to hear the difference."
+  tagline: "Try FAAC on your own music, and explore lightweight FAAD decoding for embedded devices and media applications."
   image:
     alt: "Freeware Advanced Audio visualizer"
   actions:
@@ -47,21 +47,21 @@ features:
 
 <BenchmarkShowcase view="resources" />
 
-### FAAD: faster decoding for efficient playback
+## Hear FAAC with your own music {data-icon="headphones"}
+
+Try FAAC with familiar tracks and choose the settings that work for you. The browser converter needs no installation or uploads.
+
+[Drop your own music into the converter](/playground), choose a bitrate, and listen. For a closer comparison, the [listening guide](/docs/listening) walks through a controlled test. Your feedback helps us understand what works well and what still needs attention.
+
+For measured quality results, see the [AAC benchmark results](/docs/optimization). Objective scores complement listening, and results depend on the tested builds and hardware.
+
+## Decode AAC. Keep it light. {data-icon="microchip"}
+
+### FAAD: a decoder for modern embedded devices
 
 <BenchmarkShowcase view="decoder" />
 
-In the published comparison, FAAD3 decodes nearly **2× as fast** as FAAD2 with **45% less code**, leaving more processing headroom for the rest of an app.
-
-**Encoder snapshot · September 29, 2026 · MacBook Pro M1, 32 GB.** Decoder figures come from a separate leaderboard. Results depend on the tested builds and hardware. See the [tested versions and measurements](/docs/tested-versions) and [full decoder comparison](/docs/comparison#faad3-and-faad2-benchmark-comparison).
-
-## Hear FAAC with your own music {data-icon="headphones"}
-
-FAAC provides efficient AAC encoding for music collections, media applications, and embedded devices. Try familiar tracks and choose the settings that work for you.
-
-[Drop your own music into the converter](/playground), choose a bitrate, and listen to the result. No installation or uploads required. If you want to compare more closely, our [listening guide](/docs/listening) walks through a controlled test. Your feedback helps us understand what works well and what still needs attention.
-
-See the [AAC benchmark results](/docs/optimization) for measured quality, speed, and footprint. Comparative results depend on the tested builds and hardware; objective scores complement listening.
+**Encoder snapshot · September 29, 2026 · MacBook Pro M1, 32 GB.** Decoder figures come from a separate leaderboard. Results depend on the tested builds and hardware. See the [tested versions and measurements](/docs/tested-versions).
 
 ## Choose your starting point {data-icon="compass"}
 
