@@ -95,6 +95,7 @@ export default defineConfig({
         items: [
           { text: 'Choose an Encoder or Decoder', link: '/docs/comparison' },
           { text: 'AAC Benchmark Results', link: '/docs/optimization' },
+          { text: 'AAC on ESP32', link: '/docs/esp32-aac' },
           { text: 'Listening-Test Guide', link: '/docs/listening' }
         ]
       }

@@ -23,4 +23,4 @@ FAAD supports **AAC-LC**, **HE-AAC v1**, and **HE-AAC v2 Parametric Stereo** whe
 
 ## Evaluate decoder performance and quality
 
-See the [decoder snapshot](/docs/optimization#decoder-snapshot) for decoder measurements and their build notes. Use the [implementation comparison](/docs/comparison) to compare profiles and licensing.
+See the [decoder snapshot](/docs/optimization#decoder-snapshot) for decoder measurements and their build notes. For ESP32-class decoding, including HE-AAC v2 on the ESP32-S3, see [AAC on ESP32](/docs/esp32-aac). Use the [implementation comparison](/docs/comparison) to compare profiles and licensing.

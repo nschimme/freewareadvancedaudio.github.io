@@ -55,6 +55,14 @@ FAAD3 targets modern processors with floating-point units and is a development e
 
 **Benchmark snapshot · October 28, 2026 · MacBook Pro M1, 32 GB.** Encoder and decoder figures come from the same generated leaderboard. Results depend on the tested builds and hardware. See the [benchmark results and tested versions](/docs/optimization).
 
+## AAC on ESP32 {data-icon="microchip"}
+
+The same FAAC and FAAD libraries that lead on powerful machines also run in real time on ESP32-class hardware. The original ESP32 can run the full AAC decode path without PSRAM.
+
+<Esp32Showcase view="home" />
+
+[Read AAC on ESP32](/docs/esp32-aac) for the encoding, decoding, and hardware details.
+
 ## Hear FAAC with your own music {data-icon="headphones"}
 
 Try FAAC with familiar tracks and choose the settings that work for you. The browser converter needs no installation or uploads.
@@ -73,6 +81,7 @@ For measured quality results, see the [AAC benchmark results](/docs/optimization
 | Convert audio sample rates | [FAAR guide](/docs/faar), [libfaar C API](/docs/libfaar), and [faar(1)](/docs/faar-cli) |
 | Choose an encoder or decoder for your application | [Implementation selection guide](/docs/comparison), including hardware, profiles, and licensing |
 | Compare speed, footprint, and objective quality | [AAC benchmark results](/docs/optimization) |
+| Run AAC encoding or decoding on a microcontroller | [AAC on ESP32](/docs/esp32-aac) |
 | Hear FAAC with your own music | [Browser converter](/playground), with an optional [listening guide](/docs/listening) |
 
 ## Where FAAC and FAAD are used {data-icon="layer-group"}

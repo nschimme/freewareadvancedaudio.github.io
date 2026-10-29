@@ -32,6 +32,7 @@ Choose based on the profile you need and the platform you are targeting. The cap
 | Your requirement | Encoder to evaluate |
 | :--- | :--- |
 | AAC/M4A output from a C application | [FAAC](/docs/faac) |
+| Real-time encoding on an ESP32-S3 | [FAAC](/docs/faac); see [AAC on ESP32](/docs/esp32-aac) |
 | HE-AAC v2 (Parametric Stereo) | FDK-AAC or Apple AudioToolbox; see [patent notes](#patent-status-by-aac-profile) |
 | Existing FFmpeg pipeline | An AAC encoder available in your FFmpeg build |
 | Apple-platform application | AudioToolbox |
@@ -43,13 +44,14 @@ For lossless music storage or masters, use [FLAC](https://www.xiph.org/flac/) an
 
 | Your target | Decoder to evaluate | Why |
 | :--- | :--- | :--- |
+| ESP32-S3 or another microcontroller with an FPU | [FAAD](/docs/faad) | Real-time LC and HE-AAC; stereo HE-AAC v2 is supported. See [AAC on ESP32](/docs/esp32-aac). |
+| ESP32-C6 or another microcontroller without an FPU | [LibHelix](https://github.com/earlephilhower/ESP8266Audio/blob/master/src/libhelix-aac/aacdec.c) | Recommended fixed-point decoder; stays real time where floating-point FAAD3 does not. |
 | General-purpose decoding or microcontroller with an FPU | [FAAD](/docs/faad) | C11 decoder; LGPL v2.1+. |
-| Microcontroller without an FPU | [LibHelix](https://github.com/earlephilhower/ESP8266Audio/blob/master/src/libhelix-aac/aacdec.c) | Fixed-point decoder with a smaller footprint than legacy FAAD2. |
-| HE-AAC v2 Parametric Stereo on a constrained target | [Legacy FAAD2](https://github.com/FreewareAdvancedAudio/faad2) | Adds PS support, with a larger footprint than LibHelix; verify the target build. |
+| HE-AAC v2 Parametric Stereo on a constrained target | [FAAD](/docs/faad) on an FPU-equipped target; [legacy FAAD2](https://github.com/FreewareAdvancedAudio/faad2) elsewhere | Adds PS support; verify the target build and memory budget. |
 | Existing FFmpeg application | The available libavcodec decoder | Reuse the media framework already in your pipeline. |
 | Native Apple application | AudioToolbox | Use the platform's audio APIs and query available formats. |
 
-An FPU is a hardware floating-point unit. Desktop throughput does not predict microcontroller performance. See the [FAAD guide](/docs/faad) and [libfaad reference](/docs/libfaad) for build options.
+An FPU is a hardware floating-point unit. Desktop throughput does not predict microcontroller performance. See [AAC on ESP32](/docs/esp32-aac) for ESP32-specific results, and the [FAAD guide](/docs/faad) and [libfaad reference](/docs/libfaad) for build options.
 
 ## Library capabilities {data-icon="layer-group"}
 

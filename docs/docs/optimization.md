@@ -9,6 +9,8 @@ This page reports one benchmark run in three passes: **what it found**, **how ea
 
 All results come from the **October 28, 2026** run on a **MacBook Pro M1, 32 GB**. Encoder and decoder measurements are separate sections of the same generated leaderboard and should not be treated as a single head-to-head run.
 
+> Running on microcontrollers? See [AAC on ESP32](/docs/esp32-aac) for ESP32-S3, ESP32-C6, and classic ESP32 results.
+
 ## What the run found {data-icon="chart-line"}
 
 ### Encoder quality {data-icon="headphones"}
