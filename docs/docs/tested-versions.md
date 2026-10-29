@@ -5,35 +5,36 @@ description: Tested AAC encoder and decoder versions, build identifiers, hardwar
 
 # Tested Versions and Benchmark Snapshots
 
-Benchmark figures on this site describe specific builds and test runs. Encoder and decoder results below come from separate published snapshots; results across the two tables should not be treated as a single head-to-head run.
+Benchmark figures on this site describe specific builds and test runs. Encoder and decoder results below come from separate measurement sections of the same generated leaderboard; they still should not be treated as a single head-to-head run.
 
 ## Encoder snapshot
 
-**Run:** September 29, 2026 · MacBook Pro M1 · 32 GB. The leaderboard reports results for 27 of 33 configured scenarios for each listed build. See the [published encoder leaderboard and per-scenario results](https://github.com/nschimme/faac-benchmark/discussions/90).
+**Run:** October 28, 2026 · MacBook Pro M1 · 32 GB. The leaderboard reports results for 35 scenarios for FAAC, FDK-AAC, and FFmpeg; Apple completed 29 of 35 after 6 encoding failures. See the [published leaderboard and per-scenario results](https://gist.github.com/nschimme/003da901f4b681f3ee4f679b07d2e31e).
 
 | Encoder | Tested version or build | Throughput | Peak RAM | ROM image |
 | :--- | :--- | ---: | ---: | ---: |
-| FAAC | 2.2.0 (`6acbe23a`) | 506.9× realtime | 2.3 MB | 73.4 KB |
-| FDK-AAC | 2.0.3 via `fdkaac` 1.0.9 | 152.9× realtime | 3.2 MB | 940.5 KB |
-| Apple AAC | 27.0 (`26A428`) | 112.1× realtime | 8.9 MB | 100.3 KB |
-| FFmpeg AAC | 9.1 (`g3fc4f99a79`), experimental NMR | 40.4× realtime | 17.4 MB | 274.5 KB |
+| FAAC | 3.0.0 (`ecc245c0`) | 721.6× realtime | 2.6 MB | 99.9 KB |
+| FDK-AAC | 1.0.9 | 169.2× realtime | 3.3 MB | 940.5 KB |
+| Apple AAC | 27.2 | 181.8× realtime | 8.3 MB | 100.3 KB |
+| FFmpeg AAC | N-127192-gef52e1cc38, experimental NMR | 51.6× realtime | 18.0 MB | 274.9 KB |
 
-The report ranks encoder quality by 1st-percentile MOS, with overall MOS as the tiebreaker. Its aggregate FAAC results are 2.953 first-percentile MOS and 4.452 overall MOS. These are objective estimates, not listening-test outcomes. The report includes per-scenario quality, stereo and transient fidelity, and bitrate accuracy.
+The report ranks encoder quality by 1st-percentile MOS, with overall MOS as the tiebreaker. FAAC ranks first on both aggregate metrics with 2.785 first-percentile MOS and 4.541 overall MOS, is the fastest encoder at 4.3× FDK-AAC throughput, and has the lowest peak RAM and smallest ROM image of the four encoders. These are objective estimates, not listening-test outcomes.
+
+At 48 kHz stereo AAC-LC, FAAC leads average and first-percentile MOS from 24–64 kbps. At 48 kbps it scores 4.177 average / 3.446 first-percentile MOS, versus FFmpeg 3.741 / 2.933, FDK-AAC 2.951 / 2.240, and Apple AAC 2.875 / 2.314. FAAC also leads all four encoders at 128 kbps (4.867 / 4.707). From 160–320 kbps it stays within 0.008 average MOS and 0.022 first-percentile MOS of Apple while ahead of FDK-AAC and FFmpeg, and has the leading stereo fidelity at 160–192 kbps. The report also includes per-scenario quality, transient fidelity, and bitrate accuracy.
 
 ## Decoder snapshot
 
-The [decoder leaderboard](https://gist.github.com/nschimme/71953ca296cdfa9800e99fc806f191b5) reports aggregate decode quality, speed, memory, and footprint. Version labels below follow that report; it does not identify the FAAD rewrite commit or a full FFmpeg build string. The source does not state its machine or run date, so these decoder results are kept separate from the dated encoder snapshot above.
+The [decoder leaderboard](https://gist.github.com/nschimme/003da901f4b681f3ee4f679b07d2e31e) reports aggregate decode quality, speed, memory, and footprint from the same October 28, 2026 leaderboard. Encoder and decoder measurements are separate and should not be treated as a single head-to-head run. Decoder timings are concurrent and include contention.
 
 | Decoder | Tested version | 1st-percentile MOS | Overall MOS | Stereo fidelity | Mean SNR | Timing error | Throughput | Peak RAM | ROM image |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| FAAD3 | Rewrite build; commit not listed | 1.451 | 4.231 | 0.9601 | 23.7 dB | 0.33 ms | 1,011.2× realtime | 2.6 MB | 161.9 KB |
-| FDK AAC | 2.0.0 | — | — | — | — | — | 896.2× realtime | 5.4 MB | 940.5 KB |
-| Apple AAC | 27.0.1 | — | — | — | — | — | 1,049.7× realtime | 8.3 MB | 100.3 KB |
-| FFmpeg AAC | Build not identified | — | — | — | — | — | 597.5× realtime | 17.5 MB | 274.9 KB |
-| FAAD2 | 2.11.3 | 1.451 | 4.224 | 0.9600 | 23.7 dB | 0.33 ms | 515.8× realtime | 2.1 MB | 296.3 KB |
-| Helix AAC | 1.0 | — | — | — | — | — | 812.4× realtime | 1.9 MB | 121.4 KB |
+| FAAD3 | 3.0.0 (`ecc245c0`) | 1.641 | 4.193 | 0.9557 | 20.9 dB | 0.32 ms | 2,120.0× realtime | 3.0 MB | 168.1 KB |
+| FFmpeg AAC | N-127192-gef52e1cc38 | 1.644 | 4.193 | 0.9523 | 20.8 dB | 9.54 ms | 579.7× realtime | 17.0 MB | 274.9 KB |
+| Apple AAC | 27.2 | 1.641 | 3.944 | 0.9500 | 12.5 dB | 0.33 ms | 1,145.7× realtime | 7.8 MB | 100.3 KB |
+| FDK AAC | 2.0.0 | 1.641 | 4.188 | 0.9499 | 20.8 dB | 0.33 ms | 875.9× realtime | 7.4 MB | 940.5 KB |
+| Helix AAC | 1.0 | 1.409 | 3.575 | 0.8809 | 12.7 dB | 78.01 ms | 943.0× realtime | 1.9 MB | 121.4 KB |
 
-The quality measures shown for FAAD3 and FAAD2 are close and do not establish an audible preference. In this snapshot FAAD3 delivers about 1.96× FAAD2's throughput and uses 45% less ROM image, with 0.5 MB more peak RAM. The report records one FDK runaway; Helix had 14 crashes and one timeout, and did not support HE-AAC v2 Parametric Stereo in single-channel scenarios. For profile and licensing guidance, see the [implementation comparison](/docs/comparison).
+FAAD3 ties the top overall MOS (4.193), leads stereo fidelity and throughput, and keeps peak RAM to 3.0 MB. Apple AAC has the smallest ROM image (100.3 KB), followed by Helix (121.4 KB) and FAAD3 (168.1 KB). Helix recorded 421 crashes and 169 timeouts and did not support HE-AAC v2 Parametric Stereo in single-channel scenarios; FDK recorded 10 runaways. At 48 kHz stereo, FAAD3 matches FFmpeg, Apple, and FDK within about 0.003 MOS (LC and HE-v1) while running 1.85–3.66× faster than Apple and FFmpeg. For profile and licensing guidance, see the [implementation comparison](/docs/comparison).
 
 ## How to read these figures
 

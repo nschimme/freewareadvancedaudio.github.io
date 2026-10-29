@@ -11,7 +11,7 @@ Compare **measured encoding speed, code footprint, and low-bitrate quality**. Th
 
 <BenchmarkShowcase view="resources" />
 
-**Benchmark snapshot · September 29, 2026 · MacBook Pro M1, 32 GB.** The leaderboard reports results for 27 of 33 configured scenarios. See [tested versions and measurements](/docs/tested-versions) or the [published leaderboard and per-scenario results](https://github.com/nschimme/faac-benchmark/discussions/90).
+**Benchmark snapshot · October 28, 2026 · MacBook Pro M1, 32 GB.** The leaderboard reports results for 35 scenarios for FAAC, FDK-AAC, and FFmpeg; Apple completed 29 of 35. See [tested versions and measurements](/docs/tested-versions) or the [published leaderboard and per-scenario results](https://gist.github.com/nschimme/003da901f4b681f3ee4f679b07d2e31e).
 
 ## AAC quality: low bitrate through archival {data-icon="headphones"}
 
@@ -19,7 +19,9 @@ Compare FAAC HE-AAC v1 against FFmpeg's native LC encoder at low bitrates, or se
 
 <BenchmarkShowcase view="quality" />
 
-Scores are average objective estimates from the same snapshot, not listening-test results. See the report for [profile breakdowns and bitrate accuracy](https://github.com/nschimme/faac-benchmark/discussions/90).
+**48 kHz stereo, AAC-LC.** In LC-vs-LC comparisons, FAAC leads quality from 24–64 kbps and matches Apple at archival bitrates while beating FDK-AAC and FFmpeg. At 48 kbps it scores 4.18 average MOS versus 3.74 for FFmpeg.
+
+Scores are average objective estimates from the same snapshot, not listening-test results. See the report for [profile breakdowns and bitrate accuracy](https://gist.github.com/nschimme/003da901f4b681f3ee4f679b07d2e31e).
 
 ## How audio quality is tuned {data-icon="headphones"}
 

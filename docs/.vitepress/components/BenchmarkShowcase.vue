@@ -3,29 +3,28 @@ import { computed, ref } from 'vue'
 
 const props = defineProps<{ view: 'resources' | 'decoder' | 'quality' }>()
 
-// Published snapshot: Discussion #90, 2026-09-29. Do not mix with local runs.
+// Published snapshot: leaderboard gist, generated 2026-10-28. Do not mix with local runs.
 const encoders = [
-  { name: 'FAAC', speed: 506.9, footprint: 73.4 },
-  { name: 'FDK-AAC', speed: 152.9, footprint: 940.5 },
-  { name: 'Apple AAC', speed: 112.1, footprint: 100.3 },
-  { name: 'FFmpeg AAC', speed: 40.4, footprint: 274.5 }
+  { name: 'FAAC', speed: 721.6, footprint: 99.9 },
+  { name: 'FDK-AAC', speed: 169.2, footprint: 940.5 },
+  { name: 'Apple AAC', speed: 181.8, footprint: 100.3 },
+  { name: 'FFmpeg AAC', speed: 51.6, footprint: 274.9 }
 ]
 const encoderMetrics = [
-  { key: 'speed' as const, title: 'Encoding throughput', icon: 'gauge-high', value: '507×', unit: 'realtime', summary: '3.3× the measured FDK-AAC throughput', max: 506.9, format: (n: number) => `${n.toFixed(1)}×`, note: 'Aggregate throughput · higher is better' },
-  { key: 'footprint' as const, title: 'Encoder code footprint', icon: 'microchip', value: '92%', unit: 'less code', summary: 'FAAC 73.4 KB vs FDK-AAC 940.5 KB', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Code + constants + initialized data · lower is better' }
+  { key: 'speed' as const, title: 'Encoding throughput', icon: 'gauge-high', value: '721.6×', unit: 'realtime', summary: '4.3× the measured FDK-AAC throughput', max: 721.6, format: (n: number) => `${n.toFixed(1)}×`, note: 'Aggregate throughput · higher is better' },
+  { key: 'footprint' as const, title: 'Encoder code footprint', icon: 'microchip', value: '89%', unit: 'less code', summary: 'FAAC 99.9 KB vs FDK-AAC 940.5 KB', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Code + constants + initialized data · lower is better' }
 ]
 const decoders = [
-  // Match the encoder card order, then append decoder-only implementations.
-  { name: 'FAAD3', speed: 1011.2, footprint: 161.9 },
-  { name: 'FDK AAC', speed: 896.2, footprint: 940.5 },
-  { name: 'Apple AAC', speed: 1049.7, footprint: 100.3 },
-  { name: 'FFmpeg AAC', speed: 597.5, footprint: 274.9 },
-  { name: 'FAAD2', speed: 515.8, footprint: 296.3 },
-  { name: 'Helix AAC', speed: 812.4, footprint: 121.4 }
+  // Lead with FAAD3; then follow the encoder card order and append decoder-only implementations.
+  { name: 'FAAD3', speed: 2120.0, footprint: 168.1 },
+  { name: 'FDK AAC', speed: 875.9, footprint: 940.5 },
+  { name: 'Apple AAC', speed: 1145.7, footprint: 100.3 },
+  { name: 'FFmpeg AAC', speed: 579.7, footprint: 274.9 },
+  { name: 'Helix AAC', speed: 943.0, footprint: 121.4 }
 ]
 const decoderMetrics = [
-  { key: 'speed' as const, title: 'Decoding throughput', icon: 'gauge-high', value: '1,011×', unit: 'realtime', summary: '1.96× the throughput of FAAD2', max: 1049.7, format: (n: number) => `${n.toFixed(1)}×`, note: 'Aggregate throughput · higher is better' },
-  { key: 'footprint' as const, title: 'Decoder code footprint', icon: 'microchip', value: '45%', unit: 'less code', summary: 'FAAD3 161.9 KB vs FAAD2 296.3 KB', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Code + read-only + initialized data · lower is better' }
+  { key: 'speed' as const, title: 'Decoding throughput', icon: 'gauge-high', value: '2,120×', unit: 'realtime', summary: '2.4× the measured FDK AAC throughput', max: 2120.0, format: (n: number) => `${n.toFixed(1)}×`, note: 'Aggregate throughput · higher is better' },
+  { key: 'footprint' as const, title: 'Decoder code footprint', icon: 'microchip', value: '82%', unit: 'less code', summary: 'FAAD3 168.1 KB vs FDK AAC 940.5 KB', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Code + read-only + initialized data · lower is better' }
 ]
 const metrics = computed(() => props.view === 'decoder' ? decoderMetrics : encoderMetrics)
 const implementations = computed(() => props.view === 'decoder' ? decoders : encoders)
@@ -34,20 +33,20 @@ const bitrateRange = ref<'low' | 'high'>('low')
 const highComparator = ref<'fdk' | 'ffmpeg'>('fdk')
 const faacLabel = computed(() => profile.value === 'lc' ? 'FAAC · LC' : 'FAAC · HE v1')
 const quality = [
-  { rate: 24, lc: 2.715, he: 3.427, ffmpeg: 2.515 },
-  { rate: 32, lc: 3.454, he: 3.812, ffmpeg: 2.508 },
-  { rate: 40, lc: 3.868, he: 4.020, ffmpeg: 2.667 },
-  { rate: 48, lc: 4.110, he: 4.172, ffmpeg: 3.833 },
-  { rate: 56, lc: 4.258, he: 4.309, ffmpeg: 4.129 },
-  { rate: 64, lc: 4.379, he: 4.414, ffmpeg: 4.279 }
+  { rate: 24, lc: 2.741, he: 3.484, ffmpeg: 2.335 },
+  { rate: 32, lc: 3.578, he: 3.822, ffmpeg: 2.373 },
+  { rate: 40, lc: 3.972, he: 4.128, ffmpeg: 2.609 },
+  { rate: 48, lc: 4.177, he: 4.297, ffmpeg: 3.741 },
+  { rate: 56, lc: 4.328, he: 4.451, ffmpeg: 4.070 },
+  { rate: 64, lc: 4.469, he: 4.549, ffmpeg: 4.306 }
 ]
 // Published AAC-LC averages for transparency and archival bitrates.
 const highQuality = [
-  { rate: 128, faac: 4.8336, fdk: 4.8331, ffmpeg: 4.7918 },
-  { rate: 160, faac: 4.9053, fdk: 4.8856, ffmpeg: 4.8745 },
-  { rate: 192, faac: 4.9427, fdk: 4.9300, ffmpeg: 4.9241 },
-  { rate: 256, faac: 4.9761, fdk: 4.9553, ffmpeg: 4.9626 },
-  { rate: 320, faac: 4.9889, fdk: 4.9624, ffmpeg: 4.9749 }
+  { rate: 128, faac: 4.867, fdk: 4.826, ffmpeg: 4.799 },
+  { rate: 160, faac: 4.926, fdk: 4.880, ffmpeg: 4.883 },
+  { rate: 192, faac: 4.955, fdk: 4.927, ffmpeg: 4.928 },
+  { rate: 256, faac: 4.981, fdk: 4.953, ffmpeg: 4.935 },
+  { rate: 320, faac: 4.991, fdk: 4.960, ffmpeg: 4.943 }
 ]
 const qualityWidth = (score: number, high = false) => `${(score - (high ? 4 : 1)) / (high ? 1 : 4) * 100}%`
 const displayScore = (score: number) => (Math.round(score * 100) / 100).toFixed(2)

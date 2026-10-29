@@ -3,7 +3,7 @@ layout: home
 hero:
   name: "Freeware Advanced Audio"
   text: "Fast, compact AAC encoding and decoding in C"
-  tagline: "Try FAAC on your own music, and explore lightweight FAAD decoding for embedded devices and media applications."
+  tagline: "FAAC encoding and FAAD decoding for embedded devices, media applications, and listeners who want to hear the difference."
   image:
     alt: "Freeware Advanced Audio visualizer"
   actions:
@@ -23,20 +23,20 @@ features:
     link: "/docs/optimization"
     linkText: "Compare encoding speed"
   - icon: "<i class=\"fa-solid fa-microchip feature-icon feature-icon--blue\" aria-hidden=\"true\"></i>"
-    title: "Small footprint"
-    details: "Lower measured code footprint and peak RAM than the compared encoders and decoders. Built for applications with limited resources."
-    link: "/docs/tested-versions"
+    title: "Small encoder footprint"
+    details: "Lower measured code footprint and peak RAM than the compared encoders. Built for applications with limited resources."
+    link: "/docs/optimization"
     linkText: "Compare code and memory"
   - icon: "<i class=\"fa-solid fa-headphones feature-icon feature-icon--violet\" aria-hidden=\"true\"></i>"
     title: "Competitive audio quality"
-    details: "Tuned across speech, music, and difficult passages, FAAC leads published quality scores; FAAD scores highly in decoding."
-    link: "/docs/optimization#how-audio-quality-is-tuned"
-    linkText: "How quality is tuned"
-  - icon: "<i class=\"fa-solid fa-scale-balanced feature-icon feature-icon--cyan\" aria-hidden=\"true\"></i>"
-    title: "Open source, LGPL licensed"
-    details: "Use FAAC or FAAD in a closed-source app while meeting LGPL v2.1+ requirements."
-    link: "/docs/comparison#software-licenses-and-patent-rights"
-    linkText: "Review licensing"
+    details: "Leading aggregate objective quality scores in published testing. Fine-tuned across speech, music, and difficult passages."
+    link: "/docs/optimization"
+    linkText: "See quality results"
+  - icon: "<i class=\"fa-solid fa-code feature-icon feature-icon--cyan\" aria-hidden=\"true\"></i>"
+    title: "Open development"
+    details: "Source code, CLI guides, and C APIs for AAC encoding and decoding. Check the license and release status for the library you plan to use."
+    link: "/docs/install"
+    linkText: "Choose your library"
 ---
 
 <div class="home-technical-wrapper vp-doc">
@@ -47,6 +47,14 @@ features:
 
 <BenchmarkShowcase view="resources" />
 
+### FAAD3: fast decoding in a small footprint
+
+<BenchmarkShowcase view="decoder" />
+
+FAAD3 targets modern processors with floating-point units and is a development engine. It ties the top overall MOS, leads the measured decoder throughput and stereo fidelity, and keeps peak RAM to 3.0 MB. Helix uses fixed-point arithmetic and a smaller ROM image than FAAD3, making it an option for legacy hardware without an efficient FPU; it lacks HE-AAC v2 Parametric Stereo support.
+
+**Benchmark snapshot · October 28, 2026 · MacBook Pro M1, 32 GB.** Encoder and decoder figures come from the same generated leaderboard. Results depend on the tested builds and hardware. See the [tested versions and measurements](/docs/tested-versions).
+
 ## Hear FAAC with your own music {data-icon="headphones"}
 
 Try FAAC with familiar tracks and choose the settings that work for you. The browser converter needs no installation or uploads.
@@ -54,14 +62,6 @@ Try FAAC with familiar tracks and choose the settings that work for you. The bro
 [Drop your own music into the converter](/playground), choose a bitrate, and listen. For a closer comparison, the [listening guide](/docs/listening) walks through a controlled test. Your feedback helps us understand what works well and what still needs attention.
 
 For measured quality results, see the [AAC benchmark results](/docs/optimization). Objective scores complement listening, and results depend on the tested builds and hardware.
-
-## Decode AAC. Keep it light. {data-icon="microchip"}
-
-### FAAD: a decoder for modern embedded devices
-
-<BenchmarkShowcase view="decoder" />
-
-**Encoder snapshot · September 29, 2026 · MacBook Pro M1, 32 GB.** Decoder figures come from a separate leaderboard. Results depend on the tested builds and hardware. See the [tested versions and measurements](/docs/tested-versions).
 
 ## Choose your starting point {data-icon="compass"}
 
