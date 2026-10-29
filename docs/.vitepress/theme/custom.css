@@ -266,6 +266,51 @@
   }
 }
 
+/* Comparison matrices: color-code support markers so tables scan vertically. */
+:root {
+  --audio-cmp-yes: #4ade80;
+  --audio-cmp-partial: #fbbf24;
+  --audio-cmp-no: #64748b;
+}
+
+.vp-doc .cmp-yes {
+  color: var(--audio-cmp-yes);
+  font-weight: 700;
+}
+
+.vp-doc .cmp-partial {
+  color: var(--audio-cmp-partial);
+  font-weight: 700;
+  cursor: help;
+}
+
+.vp-doc .cmp-no {
+  color: var(--audio-cmp-no);
+}
+
+.vp-doc .cmp-legend {
+  margin: 0 0 1.25rem;
+  color: var(--vp-c-text-2);
+  font-size: 0.875rem;
+}
+
+/* Keep the row label visible while a wide matrix scrolls sideways. */
+.comparison-page .vp-doc td:first-child,
+.comparison-page .vp-doc th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background-color: var(--vp-c-bg);
+}
+
+.comparison-page .vp-doc th:first-child {
+  background-color: var(--vp-c-bg-soft);
+}
+
+.comparison-page .vp-doc tr:nth-child(2n) td:first-child {
+  background-color: var(--vp-c-bg-soft);
+}
+
 /* Quiet visual landmarks; icons supplement the visible heading text. */
 :root {
   --audio-icon-cyan: #67e8f9;

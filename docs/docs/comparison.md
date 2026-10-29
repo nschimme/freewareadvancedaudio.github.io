@@ -1,6 +1,7 @@
 ---
 title: Choose an AAC Encoder or Decoder
 description: Compare FAAC, FAAD, FDK-AAC, Apple AudioToolbox, and FFmpeg. Choose an AAC implementation by profile support, integration needs, software license, and patent status.
+pageClass: comparison-page
 ---
 
 # Choose an AAC Encoder or Decoder
@@ -54,20 +55,22 @@ An FPU is a hardware floating-point unit. Desktop throughput does not predict mi
 
 Use these matrices to compare profile support across encoders and decoders. Support can depend on the specific build; notes below call out the main qualifications.
 
+<p class="cmp-legend"><span class="cmp-yes">✓</span> Supported · <span class="cmp-partial">†</span> Build- or configuration-dependent · <span class="cmp-no">—</span> Not supported. Apple entries assume modern macOS/iOS.</p>
+
 ### AAC encoders
 
 | Profile or extension | [FAAC](/docs/faac) | FFmpeg native | [FDK-AAC](https://github.com/mstorsjo/fdk-aac) | [Apple AudioToolbox](https://developer.apple.com/documentation/audiotoolbox) |
 | :--- | :---: | :---: | :---: | :---: |
-| AAC-LC | ✓ | ✓ | ✓ | ✓ |
-| AAC Main | — | — | — | — |
-| AAC SSR | — | — | — | — |
-| AAC-LTP | — | ✓ | — | — |
-| HE-AAC v1 (SBR) | ✓ | — | ✓ | ✓ |
-| HE-AAC v2 (SBR + PS) | — | — | ✓ | ✓ |
-| AAC-LD | — | — | ✓ | ✓ |
-| AAC-ELD (optionally with SBR) | — | — | ✓ | ✓ |
-| USAC / xHE-AAC | — | — | — | — |
-| DRM / DRM+ audio framing | — | — | ✓ | — |
+| AAC-LC | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> |
+| AAC Main | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> |
+| AAC SSR | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> |
+| AAC-LTP | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> |
+| HE-AAC v1 (SBR) | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> |
+| HE-AAC v2 (SBR + PS) | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> |
+| AAC-LD | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> |
+| AAC-ELD (optionally with SBR) | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> |
+| USAC / xHE-AAC | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> |
+| DRM / DRM+ audio framing | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> |
 
 FFmpeg builds can also include FDK-AAC or Apple AudioToolbox encoders. See [FFmpeg's encoder documentation](https://ffmpeg.org/ffmpeg-codecs.html#Audio-Encoders).
 
@@ -75,19 +78,17 @@ FFmpeg builds can also include FDK-AAC or Apple AudioToolbox encoders. See [FFmp
 
 | Profile or extension | [FAAD](/docs/faad) | [Legacy FAAD2](https://github.com/FreewareAdvancedAudio/faad2) | FFmpeg native | [FDK-AAC](https://github.com/mstorsjo/fdk-aac) | [LibHelix](https://github.com/earlephilhower/ESP8266Audio/blob/master/src/libhelix-aac/aacdec.c) | [Apple AudioToolbox](https://developer.apple.com/documentation/audiotoolbox) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| AAC-LC | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| AAC Main | — | † | ✓ | — | — | — |
-| AAC SSR | — | † | — | — | — | — |
-| AAC-LTP | — | ✓ | ✓ | — | — | — |
-| HE-AAC v1 (SBR) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| HE-AAC v2 (SBR + PS) | ✓ | ✓ | ✓ | ✓ | — | ✓ |
-| ER-LC / ER-LTP | — | ✓ | — | — | — | — |
-| AAC-LD | — | ✓ | — | ✓ | — | ✓ |
-| AAC-ELD | — | — | † | ✓ | — | ✓ |
-| USAC / xHE-AAC | — | — | † | ✓ | — | ✓ |
-| DRM / DRM+ audio transport | — | † | — | ✓ | — | — |
-
-✓ Supported · † build- or configuration-dependent · — not supported. Apple entries assume modern macOS/iOS.
+| AAC-LC | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> |
+| AAC Main | <span class="cmp-no">—</span> | <span class="cmp-partial" title="Build- or configuration-dependent">†</span> | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> |
+| AAC SSR | <span class="cmp-no">—</span> | <span class="cmp-partial" title="Build- or configuration-dependent">†</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> |
+| AAC-LTP | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> |
+| HE-AAC v1 (SBR) | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> |
+| HE-AAC v2 (SBR + PS) | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> |
+| ER-LC / ER-LTP | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> |
+| AAC-LD | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> |
+| AAC-ELD | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-partial" title="Build- or configuration-dependent">†</span> | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> |
+| USAC / xHE-AAC | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-partial" title="Build- or configuration-dependent">†</span> | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> |
+| DRM / DRM+ audio transport | <span class="cmp-no">—</span> | <span class="cmp-partial" title="Build- or configuration-dependent">†</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> |
 
 <details>
 <summary>Profile support notes</summary>
@@ -121,7 +122,7 @@ Check the license shipped with the exact version you use. Software copyright and
 | :--- | :--- |
 | AAC-LC | The foundational patents have expired. |
 | HE-AAC v1 | The foundational patents, including Spectral Band Replication (SBR), have expired. |
-| HE-AAC v2 | Adds **Parametric Stereo**; associated patents expire in 2029. |
+| HE-AAC v2 | Adds **Parametric Stereo**; associated patents expire in 2030. |
 | xHE-AAC | Has additional patent restrictions; check current licensing terms. |
 
 These profile distinctions apply across implementations, including FFmpeg. Patent applicability depends on jurisdiction and implementation. See the [Via Licensing Alliance AAC program](https://www.via-la.com/licensing-programs/aac/) for current HE-AAC v2 and xHE-AAC licensing information.
