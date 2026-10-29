@@ -69,6 +69,8 @@ For measured quality results, see the [AAC benchmark results](/docs/optimization
 | :--- | :--- |
 | Encode music, speech, or streaming audio | [Install FAAC](/docs/install), then try the [CLI and C API](/docs/faac) |
 | Play or decode existing AAC files | [FAAD decoder guide](/docs/faad) and [libfaad API reference](/docs/libfaad) |
+| Mux, demux, or tag MP4/M4A files | [FAAM guide](/docs/faam), [libfaam C API](/docs/libfaam), and [faam(1)](/docs/faam-cli) |
+| Convert audio sample rates | [FAAR guide](/docs/faar), [libfaar C API](/docs/libfaar), and [faar(1)](/docs/faar-cli) |
 | Choose an encoder or decoder for your application | [Implementation selection guide](/docs/comparison), including hardware, profiles, and licensing |
 | Compare speed, footprint, and objective quality | [AAC benchmark results](/docs/optimization) |
 | Hear FAAC with your own music | [Browser converter](/playground), with an optional [listening guide](/docs/listening) |

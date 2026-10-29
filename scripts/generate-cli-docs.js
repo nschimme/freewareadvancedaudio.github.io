@@ -15,6 +15,7 @@ function unescapeRoff(str) {
   res = res.replace(/\\\(hy/g, '-');
   res = res.replace(/\\hy\(/g, '-');
   res = res.replace(/\\\(em/g, '—');
+  res = res.replace(/\\\(en/g, '–');
   res = res.replace(/\\ /g, ' ');
   res = res.replace(/\\e/g, '\\');
   res = res.replace(/\\~/g, ' ');
@@ -89,6 +90,74 @@ function formatAlternatingArgs(args) {
   return res.replace(/\s+,/g, ',').replace(/\s+/g, ' ').trim();
 }
 
+function splitTblRow(raw, columns) {
+  let parts = raw.includes('\t') ? raw.split('\t') : raw.split(/\s{2,}/);
+  if (parts.length < columns) parts = raw.trim().split(/\s{2,}/);
+  while (parts.length < columns) parts.push('');
+  return parts.slice(0, columns);
+}
+
+function tblCell(value) {
+  return escapeVueHtml(unescapeRoff((value || '').trim())).replace(/\|/g, '\\|');
+}
+
+/* Convert a tbl(1) table (.TS/.TE) into a GFM table. Handles the simple
+ * tab-separated form used by the manpages: option lines ending in ';',
+ * one or more format lines ending in '.', a '_' header rule, and rows. */
+function parseTblTable(lines, start) {
+  let i = start + 1;
+  const formats = [];
+
+  for (; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    if (line === '.TE') return { markdown: [], next: i + 1 };
+    if (line.endsWith(';')) continue;
+    if (line.startsWith('.')) break;
+
+    const closed = line.endsWith('.');
+    const spec = closed ? line.slice(0, -1).trim() : line;
+    formats.push(spec.split(/\s+/).filter(Boolean));
+    if (closed) {
+      i++;
+      break;
+    }
+  }
+
+  if (!formats.length) return { markdown: [], next: i };
+
+  const columns = formats[formats.length - 1];
+  const rows = [];
+  let header = null;
+
+  for (; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line === '.TE') {
+      i++;
+      break;
+    }
+    if (!line) continue;
+    if (line === '_' || line === '=') {
+      if (rows.length) header = rows.pop();
+      continue;
+    }
+    if (line.startsWith('.')) continue;
+    rows.push(splitTblRow(lines[i], columns.length));
+  }
+
+  const alignments = columns.map(column => {
+    const align = column[0];
+    return align === 'r' ? '---:' : align === 'c' ? ':---:' : ':---';
+  });
+  const render = cells => `| ${columns.map((_, index) => tblCell(cells[index])).join(' | ')} |`;
+  const markdown = [
+    render(header || columns.map(() => '')),
+    `| ${alignments.join(' | ')} |`,
+    ...rows.map(render)
+  ];
+  return { markdown, next: i };
+}
+
 function parseManpageToMarkdown(manContent) {
   const lines = manContent.split(/\r?\n/);
   let md = [];
@@ -96,6 +165,16 @@ function parseManpageToMarkdown(manContent) {
   let tpTerm = '';
   let tpDesc = [];
   let rsLevel = 0;
+  let section = '';
+  let exampleEligible = false;
+  let exampleLines = [];
+
+  function flushExample() {
+    if (!exampleLines.length) return;
+    md.push('', '```sh', ...exampleLines, '```', '');
+    exampleLines = [];
+    exampleEligible = false;
+  }
 
   function flushTP() {
     if (inTP) {
@@ -168,12 +247,19 @@ function parseManpageToMarkdown(manContent) {
         continue;
       } else if (macro === '.SH') {
         flushTP();
+        flushExample();
         const sectionName = tokens.slice(1).join(' ').replace(/^"(.*)"$/, '$1');
+        section = unescapeRoff(sectionName).trim().toUpperCase();
         md.push(`\n### ${unescapeRoff(sectionName)}\n`);
       } else if (macro === '.SS') {
         flushTP();
         const subSec = tokens.slice(1).join(' ').replace(/^"(.*)"$/, '$1');
         md.push(`\n#### ${unescapeRoff(subSec)}\n`);
+      } else if (macro === '.TS') {
+        flushTP();
+        const table = parseTblTable(lines, i);
+        if (table.markdown.length) md.push('', ...table.markdown, '');
+        i = table.next - 1;
       } else if (macro === '.TP') {
         flushTP();
         inTP = true;
@@ -182,12 +268,21 @@ function parseManpageToMarkdown(manContent) {
           tpDesc.push('\n');
         } else {
           flushTP();
+          flushExample();
           md.push('');
+          if (section === 'EXAMPLES') exampleEligible = true;
+        }
+      } else if (macro === '.IP') {
+        if (inTP) {
+          tpDesc.push('\n');
+        } else if (section === 'EXAMPLES') {
+          flushExample();
+          exampleEligible = true;
         }
       } else if (macro === '.br') {
         if (inTP) {
           tpDesc.push('\n');
-        } else {
+        } else if (!(section === 'EXAMPLES' && exampleLines.length)) {
           md.push('');
         }
       } else if (macro === '.RS') {
@@ -200,7 +295,9 @@ function parseManpageToMarkdown(manContent) {
         const rawArgs = tokens.slice(1);
         let formatted = formatAlternatingArgs(rawArgs);
 
-        if (inTP && !tpTerm) {
+        if (section === 'EXAMPLES' && (exampleEligible || exampleLines.length)) {
+          if (formatted) exampleLines.push(formatted);
+        } else if (inTP && !tpTerm) {
           tpTerm = formatted;
         } else if (inTP) {
           tpDesc.push(formatted);
@@ -225,6 +322,10 @@ function parseManpageToMarkdown(manContent) {
           tpDesc.push(cleanLine);
         }
       } else {
+        if (section === 'EXAMPLES' && (exampleEligible || exampleLines.length)) {
+          flushExample();
+          exampleEligible = false;
+        }
         if (rsLevel > 0 && /^\d+:\s+/.test(cleanLine)) {
           const match = cleanLine.match(/^(\d+):\s+(.*)$/);
           md.push(`- **${match[1]}**: ${escapeVueHtml(match[2])}`);
@@ -236,29 +337,22 @@ function parseManpageToMarkdown(manContent) {
   }
 
   flushTP();
+  flushExample();
 
   return md.join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
-// Generate FAAC CLI markdown snippet
-const faacManPath = path.join(process.cwd(), 'vendor/faac/docs/faac.1');
-if (fs.existsSync(faacManPath)) {
-  const faacMan = fs.readFileSync(faacManPath, 'utf8');
-  const faacMd = parseManpageToMarkdown(faacMan);
-  fs.writeFileSync(path.join(process.cwd(), 'docs/docs/faac-cli-gen.md'), faacMd);
-  console.log('Generated docs/docs/faac-cli-gen.md');
+for (const name of ['faac', 'faad', 'faam', 'faar']) {
+  const manPath = path.join(process.cwd(), 'vendor/faac/docs', `${name}.1`);
+  if (fs.existsSync(manPath)) {
+    const man = fs.readFileSync(manPath, 'utf8');
+    const md = parseManpageToMarkdown(man);
+    fs.writeFileSync(path.join(process.cwd(), 'docs/docs', `${name}-cli-gen.md`), md);
+    console.log(`Generated docs/docs/${name}-cli-gen.md`);
+  }
 }
 
-// Generate FAAD CLI markdown snippet
-const faadManPath = path.join(process.cwd(), 'vendor/faac/docs/faad.1');
-if (fs.existsSync(faadManPath)) {
-  const faadMan = fs.readFileSync(faadManPath, 'utf8');
-  const faadMd = parseManpageToMarkdown(faadMan);
-  fs.writeFileSync(path.join(process.cwd(), 'docs/docs/faad-cli-gen.md'), faadMd);
-  console.log('Generated docs/docs/faad-cli-gen.md');
-}
-
-for (const name of ['libfaac', 'libfaad']) {
+for (const name of ['libfaac', 'libfaad', 'libfaam', 'libfaar']) {
   const source = path.join(process.cwd(), 'vendor/faac/docs', `${name}.md`);
   if (fs.existsSync(source)) {
     fs.writeFileSync(path.join(process.cwd(), 'docs/docs', `${name}-api-gen.md`), fs.readFileSync(source, 'utf8'));

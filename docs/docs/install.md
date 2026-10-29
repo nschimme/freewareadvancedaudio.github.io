@@ -47,14 +47,14 @@ sudo pacman -S faac faad2
 
 ---
 
-## Build current FAAC and FAAD from source {data-icon="code"}
+## Build the current libraries and tools from source {data-icon="code"}
 
 For developers who need to build the current libraries and command-line tools, use the source repository. Some operating-system packages still provide the legacy FAAD2 decoder rather than the current FAAD API; see the [version comparison](/docs/comparison#choose-a-decoder-for-your-hardware) for details.
 
-Current combined source for FAAC and FAAD:
-- **FAAC and FAAD Source**: [github.com/FreewareAdvancedAudio/faac](https://github.com/FreewareAdvancedAudio/faac)
+Current combined source for FAAC, FAAD, FAAM and FAAR:
+- **FAAC, FAAD, FAAM and FAAR Source**: [github.com/FreewareAdvancedAudio/faac](https://github.com/FreewareAdvancedAudio/faac)
 
-### Building FAAC and FAAD (Meson / Ninja)
+### Building the libraries and tools (Meson / Ninja)
 
 ```bash
 git clone https://github.com/FreewareAdvancedAudio/faac.git
@@ -65,4 +65,13 @@ meson compile -C build
 sudo meson install -C build
 ```
 
-Use `-Dencoder=false` or `-Ddecoder=false` to build only one library. See the [FAAC](/docs/faac), [FAAD](/docs/faad), [`libfaac`](/docs/libfaac), and [`libfaad`](/docs/libfaad) guides for capabilities and API details.
+Use `-Dencoder=false` or `-Ddecoder=false` to leave out the encoder or decoder. `libfaam` and `libfaar` are always built; `-Dfrontend=false` omits the command-line tools.
+
+### Documentation
+
+| Library or tool | Guide | CLI manual |
+| :--- | :--- | :--- |
+| FAAC AAC encoder | [FAAC guide](/docs/faac), [libfaac C API](/docs/libfaac) | [faac(1)](/docs/faac-cli) |
+| FAAD AAC decoder | [FAAD guide](/docs/faad), [libfaad C API](/docs/libfaad) | [faad(1)](/docs/faad-cli) |
+| FAAM MP4 muxer/demuxer | [FAAM guide](/docs/faam), [libfaam C API](/docs/libfaam) | [faam(1)](/docs/faam-cli) |
+| FAAR sample rate converter | [FAAR guide](/docs/faar), [libfaar C API](/docs/libfaar) | [faar(1)](/docs/faar-cli) |

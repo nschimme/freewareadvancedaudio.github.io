@@ -1,4 +1,4 @@
 [submodule "vendor/faac"]
 	path = vendor/faac
 	url = https://github.com/nschimme/faac.git
-	branch = faad-upstream
+	branch = master

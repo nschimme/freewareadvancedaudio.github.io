@@ -26,16 +26,20 @@ RUN echo "[binaries]" > /build/emscripten.cross && \
 
 # Build libfaac WASM
 RUN cd /build/faac_src && \
-    meson setup build_wasm --cross-file /build/emscripten.cross -Ddefault_library=static -Ddecoder=false && \
-    ninja -C build_wasm
+    meson setup build_wasm --cross-file /build/emscripten.cross \
+      -Ddefault_library=static -Ddecoder=false -Dfrontend=false && \
+    ninja -C build_wasm libfaac/libfaac.a libfaam/libfaam.a
 
 COPY scripts/wasm-api.c /build/wasm-api.c
 
 # Compile Emscripten JS/WASM FAAC output module
 RUN mkdir -p /build/out_wasm && \
     LIBS=$(find /build/faac_src/build_wasm -name "*.a" | sort | tr '\n' ' ') && \
-    emcc -O2 /build/wasm-api.c $LIBS \
-      -I/build/faac_src/include -I/build/faac_src/frontend \
+    emcc -O2 /build/wasm-api.c \
+      /build/faac_src/frontend/mp4write.c \
+      /build/faac_src/frontend/cli_io.c \
+      -Wl,--start-group $LIBS -Wl,--end-group \
+      -I/build/faac_src -I/build/faac_src/include -I/build/faac_src/frontend -I/build/faac_src/common \
       -s EXPORTED_FUNCTIONS='["_wasm_converter_open","_wasm_converter_object_type","_wasm_converter_frame_samples","_wasm_converter_rate_control","_wasm_converter_bit_rate","_wasm_converter_quant_quality","_wasm_converter_input","_wasm_converter_encode","_wasm_converter_finish","_wasm_converter_close","_wasm_converter_error","_wasm_converter_version","_malloc","_free"]' \
       -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue","FS","UTF8ToString","stringToUTF8","addFunction","removeFunction"]' \
       -s ALLOW_MEMORY_GROWTH=1 \

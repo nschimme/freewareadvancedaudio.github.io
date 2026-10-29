@@ -67,21 +67,27 @@ export default defineConfig({
         items: [
           { text: 'Installation Guide', link: '/docs/install' },
           { text: 'FAAC AAC Encoder', link: '/docs/faac' },
-          { text: 'FAAD AAC Decoder', link: '/docs/faad' }
+          { text: 'FAAD AAC Decoder', link: '/docs/faad' },
+          { text: 'FAAM MP4 Muxer/Demuxer', link: '/docs/faam' },
+          { text: 'FAAR Sample Rate Converter', link: '/docs/faar' }
         ]
       },
       {
         text: 'CLI Manuals',
         items: [
           { text: 'FAAC CLI Manpage', link: '/docs/faac-cli' },
-          { text: 'FAAD CLI Manpage', link: '/docs/faad-cli' }
+          { text: 'FAAD CLI Manpage', link: '/docs/faad-cli' },
+          { text: 'FAAM CLI Manpage', link: '/docs/faam-cli' },
+          { text: 'FAAR CLI Manpage', link: '/docs/faar-cli' }
         ]
       },
       {
         text: 'C Library APIs',
         items: [
           { text: 'libfaac C API', link: '/docs/libfaac' },
-          { text: 'libfaad C API', link: '/docs/libfaad' }
+          { text: 'libfaad C API', link: '/docs/libfaad' },
+          { text: 'libfaam C API', link: '/docs/libfaam' },
+          { text: 'libfaar C API', link: '/docs/libfaar' }
         ]
       },
       {

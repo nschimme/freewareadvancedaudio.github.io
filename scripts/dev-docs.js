@@ -6,10 +6,8 @@ const root = process.cwd()
 const generator = path.join(root, 'scripts/generate-cli-docs.js')
 const vitepress = path.join(root, 'node_modules/vitepress/bin/vitepress.js')
 const upstreamDocs = [
-  'vendor/faac/docs/faac.1',
-  'vendor/faac/docs/faad.1',
-  'vendor/faac/docs/libfaac.md',
-  'vendor/faac/docs/libfaad.md'
+  ...['faac', 'faad', 'faam', 'faar'].map(name => `vendor/faac/docs/${name}.1`),
+  ...['libfaac', 'libfaad', 'libfaam', 'libfaar'].map(name => `vendor/faac/docs/${name}.md`)
 ].map(file => path.join(root, file))
 
 function generateReferences() {

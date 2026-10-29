@@ -8,8 +8,10 @@ Official website and technical documentation platform for **FAAC** (AAC encoder)
 
 - **FAAC (Encoder)**: Cleanroom LGPL v2.1+ C11/C99 rewrite free of ISO reference code. Supports AAC-LC and HE-AAC v1 with `-b` Average Bitrate (ABR) rate control.
 - **FAAD (Decoder)**: C11 decoder for AAC-LC and HE-AAC v1/v2, with optional multichannel support. Licensed under LGPL v2.1+.
+- **FAAM (Muxer/Demuxer)**: C11 MP4/M4A/M4B muxer, demuxer, and tag editor for AAC audio and H.264/H.265 video. Licensed under LGPL v2.1+.
+- **FAAR (Resampler)**: C11 sample rate converter for interleaved float PCM, with Fast, Good, and High quality profiles. Licensed under LGPL v2.1+.
 - **Interactive Audio Playground**: Live in-browser FAAC encoding powered by a C library cross-compiled to WebAssembly; input decoding uses browser audio support.
-- **Technical Documentation & Listening**: Codec selection guidance, CLI usage guides, C API references, and controlled listening guidance.
+- **Technical Documentation & Listening**: Codec selection guidance, CLI manuals for `faac`, `faad`, `faam` and `faar`, C API references for all four libraries, and controlled listening guidance.
 - **PagesCMS & Decap Integration**: Native `.pages.yml` configuration for content management and blog updates.
 
 ---
@@ -24,7 +26,7 @@ Official website and technical documentation platform for **FAAC** (AAC encoder)
 ├── Dockerfile                   # Multi-stage build compiling FAAC to WASM + VitePress site
 ├── docker-compose.yml           # Docker Compose setup
 ├── scripts/                     # Utility scripts (generate-cli-docs.js)
-├── vendor/faac/                 # FAAC and FAAD source, libraries, CLI tools, and manuals
+├── vendor/faac/                 # FAAC, FAAD, FAAM and FAAR source, libraries, CLI tools, and manuals
 └── docs/                        # VitePress documentation root
     ├── .vitepress/              # VitePress configuration, theme, and components
     │   ├── components/          # AudioVisualizer.vue & WasmConverter.vue
