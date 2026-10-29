@@ -53,7 +53,7 @@ features:
 
 FAAD3 targets modern processors with floating-point units and is a development engine. It ties the top overall MOS, leads the measured decoder throughput and stereo fidelity, and keeps peak RAM to 3.0 MB. Helix uses fixed-point arithmetic and a smaller ROM image than FAAD3, making it an option for legacy hardware without an efficient FPU; it lacks HE-AAC v2 Parametric Stereo support.
 
-**Benchmark snapshot · October 28, 2026 · MacBook Pro M1, 32 GB.** Encoder and decoder figures come from the same generated leaderboard. Results depend on the tested builds and hardware. See the [tested versions and measurements](/docs/tested-versions).
+**Benchmark snapshot · October 28, 2026 · MacBook Pro M1, 32 GB.** Encoder and decoder figures come from the same generated leaderboard. Results depend on the tested builds and hardware. See the [benchmark results and tested versions](/docs/optimization).
 
 ## Hear FAAC with your own music {data-icon="headphones"}
 

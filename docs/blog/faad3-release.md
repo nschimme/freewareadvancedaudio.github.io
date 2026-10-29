@@ -21,6 +21,6 @@ The rewrite does not preserve FAAD2's `NeAACDec*` API or ABI. Applications built
 
 ## Follow the evidence
 
-The [tested-versions page](/docs/tested-versions) is the reference for measured quality, speed, footprint, memory use, and the builds behind those results. Use the [implementation comparison](/docs/comparison) for profile and licensing guidance.
+The [benchmark results page](/docs/optimization#tested-versions-and-benchmark-snapshots) is the reference for measured quality, speed, footprint, memory use, and the builds behind those results. Use the [implementation comparison](/docs/comparison) for profile and licensing guidance.
 
 For license history and patent context, see [software licenses and patent rights](/docs/comparison#software-licenses-and-patent-rights). To install the tools and libraries, visit [installation](/docs/install).

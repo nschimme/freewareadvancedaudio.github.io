@@ -94,7 +94,6 @@ export default defineConfig({
         text: 'Compare & Evaluate',
         items: [
           { text: 'Choose an Encoder or Decoder', link: '/docs/comparison' },
-          { text: 'Tested Versions', link: '/docs/tested-versions' },
           { text: 'AAC Benchmark Results', link: '/docs/optimization' },
           { text: 'Listening-Test Guide', link: '/docs/listening' }
         ]

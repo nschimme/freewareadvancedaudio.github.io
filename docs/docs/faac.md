@@ -22,6 +22,6 @@ FAAC supports **AAC-LC** and **HE-AAC v1** encoding. The library accepts PCM and
 
 ## Evaluate quality and resource use
 
-Published results compare FAAC with other AAC encoders for quality, throughput, code footprint, and memory use. Results depend on the tested build and hardware; objective quality scores are not listening-test results. See the [benchmark methods and results](/docs/optimization) and [tested builds](/docs/tested-versions).
+Published results compare FAAC with other AAC encoders for quality, throughput, code footprint, and memory use. Results depend on the tested build and hardware; objective quality scores are not listening-test results. See the [benchmark methods, results, and tested builds](/docs/optimization).
 
 For profile support, competing implementations, and licensing context, see the [encoder comparison](/docs/comparison).
