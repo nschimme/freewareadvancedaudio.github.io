@@ -33,7 +33,7 @@ Choose based on the profile you need and the platform you are targeting. The cap
 | :--- | :--- |
 | AAC/M4A output from a C application | [FAAC](/docs/faac) |
 | Real-time encoding on an ESP32-S3 | [FAAC](/docs/faac); see [AAC on ESP32](/docs/esp32-aac) |
-| HE-AAC v2 (Parametric Stereo) | FDK-AAC or Apple AudioToolbox; see [patent notes](#patent-status-by-aac-profile) |
+| HE-AAC v2 (Parametric Stereo) | [FAAC](/docs/faac) with Parametric Stereo enabled, FDK-AAC, or Apple AudioToolbox; see [patent notes](#patent-status-by-aac-profile) |
 | Existing FFmpeg pipeline | An AAC encoder available in your FFmpeg build |
 | Apple-platform application | AudioToolbox |
 | Digital Radio Mondiale (DRM) | A DRM-aware encoder and receiver stack; see [DRM notes](#xhe-aac-digital-radio-mondiale-and-opus) |
@@ -45,7 +45,7 @@ For lossless music storage or masters, use [FLAC](https://www.xiph.org/flac/) an
 | Your target | Decoder to evaluate | Why |
 | :--- | :--- | :--- |
 | ESP32-S3 or another microcontroller with an FPU | [FAAD](/docs/faad) | Real-time LC and HE-AAC; stereo HE-AAC v2 is supported. See [AAC on ESP32](/docs/esp32-aac). |
-| ESP32-C6 or another microcontroller without an FPU | [LibHelix](https://github.com/earlephilhower/ESP8266Audio/blob/master/src/libhelix-aac/aacdec.c) | Recommended fixed-point decoder; stays real time where floating-point FAAD3 does not. |
+| ESP32-C6, ESP8266, or another microcontroller without an FPU | [Helix](https://github.com/earlephilhower/ESP8266Audio/blob/master/src/libhelix-aac/aacdec.c) | Recommended fixed-point decoder; stays real time where floating-point FAAD3 does not. |
 | General-purpose decoding or microcontroller with an FPU | [FAAD](/docs/faad) | C11 decoder; LGPL v2.1+. |
 | HE-AAC v2 Parametric Stereo on a constrained target | [FAAD](/docs/faad) on an FPU-equipped target; [legacy FAAD2](https://github.com/FreewareAdvancedAudio/faad2) elsewhere | Adds PS support; verify the target build and memory budget. |
 | Existing FFmpeg application | The available libavcodec decoder | Reuse the media framework already in your pipeline. |
@@ -68,7 +68,7 @@ Use these matrices to compare profile support across encoders and decoders. Supp
 | AAC SSR | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> |
 | AAC-LTP | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> |
 | HE-AAC v1 (SBR) | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> |
-| HE-AAC v2 (SBR + PS) | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> |
+| HE-AAC v2 (SBR + PS) | <span class="cmp-partial" title="Build-dependent: requires encoder-ps">†</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> |
 | AAC-LD | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> |
 | AAC-ELD (optionally with SBR) | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> |
 | USAC / xHE-AAC | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> |
@@ -78,7 +78,7 @@ FFmpeg builds can also include FDK-AAC or Apple AudioToolbox encoders. See [FFmp
 
 ### AAC decoders
 
-| Profile or extension | [FAAD](/docs/faad) | [Legacy FAAD2](https://github.com/FreewareAdvancedAudio/faad2) | FFmpeg native | [FDK-AAC](https://github.com/mstorsjo/fdk-aac) | [LibHelix](https://github.com/earlephilhower/ESP8266Audio/blob/master/src/libhelix-aac/aacdec.c) | [Apple AudioToolbox](https://developer.apple.com/documentation/audiotoolbox) |
+| Profile or extension | [FAAD](/docs/faad) | [Legacy FAAD2](https://github.com/FreewareAdvancedAudio/faad2) | FFmpeg native | [FDK-AAC](https://github.com/mstorsjo/fdk-aac) | [Helix](https://github.com/earlephilhower/ESP8266Audio/blob/master/src/libhelix-aac/aacdec.c) | [Apple AudioToolbox](https://developer.apple.com/documentation/audiotoolbox) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | AAC-LC | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> | <span class="cmp-yes">✓</span> |
 | AAC Main | <span class="cmp-no">—</span> | <span class="cmp-partial" title="Build- or configuration-dependent">†</span> | <span class="cmp-yes">✓</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> | <span class="cmp-no">—</span> |
@@ -95,7 +95,7 @@ FFmpeg builds can also include FDK-AAC or Apple AudioToolbox encoders. See [FFmp
 <details>
 <summary>Profile support notes</summary>
 
-“Main,” “SSR,” and “LTP” are AAC profiles; SBR and PS extend the LC core to HE-AAC v1 and v2. FAAD and legacy FAAD2 include HE-AAC v2 decoding in their default builds. FAAD's PS support can be disabled at build time; legacy FAAD2 Main is unavailable in fixed-point builds, SSR is disabled by default, and DRM support is optional. FFmpeg ELD and USAC support depends on its build.
+“Main,” “SSR,” and “LTP” are AAC profiles; SBR and PS extend the LC core to HE-AAC v1 and v2. FAAC encodes HE-AAC v2 only when built with `encoder-ps`. FAAD and legacy FAAD2 include HE-AAC v2 decoding in their default builds. FAAD's PS support can be disabled at build time; legacy FAAD2 Main is unavailable in fixed-point builds, SSR is disabled by default, and DRM support is optional. FFmpeg ELD and USAC support depends on its build.
 
 Profile support does not guarantee every transport, sample rate, or channel layout. Check the selected release and build. Apple rates and channel layouts depend on the requested format; see [Apple's format identifiers](https://developer.apple.com/documentation/coreaudiotypes/audio-format-identifiers).
 
@@ -111,7 +111,7 @@ For measured decoder quality, speed, memory, and footprint, see the [decoder sna
 | FAAD 3.0 and later | LGPL v2.1 or later. |
 | FDK-AAC | [Custom license](https://github.com/mstorsjo/fdk-aac/blob/master/NOTICE) with redistribution and source-availability conditions; it grants no patent rights. [Fedora treats it as not allowed for new packages](https://docs.fedoraproject.org/tr/legal/not-allowed-licenses/), with an exception for continued packaging of `fdk-aac-free`. |
 | Opus reference implementation | [Three-clause BSD license](https://www.opus-codec.org/license/); royalty-free patent licenses also apply. |
-| LibHelix | [RealNetworks Public Source License (RPSL)](https://github.com/earlephilhower/ESP8266Audio/blob/master/src/libhelix-aac/aacdec.c), unless separately licensed under the RealNetworks Community Source License (RCSL). |
+| Helix | [RealNetworks Public Source License (RPSL)](https://github.com/earlephilhower/ESP8266Audio/blob/master/src/libhelix-aac/aacdec.c), unless separately licensed under the RealNetworks Community Source License (RCSL). |
 | FFmpeg | Build-dependent: LGPL v2.1+ by default; GPL v2+ when GPL components are enabled. See [FFmpeg's licensing guidance](https://www.ffmpeg.org/legal.html). |
 | Legacy FAAD2 | GPL v2 or later. |
 | Legacy FAAC 1.x | Included ISO MPEG-4 reference code under terms distinct from the LGPL; check the exact release. |

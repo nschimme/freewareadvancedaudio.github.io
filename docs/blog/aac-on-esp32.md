@@ -31,7 +31,7 @@ The ESP32-S3 and the classic ESP32 both run ahead of real time. The ESP32-C6 has
 
 ## The honest part
 
-Not every combination fits everywhere. The FPU-less ESP32-C6 should use LibHelix; FAAD's floating-point path runs correctly there, but not in real time. The classic ESP32 cannot fit HE-AAC encoding. FAAC does not yet encode HE-AAC v2, and the measured FAAD3 build is still a work in progress.
+Not every combination fits everywhere. The FPU-less ESP32-C6 and ESP8266 should use Helix; FAAD's floating-point path runs correctly on the C6, but not in real time. The classic ESP32 cannot fit HE-AAC v1 encoding. FAAC can now encode HE-AAC v2 in a Parametric Stereo build, though that path has not been measured on ESP32, and the measured FAAD3 build is still a work in progress.
 
 The point is not that one decoder wins on every chip. The point is that the family covers the range.
 

@@ -1,6 +1,6 @@
 ---
 title: FAAC AAC Encoder Library Overview
-description: FAAC is an LGPL v2.1+ C AAC encoder for AAC-LC and HE-AAC v1. Explore its library and CLI, supported output, and benchmark results.
+description: FAAC is an LGPL v2.1+ C AAC encoder for AAC-LC, HE-AAC v1, and build-dependent HE-AAC v2. Explore its library and CLI, supported output, and benchmark results.
 ---
 
 # FAAC AAC Encoder and C Library
@@ -9,7 +9,7 @@ description: FAAC is an LGPL v2.1+ C AAC encoder for AAC-LC and HE-AAC v1. Explo
 
 ## AAC encoding capabilities
 
-FAAC supports **AAC-LC** and **HE-AAC v1** encoding. The library accepts PCM and returns AAC access units for an application to mux into its chosen container. The command-line tool supports common AAC file-conversion workflows, including M4A output. FAAC does not encode HE-AAC v2 or xHE-AAC.
+FAAC supports **AAC-LC** and **HE-AAC v1** encoding, and **HE-AAC v2** (SBR plus Parametric Stereo) when built with `encoder-ps`. HE-AAC v2 takes stereo input at 32 kHz or above. The library accepts PCM and returns AAC access units for an application to mux into its chosen container. The command-line tool supports common AAC file-conversion workflows, including M4A output. FAAC does not encode xHE-AAC.
 
 ## Choose how to use FAAC
 
