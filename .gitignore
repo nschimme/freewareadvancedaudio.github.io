@@ -13,3 +13,4 @@ docs/public/wasm/*
 
 # Ignore auto-generated CLI docs
 docs/docs/*-cli-gen.md
+docs/docs/*-api-gen.md

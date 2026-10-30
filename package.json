@@ -1,11 +1,11 @@
 {
   "name": "freeware-advanced-audio-website",
   "version": "1.0.0",
-  "description": "Official website for Freeware Advanced Audio Organization (FAAC & FAAD)",
+  "description": "Official website for Freeware Advanced Audio Organization (FAAC & FAAD2)",
   "type": "module",
   "scripts": {
     "docs:generate-cli": "node scripts/generate-cli-docs.js",
-    "docs:dev": "node scripts/dev-docs.js",
+    "docs:dev": "npm run docs:generate-cli && vitepress dev docs",
     "docs:build": "npm run docs:generate-cli && vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },
