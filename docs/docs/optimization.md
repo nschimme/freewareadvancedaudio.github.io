@@ -1,46 +1,43 @@
 ---
-title: AAC Benchmarks — FAAC & FAAD Speed, Size & Quality
-description: "Published AAC encoder and decoder benchmarks: FAAC versus FDK-AAC, FFmpeg, and Apple; FAAD2 and FAAD3 versus Helix. Compare throughput, footprint, and low-bitrate quality."
+title: FAAC Benchmarks — Speed, Size & Quality
+description: "Published AAC encoder and decoder benchmarks, the tested builds behind them, and the methodology used for FAAC versus FDK-AAC, FFmpeg, and Apple."
 ---
 
-# AAC Benchmarks: Speed, Size, and Quality
+# FAAC Benchmarks: Speed, Size, and Quality
 
-Compare **measured encoding speed, code footprint, low-bitrate quality, and decoder performance**. The results below are a published benchmark snapshot; the methods explain how these measurements guide FAAC tuning.
+This page reports one benchmark run in three passes: **what it found**, **how each measurement is made**, and **the exact builds and figures** behind the results. Terms such as MOS and BD-rate are defined at the end.
 
-## FAAC encoder speed and footprint {data-icon="gauge-high"}
+All results come from the **October 28, 2026** run on a **MacBook Pro M1, 32 GB**. Encoder and decoder measurements are separate sections of the same generated leaderboard and should not be treated as a single head-to-head run.
 
-<BenchmarkShowcase view="resources" />
+> Running on microcontrollers? See [AAC on ESP32](/docs/esp32-aac) for ESP32-S3, ESP32-C6, and classic ESP32 results.
 
-**Benchmark snapshot · September 29, 2026 · MacBook Pro M1, 32 GB.** The aggregate report covers 27 scenarios. Tested builds: FAAC 2.2.0 (`6acbe23a`), FDK-AAC 2.0.3 through fdkaac 1.0.9, Apple AAC 27.0, and FFmpeg `g3fc4f99a79` with experimental NMR. [Published measurements](https://github.com/nschimme/faac-benchmark/discussions/90).
+## What the run found {data-icon="chart-line"}
 
-## Low-bitrate quality: FAAC vs FFmpeg {data-icon="headphones"}
+### Encoder quality {data-icon="headphones"}
 
-See FAAC's HE-AAC v1 results against FFmpeg's native LC encoder, or select LC vs LC for a same-profile comparison.
+The chart plots average MOS against bitrate from 16 to 320 kbps on a logarithmic axis, so the full rate–quality curve is visible in one view. Each encoder is shown at its higher-scoring profile for that bitrate. A magnified 128–320 kbps detail separates scores that differ by only a few hundredths of a MOS.
 
 <BenchmarkShowcase view="quality" />
 
-Average scores from the same snapshot. See the report for [profile breakdowns and bitrate accuracy](https://github.com/nschimme/faac-benchmark/discussions/90).
+**48 kHz stereo.** FAAC leads at 16–24 and 48–128 kbps, trails Apple and FDK by at most about 0.02 MOS at 32–40 kbps, and trails Apple by at most 0.008 MOS above 160 kbps. At 48 kbps it scores 4.297 average MOS versus 4.267 for FDK-AAC, 4.262 for Apple AAC, and 3.741 for FFmpeg. [MOS](#metric-definitions) here is a 1.0–5.0 objective estimate, not a listening-test score.
 
-## Decoder performance: FAAD vs Helix and others {data-icon="circle-play"}
+FAAC ranks first on both aggregate metrics, with 2.785 first-percentile MOS and 4.541 overall MOS. See the [encoder snapshot](#encoder-snapshot) for first-percentile figures, per-scenario results, and the report's [profile breakdowns and bitrate accuracy](https://gist.github.com/nschimme/003da901f4b681f3ee4f679b07d2e31e).
+
+### Encoder speed and footprint {data-icon="gauge-high"}
+
+<BenchmarkShowcase view="resources" />
+
+FAAC is the fastest encoder in the comparison at 4.3× FDK-AAC throughput, and has the lowest peak RAM (2.6 MB) and smallest ROM image (99.9 KB) of the four encoders.
+
+### Decoder quality and speed {data-icon="headphones"}
 
 <BenchmarkShowcase view="decoder" />
 
-The same [published report](https://github.com/nschimme/faac-benchmark/discussions/90#decoder-leaderboard) compares **released FAAD2** and the **FAAD3 development engine** with other AAC decoders.
+FAAD3 ties the top overall MOS (4.193), leads stereo fidelity and throughput, and keeps peak RAM to 3.0 MB. Apple AAC has the smallest ROM image (100.3 KB). At 48 kHz stereo, FAAD3 matches FFmpeg, Apple, and FDK within about 0.003 MOS (LC and HE-v1) while running 1.85–3.66× faster than Apple and FFmpeg.
 
-| Decoder | Throughput ↑ | Code footprint ↓ | Peak RAM ↓ |
-| :--- | ---: | ---: | ---: |
-| **FAAD2 2.11.3** | **376.8×** | **296.3 KB** | **2.1 MB** |
-| **FAAD3 (`f9fbcb76`)** | **490.3×** | **136.0 KB** | **2.8 MB** |
-| Helix AAC 1.0 (LibHelix) | 426.1× | 121.4 KB | 1.9 MB |
-| FDK AAC 2.0.0 | 344.1× | 940.5 KB | 4.2 MB |
-| FFmpeg AAC (`g3fc4f99a79`) | 135.1× | 274.5 KB | 16.8 MB |
-| Apple AAC 27.0 | 174.4× | 100.3 KB | 8.3 MB |
+## How the measurements are made {data-icon="flask"}
 
-**The tradeoff:** FAAD3 was faster and used less code storage than FAAD2, with higher peak RAM. Helix was faster and smaller than FAAD2; FAAD3 was faster than Helix, with a larger footprint.
-
-Helix lacks HE-AAC v2 Parametric Stereo (PS) support. For FPU versus fixed-point hardware guidance and release requirements, see [choosing a decoder](/docs/comparison#choose-a-decoder-for-your-hardware).
-
-## How audio quality is tuned {data-icon="headphones"}
+### Audio quality and tuning {data-icon="headphones"}
 
 The [FAAC benchmark suite](https://github.com/nschimme/faac-benchmark) evaluates mono speech, stereo music, and multichannel audio across sample rates and bitrates. Fine-tuning considers difficult passages alongside average quality.
 
@@ -52,13 +49,13 @@ The [FAAC benchmark suite](https://github.com/nschimme/faac-benchmark) evaluates
 
 These measurements guide investigation; objective scores do not establish audible preference.
 
-## How bitrate efficiency is checked {data-icon="sliders"}
+### Bitrate efficiency {data-icon="sliders"}
 
 Quality comparisons use the **actual AAC payload bitrate**, excluding M4A headers and metadata. This prevents extra bits or container overhead from disguising a rate-control difference.
 
-Rate–quality curves and BD-rate analysis compare the bits needed to reach the same objective quality. Sample-rate and channel groups stay separate, as do AAC-LC and HE-AAC v1. ABR, VBR, and CBR are evaluated as distinct modes.
+Rate–quality curves and [BD-rate](#metric-definitions) compare the bits needed to reach the same objective quality. BD-rate is the percentage bitrate change required for equal MOS; a negative value means the candidate needs fewer bits for the same quality. Sample-rate and channel groups stay separate, as do AAC-LC and HE-AAC v1. ABR, VBR, and CBR are evaluated as distinct modes.
 
-## How speed and footprint are checked {data-icon="microchip"}
+### Speed and footprint {data-icon="microchip"}
 
 Benchmarking tracks three resource costs:
 
@@ -70,8 +67,47 @@ Baseline and candidate builds record their toolchain and settings. Parameter swe
 
 For your application, measure the selected build on the target device. Encoding throughput alone does not establish live-audio delay or power consumption.
 
-## Benchmark methodology {data-icon="code"}
+### Methodology references {data-icon="code"}
 
 The benchmark documentation defines the [quality and efficiency metrics](https://github.com/nschimme/faac-benchmark/blob/master/docs/metrics.md), [test scenarios](https://github.com/nschimme/faac-benchmark/blob/master/docs/benchmarking.md), and [footprint checks](https://github.com/nschimme/faac-benchmark/blob/master/docs/footprint-gate.md).
+
+## Tested versions and benchmark snapshots {data-icon="flask"}
+
+### Encoder snapshot
+
+**Run:** October 28, 2026 · MacBook Pro M1 · 32 GB. The leaderboard reports results for 35 scenarios for FAAC, FDK-AAC, and FFmpeg; Apple completed 29 of 35 after 6 encoding failures.
+
+| Encoder | Tested version or build | Throughput | Peak RAM | ROM image |
+| :--- | :--- | ---: | ---: | ---: |
+| FAAC | 3.0.0 (`ecc245c0`) | 721.6× realtime | 2.6 MB | 99.9 KB |
+| FDK-AAC | 1.0.9 | 169.2× realtime | 3.3 MB | 940.5 KB |
+| Apple AAC | 27.2 | 181.8× realtime | 8.3 MB | 100.3 KB |
+| FFmpeg AAC | N-127192-gef52e1cc38, experimental NMR | 51.6× realtime | 18.0 MB | 274.9 KB |
+
+The report ranks encoder quality by 1st-percentile MOS, with overall MOS as the tiebreaker. In the AAC-LC comparison at 48 kbps, FAAC's first-percentile MOS is 3.446 versus 2.933 for FFmpeg, 2.240 for FDK-AAC, and 2.314 for Apple AAC; it also leads all four encoders at 128 kbps (4.867 average / 4.707 first-percentile). From 160–320 kbps it stays within 0.008 average MOS and 0.022 first-percentile MOS of Apple while ahead of FDK-AAC and FFmpeg, and has the leading stereo fidelity at 160–192 kbps. The report also includes per-scenario quality, transient fidelity, and bitrate accuracy. These are objective estimates, not listening-test outcomes.
+
+### Decoder snapshot
+
+The [decoder leaderboard](https://gist.github.com/nschimme/003da901f4b681f3ee4f679b07d2e31e) reports aggregate decode quality, speed, memory, and footprint from the same run. Decoder timings are concurrent and include contention.
+
+| Decoder | Tested version | 1st-percentile MOS | Overall MOS | Stereo fidelity | Mean SNR | Timing error | Throughput | Peak RAM | ROM image |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| FAAD3 | 3.0.0 (`ecc245c0`) | 1.641 | 4.193 | 0.9557 | 20.9 dB | 0.32 ms | 2,120.0× realtime | 3.0 MB | 168.1 KB |
+| FFmpeg AAC | N-127192-gef52e1cc38 | 1.644 | 4.193 | 0.9523 | 20.8 dB | 9.54 ms | 579.7× realtime | 17.0 MB | 274.9 KB |
+| Apple AAC | 27.2 | 1.641 | 3.944 | 0.9500 | 12.5 dB | 0.33 ms | 1,145.7× realtime | 7.8 MB | 100.3 KB |
+| FDK AAC | 2.0.0 | 1.641 | 4.188 | 0.9499 | 20.8 dB | 0.33 ms | 875.9× realtime | 7.4 MB | 940.5 KB |
+| Helix AAC | 1.0 | 1.409 | 3.575 | 0.8809 | 12.7 dB | 78.01 ms | 943.0× realtime | 1.9 MB | 121.4 KB |
+
+Helix recorded 421 crashes and 169 timeouts and did not support HE-AAC v2 Parametric Stereo in single-channel scenarios; FDK recorded 10 runaways. For profile and licensing guidance, see the [implementation comparison](/docs/comparison).
+
+## Metric definitions {data-icon="circle-info"}
+
+- **MOS (mean opinion score)** is a 1.0–5.0 objective estimate: ViSQOL scores speech, while Zimtohrli scores music and full-band audio. The models compare the encoded result with the source. This is not a listening test; 1.0 is poor and 5.0 is transparent.
+- **First-percentile MOS** (`P1`) is the score that 99% of tested clips equal or exceed. It measures the quality floor on difficult passages and is more stable than worst-case MOS, which can be distorted by one anomalous clip.
+- **BD-rate (Bjøntegaard delta rate)** is the percentage bitrate difference needed to reach the same MOS. A **negative** value means the candidate uses fewer bits for equal quality; a **positive** value means it needs more. Rate–quality curves are fitted per coding profile, so AAC-LC and HE-AAC v1 are never compared on one curve.
+- **Throughput** is aggregate audio duration decoded or encoded per unit of processing time on the listed machine. It does not predict performance on another processor.
+- **ROM image** is `.text` + `.rodata` + `.data`, the measured static image used by the reports. It is not the installed package size.
+- **Peak RAM** is specific to the report's scenarios and measurement method.
+- A dash means the linked summary does not publish that measure for the row; it does not mean zero or a failed measurement.
 
 **Next:** [choose an encoder or decoder](/docs/comparison), or [test audible quality](/docs/listening).

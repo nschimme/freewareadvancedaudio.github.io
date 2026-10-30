@@ -6,8 +6,16 @@ const origin = process.env.SITE_ORIGIN || 'https://freewareadvancedaudio.github.
 export default defineConfig({
   base,
   title: 'Freeware Advanced Audio',
-  description: 'Official documentation and interactive online audio converter for FAAC (LGPL v2.1+ AAC Encoder) and FAAD (AAC Decoder). Fast, compact open-source AAC encoder and decoder libraries in C.',
+  description: 'Official documentation and interactive online audio converter for FAAC and FAAD, LGPL-licensed AAC encoder and decoder libraries in C.',
   cleanUrls: true,
+  vite: {
+    server: {
+      watch: {
+        usePolling: process.env.VITEPRESS_POLLING === '1',
+        interval: 500
+      }
+    }
+  },
   markdown: {
     config(md) {
       // Add decoration at render time so anchors and outline labels stay plain text.
@@ -23,8 +31,9 @@ export default defineConfig({
           ? renderHeading(tokens, idx, options, env, self)
           : self.renderToken(tokens, idx, options)
         const icon = tokens[idx].attrGet('data-icon')
+        const iconStyle = ['apple', 'linux', 'windows'].includes(icon) ? 'fa-brands' : 'fa-solid'
         return opening + (icon && /^[a-z-]+$/.test(icon)
-          ? `<i class="fa-solid fa-${icon} section-icon" aria-hidden="true"></i> `
+          ? `<i class="${iconStyle} fa-${icon} section-icon" aria-hidden="true"></i> `
           : '')
       }
     }
@@ -46,16 +55,10 @@ export default defineConfig({
     siteTitle: 'Freeware Advanced Audio',
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Documentation', link: '/docs/faac' },
       { text: 'Try FAAC', link: '/playground' },
+      { text: 'Download', link: '/docs/install' },
+      { text: 'Documentation', link: '/docs/faac' },
       { text: 'Choose an Implementation', link: '/docs/comparison' },
-      {
-        text: 'Downloads',
-        items: [
-          { text: 'FAAC Encoder Releases', link: 'https://github.com/FreewareAdvancedAudio/faac/releases' },
-          { text: 'FAAD Decoder Releases', link: 'https://github.com/FreewareAdvancedAudio/faad2/releases' }
-        ]
-      },
       { text: 'Blog', link: '/blog/' }
     ],
     sidebar: [
@@ -64,14 +67,27 @@ export default defineConfig({
         items: [
           { text: 'Installation Guide', link: '/docs/install' },
           { text: 'FAAC AAC Encoder', link: '/docs/faac' },
-          { text: 'FAAD AAC Decoder', link: '/docs/faad' }
+          { text: 'FAAD AAC Decoder', link: '/docs/faad' },
+          { text: 'FAAM MP4 Muxer/Demuxer', link: '/docs/faam' },
+          { text: 'FAAR Sample Rate Converter', link: '/docs/faar' }
         ]
       },
       {
         text: 'CLI Manuals',
         items: [
           { text: 'FAAC CLI Manpage', link: '/docs/faac-cli' },
-          { text: 'FAAD CLI Manpage', link: '/docs/faad-cli' }
+          { text: 'FAAD CLI Manpage', link: '/docs/faad-cli' },
+          { text: 'FAAM CLI Manpage', link: '/docs/faam-cli' },
+          { text: 'FAAR CLI Manpage', link: '/docs/faar-cli' }
+        ]
+      },
+      {
+        text: 'C Library APIs',
+        items: [
+          { text: 'libfaac C API', link: '/docs/libfaac' },
+          { text: 'libfaad C API', link: '/docs/libfaad' },
+          { text: 'libfaam C API', link: '/docs/libfaam' },
+          { text: 'libfaar C API', link: '/docs/libfaar' }
         ]
       },
       {
@@ -79,6 +95,7 @@ export default defineConfig({
         items: [
           { text: 'Choose an Encoder or Decoder', link: '/docs/comparison' },
           { text: 'AAC Benchmark Results', link: '/docs/optimization' },
+          { text: 'AAC on ESP32', link: '/docs/esp32-aac' },
           { text: 'Listening-Test Guide', link: '/docs/listening' }
         ]
       }

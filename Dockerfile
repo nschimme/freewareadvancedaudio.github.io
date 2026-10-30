@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for Freeware Advanced Audio build & web server
+# Multi-stage Dockerfile for the FAAC WebAssembly encoder and website
 FROM emscripten/emsdk:3.1.6 AS builder
 
 WORKDIR /build
@@ -26,16 +26,20 @@ RUN echo "[binaries]" > /build/emscripten.cross && \
 
 # Build libfaac WASM
 RUN cd /build/faac_src && \
-    meson setup build_wasm --cross-file /build/emscripten.cross -Ddefault_library=static && \
-    ninja -C build_wasm
+    meson setup build_wasm --cross-file /build/emscripten.cross \
+      -Ddefault_library=static -Ddecoder=false -Dfrontend=false && \
+    ninja -C build_wasm libfaac/libfaac.a libfaam/libfaam.a
 
 COPY scripts/wasm-api.c /build/wasm-api.c
 
 # Compile Emscripten JS/WASM FAAC output module
 RUN mkdir -p /build/out_wasm && \
     LIBS=$(find /build/faac_src/build_wasm -name "*.a" | sort | tr '\n' ' ') && \
-    emcc -O2 /build/wasm-api.c $LIBS \
-      -I/build/faac_src/include -I/build/faac_src/frontend \
+    emcc -O2 /build/wasm-api.c \
+      /build/faac_src/frontend/mp4write.c \
+      /build/faac_src/frontend/cli_io.c \
+      -Wl,--start-group $LIBS -Wl,--end-group \
+      -I/build/faac_src -I/build/faac_src/include -I/build/faac_src/frontend -I/build/faac_src/common \
       -s EXPORTED_FUNCTIONS='["_wasm_converter_open","_wasm_converter_object_type","_wasm_converter_frame_samples","_wasm_converter_rate_control","_wasm_converter_bit_rate","_wasm_converter_quant_quality","_wasm_converter_input","_wasm_converter_encode","_wasm_converter_finish","_wasm_converter_close","_wasm_converter_error","_wasm_converter_version","_malloc","_free"]' \
       -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue","FS","UTF8ToString","stringToUTF8","addFunction","removeFunction"]' \
       -s ALLOW_MEMORY_GROWTH=1 \
@@ -64,7 +68,7 @@ COPY --from=builder /build/out_wasm/ /opt/faac-wasm/
 
 EXPOSE 5173 4173
 
-CMD ["sh", "-lc", "cp /opt/faac-wasm/* docs/public/wasm/ && npm run docs:dev -- --host 0.0.0.0"]
+CMD ["sh", "-lc", "cp /opt/faac-wasm/* docs/public/wasm/ && exec npm run docs:dev -- --host 0.0.0.0"]
 
 # Static site builder stage for production deployment
 FROM app AS site-builder

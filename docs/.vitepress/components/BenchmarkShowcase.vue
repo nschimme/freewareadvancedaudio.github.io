@@ -1,49 +1,132 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 
 const props = defineProps<{ view: 'resources' | 'decoder' | 'quality' }>()
 
-// Published snapshot: Discussion #90, 2026-09-29. Do not mix with local runs.
+// Published snapshot: leaderboard gist, generated 2026-10-28. Do not mix with local runs.
 const encoders = [
-  { name: 'FAAC', speed: 506.9, footprint: 73.4 },
-  { name: 'FDK-AAC', speed: 152.9, footprint: 940.5 },
-  { name: 'Apple AAC', speed: 112.1, footprint: 100.3 },
-  { name: 'FFmpeg AAC', speed: 40.4, footprint: 274.5 }
+  { name: 'FAAC', speed: 721.6, footprint: 99.9 },
+  { name: 'FDK-AAC', speed: 169.2, footprint: 940.5 },
+  { name: 'Apple AAC', speed: 181.8, footprint: 100.3 },
+  { name: 'FFmpeg AAC', speed: 51.6, footprint: 274.9 }
 ]
 const encoderMetrics = [
-  { key: 'speed' as const, title: 'Encoding throughput', icon: 'gauge-high', value: '507×', unit: 'realtime', summary: '3.3× the measured FDK-AAC throughput', max: 506.9, format: (n: number) => `${n.toFixed(1)}×`, note: 'Aggregate throughput · higher is better' },
-  { key: 'footprint' as const, title: 'Encoder footprint', icon: 'microchip', value: '73', unit: 'KB', summary: 'About 8% of the measured FDK-AAC footprint', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Code + constants + initialized data · lower is better' }
+  { key: 'speed' as const, title: 'Encoding throughput', icon: 'gauge-high', value: '721.6×', unit: 'realtime', summary: '4.3× the measured FDK-AAC throughput', max: 721.6, format: (n: number) => `${n.toFixed(1)}×`, note: 'Aggregate throughput · higher is better' },
+  { key: 'footprint' as const, title: 'Encoder code footprint', icon: 'microchip', value: '89%', unit: 'less code', summary: 'FAAC 99.9 KB vs FDK-AAC 940.5 KB', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Code + constants + initialized data · lower is better' }
 ]
 const decoders = [
-  { name: 'FAAD3', speed: 490.3, footprint: 136.0 },
-  { name: 'LibHelix', speed: 426.1, footprint: 121.4 },
-  { name: 'FAAD2', speed: 376.8, footprint: 296.3 },
-  { name: 'FDK-AAC', speed: 344.1, footprint: 940.5 },
-  { name: 'Apple AAC', speed: 174.4, footprint: 100.3 },
-  { name: 'FFmpeg AAC', speed: 135.1, footprint: 274.5 }
+  // Lead with FAAD3; then follow the encoder card order and append decoder-only implementations.
+  { name: 'FAAD3', speed: 2120.0, footprint: 168.1 },
+  { name: 'FDK AAC', speed: 875.9, footprint: 940.5 },
+  { name: 'Apple AAC', speed: 1145.7, footprint: 100.3 },
+  { name: 'FFmpeg AAC', speed: 579.7, footprint: 274.9 },
+  { name: 'Helix AAC', speed: 943.0, footprint: 121.4 }
 ]
 const decoderMetrics = [
-  { key: 'speed' as const, title: 'Decoding throughput', icon: 'gauge-high', value: '490×', unit: 'realtime', summary: 'FAAD3 · 15% higher throughput than LibHelix', max: 490.3, format: (n: number) => `${n.toFixed(1)}×`, note: 'Aggregate throughput · higher is better' },
-  { key: 'footprint' as const, title: 'Decoder footprint', icon: 'microchip', value: '54%', unit: 'less code', summary: 'FAAD3 compared with FAAD2 · 136 KB', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Helix and Apple were smaller · lower is better' }
+  { key: 'speed' as const, title: 'Decoding throughput', icon: 'gauge-high', value: '2,120×', unit: 'realtime', summary: '2.4× the measured FDK AAC throughput', max: 2120.0, format: (n: number) => `${n.toFixed(1)}×`, note: 'Aggregate throughput · higher is better' },
+  { key: 'footprint' as const, title: 'Decoder code footprint', icon: 'microchip', value: '82%', unit: 'less code', summary: 'FAAD3 168.1 KB vs FDK AAC 940.5 KB', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Code + read-only + initialized data · lower is better' }
 ]
 const metrics = computed(() => props.view === 'decoder' ? decoderMetrics : encoderMetrics)
 const implementations = computed(() => props.view === 'decoder' ? decoders : encoders)
-const profile = ref<'lc' | 'he'>('he')
-const faacLabel = computed(() => profile.value === 'lc' ? 'FAAC · LC' : 'FAAC · HE v1')
-const quality = [
-  { rate: 24, lc: 2.715, he: 3.427, ffmpeg: 2.515 },
-  { rate: 32, lc: 3.454, he: 3.812, ffmpeg: 2.508 },
-  { rate: 40, lc: 3.868, he: 4.020, ffmpeg: 2.667 },
-  { rate: 48, lc: 4.110, he: 4.172, ffmpeg: 3.833 },
-  { rate: 56, lc: 4.258, he: 4.309, ffmpeg: 4.129 },
-  { rate: 64, lc: 4.379, he: 4.414, ffmpeg: 4.279 }
+
+// 48 kHz stereo average MOS, 16–320 kbps. Published snapshot; null means not published.
+const rates = [16, 24, 32, 40, 48, 56, 64, 80, 96, 128, 160, 192, 256, 320]
+const rawQualitySeries = [
+  {
+    name: 'FAAC',
+    label: { lc: 'FAAC · LC', he: 'FAAC · HE v1' },
+    color: '#67e8f9',
+    dash: '',
+    values: {
+      lc: [2.083, 2.741, 3.578, 3.972, 4.177, 4.328, 4.469, 4.613, 4.739, 4.867, 4.926, 4.955, 4.981, 4.991],
+      he: [2.978, 3.484, 3.822, 4.128, 4.297, 4.451, 4.549, 4.678, 4.746, 4.807, 4.827, 4.832, 4.833, 4.833]
+    }
+  },
+  {
+    name: 'FDK-AAC',
+    label: { lc: 'FDK-AAC · LC', he: 'FDK-AAC · HE v1' },
+    color: '#c4b5fd',
+    dash: '',
+    values: {
+      lc: [1.710, 2.164, 2.567, 2.760, 2.951, 4.063, 4.221, 4.606, 4.718, 4.826, 4.880, 4.927, 4.953, 4.960],
+      he: [2.157, 3.321, 3.836, 4.134, 4.267, 4.440, 4.526, 4.666, 4.742, 4.815, 4.844, 4.854, 4.857, 4.860]
+    }
+  },
+  {
+    name: 'Apple AAC',
+    label: { lc: 'Apple AAC · LC', he: 'Apple AAC · HE v1' },
+    color: '#fbbf24',
+    dash: '6 3',
+    values: {
+      lc: [1.487, 1.548, 2.531, 2.881, 2.875, 3.385, 3.976, 4.613, 4.710, 4.859, 4.927, 4.963, 4.983, 4.993],
+      he: [null, 2.617, 3.843, 4.109, 4.262, 4.408, 4.543, null, null, null, null, null, null, null]
+    }
+  },
+  {
+    name: 'FFmpeg AAC',
+    label: { lc: 'FFmpeg AAC · LC', he: 'FFmpeg AAC · HE v1' },
+    color: '#94a3b8',
+    dash: '2 4',
+    values: {
+      lc: [2.329, 2.335, 2.373, 2.609, 3.741, 4.070, 4.306, 4.535, 4.680, 4.799, 4.883, 4.928, 4.935, 4.943],
+      he: [null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+    }
+  }
 ]
-const qualityWidth = (score: number) => `${(score - 1) / 4 * 100}%`
-const displayScore = (score: number) => (Math.round(score * 100) / 100).toFixed(2)
+
+// Each encoder is plotted at its higher-scoring profile for each bitrate.
+const bestOf = (lc: (number | null)[], he: (number | null)[]) => lc.map((lcValue, index) => {
+  const heValue = he[index]
+  if (lcValue === null) return heValue
+  if (heValue === null) return lcValue
+  return Math.max(lcValue, heValue)
+})
+const qualitySeries = rawQualitySeries.map(series => ({
+  name: series.name,
+  color: series.color,
+  dash: series.dash,
+  values: bestOf(series.values.lc, series.values.he)
+}))
+const plottedSeries = computed(() => qualitySeries.filter(series => series.values.some(value => value !== null)))
+
+const chart = { width: 760, height: 320, top: 18, right: 18, bottom: 38, left: 46 }
+const plotWidth = chart.width - chart.left - chart.right
+const plotHeight = chart.height - chart.top - chart.bottom
+const minRate = rates[0]
+const maxRate = rates[rates.length - 1]
+const xFor = (rate: number) => chart.left + (Math.log2(rate) - Math.log2(minRate)) / (Math.log2(maxRate) - Math.log2(minRate)) * plotWidth
+const yFor = (score: number) => chart.top + (5 - score) / 4 * plotHeight
+const xTicks = [16, 32, 64, 128, 320]
+const yTicks = [1, 2, 3, 4, 5]
+const linePoints = (values: (number | null)[]) => values
+  .map((value, index) => value === null ? null : `${xFor(rates[index]).toFixed(1)},${yFor(value).toFixed(1)}`)
+  .filter(Boolean)
+  .join(' ')
+
+// High-bitrate magnification: same 128–320 kbps segment, y-axis 4.75–5.00.
+const zoomStart = rates.indexOf(128)
+const zoomRates = rates.slice(zoomStart)
+const zoomChart = { width: 760, height: 210, top: 18, right: 18, bottom: 30, left: 46 }
+const zoomPlotWidth = zoomChart.width - zoomChart.left - zoomChart.right
+const zoomPlotHeight = zoomChart.height - zoomChart.top - zoomChart.bottom
+const zoomMinRate = zoomRates[0]
+const zoomMaxRate = zoomRates[zoomRates.length - 1]
+const zoomXFor = (rate: number) => zoomChart.left + (Math.log2(rate) - Math.log2(zoomMinRate)) / (Math.log2(zoomMaxRate) - Math.log2(zoomMinRate)) * zoomPlotWidth
+const zoomYFor = (score: number) => zoomChart.top + (5 - score) / 0.25 * zoomPlotHeight
+const zoomXTicks = [128, 160, 192, 256, 320]
+const zoomYTicks = [4.75, 4.8, 4.85, 4.9, 4.95, 5]
+const zoomPoints = (values: (number | null)[]) => values
+  .slice(zoomStart)
+  .map((value, index) => value === null ? null : `${zoomXFor(zoomRates[index]).toFixed(1)},${zoomYFor(value).toFixed(1)}`)
+  .filter(Boolean)
+  .join(' ')
+
+const qualityAria = computed(() => `Line chart of average MOS from ${minRate} to ${maxRate} kbps, log scale, for ${plottedSeries.value.map(series => series.name).join(', ')}.`)
+const displayScore = (score: number | null) => score === null ? '—' : (Math.round(score * 100) / 100).toFixed(2)
 </script>
 
 <template>
-  <div v-if="view !== 'quality'" class="resource-cards" :aria-label="view === 'decoder' ? 'Measured decoder throughput and footprint' : 'Measured encoder throughput and footprint'">
+  <div v-if="view !== 'quality'" class="resource-cards" :aria-label="view === 'decoder' ? 'Measured AAC decoder throughput and footprint' : 'Measured encoder throughput and footprint'">
     <article v-for="metric in metrics" :key="metric.key" class="metric-card">
       <div class="metric-heading"><i :class="`fa-solid fa-${metric.icon}`" aria-hidden="true"></i><h3>{{ metric.title }}</h3></div>
       <div class="metric-value">{{ metric.value }} <span>{{ metric.unit }}</span></div>
@@ -59,34 +142,74 @@ const displayScore = (score: number) => (Math.round(score * 100) / 100).toFixed(
   </div>
 
   <figure v-else class="quality-chart" aria-labelledby="quality-chart-caption">
-    <figcaption id="quality-chart-caption">48 kHz stereo · 24–64 kbps</figcaption>
-    <div class="profile-controls" role="group" aria-label="FAAC profile to compare with FFmpeg LC">
-      <button type="button" :aria-pressed="profile === 'he'" @click="profile = 'he'">FAAC HE v1 vs FFmpeg LC</button>
-      <button type="button" :aria-pressed="profile === 'lc'" @click="profile = 'lc'">LC vs LC</button>
+    <figcaption id="quality-chart-caption">48 kHz stereo · average objective MOS across 16–320 kbps · higher is better</figcaption>
+
+    <ul class="series-legend">
+      <li v-for="series in plottedSeries" :key="series.name">
+        <span class="legend-swatch" :style="{ background: series.dash ? `repeating-linear-gradient(90deg, ${series.color} 0 5px, transparent 5px 9px)` : series.color }"></span>
+        {{ series.name }}
+      </li>
+    </ul>
+
+    <svg class="quality-svg" :viewBox="`0 0 ${chart.width} ${chart.height}`" role="img" :aria-label="qualityAria">
+      <title>Average MOS vs bitrate</title>
+      <g aria-hidden="true">
+        <rect class="zoom-region" :x="xFor(128)" :y="chart.top" :width="xFor(320) - xFor(128)" :height="plotHeight" />
+        <text class="axis-title" :x="(xFor(128) + xFor(320)) / 2" :y="chart.top - 6" text-anchor="middle">detail below</text>
+        <line v-for="tick in yTicks" :key="tick" class="grid-line" :x1="chart.left" :x2="chart.width - chart.right" :y1="yFor(tick)" :y2="yFor(tick)" />
+        <text v-for="tick in yTicks" :key="`y-${tick}`" class="axis-label" :x="chart.left - 10" :y="yFor(tick) + 3" text-anchor="end">{{ tick }}</text>
+        <text v-for="rate in xTicks" :key="`x-${rate}`" class="axis-label" :x="xFor(rate)" :y="chart.height - 14" :text-anchor="rate === maxRate ? 'end' : 'middle'">{{ rate }}</text>
+        <text class="axis-label axis-title" :x="chart.left + plotWidth / 2" :y="chart.height" text-anchor="middle">kbps · logarithmic scale</text>
+        <text class="axis-label axis-title" :x="chart.left - 34" :y="chart.top - 4" text-anchor="start">MOS</text>
+      </g>
+      <g v-for="series in plottedSeries" :key="series.name" :style="{ color: series.color }">
+        <polyline :points="linePoints(series.values)" fill="none" stroke="currentColor" :stroke-width="series.name === 'FAAC' ? 3 : 2" :stroke-dasharray="series.dash || undefined" stroke-linejoin="round" stroke-linecap="round" />
+        <circle v-for="(value, index) in series.values" :key="index" v-show="value !== null" :cx="xFor(rates[index])" :cy="value === null ? 0 : yFor(value)" :r="series.name === 'FAAC' ? 4 : 3" fill="currentColor" stroke="var(--vp-c-bg)" stroke-width="1.5">
+          <title>{{ series.name }} · {{ rates[index] }} kbps: {{ displayScore(value) }} MOS</title>
+        </circle>
+      </g>
+    </svg>
+
+    <p class="chart-note">
+      Each encoder is shown at its higher-scoring profile for that bitrate, so points may mix profiles.
+      Bitrates are requested targets, not matched actual payload rates. Scores are model estimates, not listening-test results.
+    </p>
+
+    <div class="zoom-panel">
+      <p class="zoom-title">High-bitrate detail · 128–320 kbps · y-axis 4.75–5.00</p>
+      <svg class="zoom-svg" :viewBox="`0 0 ${zoomChart.width} ${zoomChart.height}`" role="img" aria-label="Magnified view of average MOS from 128 to 320 kbps, y-axis 4.75 to 5.00">
+        <title>High-bitrate detail: average MOS vs bitrate</title>
+        <g aria-hidden="true">
+          <line v-for="tick in zoomYTicks" :key="tick" class="grid-line" :x1="zoomChart.left" :x2="zoomChart.width - zoomChart.right" :y1="zoomYFor(tick)" :y2="zoomYFor(tick)" />
+          <text v-for="tick in zoomYTicks" :key="`zy-${tick}`" class="axis-label" :x="zoomChart.left - 10" :y="zoomYFor(tick) + 3" text-anchor="end">{{ tick.toFixed(2) }}</text>
+          <text v-for="rate in zoomXTicks" :key="`zx-${rate}`" class="axis-label" :x="zoomXFor(rate)" :y="zoomChart.height - 12" :text-anchor="rate === zoomMaxRate ? 'end' : 'middle'">{{ rate }}</text>
+          <text class="axis-label axis-title" :x="zoomChart.left + zoomPlotWidth / 2" :y="zoomChart.height" text-anchor="middle">kbps · logarithmic scale</text>
+        </g>
+        <g v-for="series in plottedSeries" :key="series.name" :style="{ color: series.color }">
+          <polyline :points="zoomPoints(series.values)" fill="none" stroke="currentColor" :stroke-width="series.name === 'FAAC' ? 3 : 2" :stroke-dasharray="series.dash || undefined" stroke-linejoin="round" stroke-linecap="round" />
+          <circle v-for="(value, index) in series.values.slice(zoomStart)" :key="index" v-show="value !== null" :cx="zoomXFor(zoomRates[index])" :cy="value === null ? 0 : zoomYFor(value)" :r="series.name === 'FAAC' ? 4 : 3" fill="currentColor" stroke="var(--vp-c-bg)" stroke-width="1.5">
+            <title>{{ series.name }} · {{ zoomRates[index] }} kbps: {{ displayScore(value) }} MOS</title>
+          </circle>
+        </g>
+      </svg>
+      <p class="chart-note">The detail view keeps the same 128–320 kbps data but magnifies the y-axis, so differences of a few hundredths of a MOS are visible. The shaded region in the chart above marks the range shown here.</p>
     </div>
-    <p class="chart-note">Average objective MOS · higher is better</p>
-    <div class="quality-axis" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
-    <div v-for="point in quality" :key="point.rate" class="quality-group">
-      <div class="rate-label">{{ point.rate }} <span>kbps</span></div>
-      <div class="quality-pair">
-        <div class="quality-row faac-row">
-          <span class="encoder-label">{{ faacLabel }}</span>
-          <div class="quality-track" aria-hidden="true"><div :style="{width: qualityWidth(point[profile])}"></div></div>
-          <strong>{{ displayScore(point[profile]) }}</strong>
-        </div>
-        <div class="quality-row ffmpeg-row">
-          <span class="encoder-label">FFmpeg · LC</span>
-          <div class="quality-track" aria-hidden="true"><div :style="{width: qualityWidth(point.ffmpeg)}"></div></div>
-          <strong>{{ displayScore(point.ffmpeg) }}</strong>
-        </div>
-      </div>
-    </div>
-    <p class="chart-note profile-note" aria-live="polite">{{ profile === 'lc' ? 'Both encoders use AAC-LC.' : 'Different profiles: FAAC uses HE-AAC v1; the tested FFmpeg native encoder uses AAC-LC.' }} Bitrates are requested targets, not matched actual payload rates. Scores are model estimates, not listening-test results.</p>
+
     <details class="quality-data">
-      <summary>View all scores</summary>
+      <summary>View chart data</summary>
       <table>
-        <thead><tr><th>Target kbps</th><th>FAAC LC</th><th>FAAC HE v1</th><th>FFmpeg LC</th></tr></thead>
-        <tbody><tr v-for="point in quality" :key="point.rate"><td>{{ point.rate }}</td><td>{{ point.lc.toFixed(3) }}</td><td>{{ point.he.toFixed(3) }}</td><td>{{ point.ffmpeg.toFixed(3) }}</td></tr></tbody>
+        <thead>
+          <tr>
+            <th scope="col">kbps</th>
+            <th v-for="series in plottedSeries" :key="series.name" scope="col">{{ series.name }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(rate, index) in rates" :key="rate">
+            <th scope="row">{{ rate }}</th>
+            <td v-for="series in plottedSeries" :key="series.name">{{ displayScore(series.values[index]) }}</td>
+          </tr>
+        </tbody>
       </table>
     </details>
   </figure>
@@ -108,35 +231,29 @@ const displayScore = (score: number) => (Math.round(score * 100) / 100).toFixed(
 .is-faac .resource-label { color: var(--audio-icon-cyan); }
 .is-faac .resource-track > div { background: var(--audio-icon-cyan); }
 .metric-card .metric-note { margin: 22px 0 0; color: var(--vp-c-text-3); font-size: 12px; line-height: 18px; }
+
 .quality-chart { margin: 24px 0; }
 .quality-chart figcaption { font-weight: 600; font-size: 17px; }
-.profile-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
-.profile-controls button { padding: 7px 12px; border: 1px solid var(--vp-c-divider); border-radius: 8px; color: var(--vp-c-text-2); font-size: 12px; line-height: 18px; }
-.profile-controls button[aria-pressed="true"] { color: var(--audio-icon-cyan); background: var(--vp-c-brand-soft); border-color: var(--vp-c-brand-1); }
-.profile-controls button:focus-visible, .quality-data summary:focus-visible { outline: 2px solid var(--audio-icon-cyan); outline-offset: 3px; }
+.series-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 16px 0 4px; padding: 0; list-style: none; font-size: 12px; color: var(--vp-c-text-2); }
+.series-legend li { display: flex; align-items: center; gap: 7px; }
+.legend-swatch { display: inline-block; width: 20px; height: 3px; border-radius: 2px; }
+.quality-svg, .zoom-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.axis-label { fill: var(--vp-c-text-3); font-size: 10px; font-variant-numeric: tabular-nums; }
+.axis-title { fill: var(--vp-c-text-2); font-size: 10px; }
+.grid-line { stroke: var(--vp-c-divider); stroke-width: 1; }
+.zoom-region { fill: rgba(148, 163, 184, 0.08); }
 .quality-chart .chart-note { font-size: 12px; line-height: 20px; color: var(--vp-c-text-2); margin: 12px 0; }
-.quality-axis { display: flex; justify-content: space-between; margin: 18px 42px 8px 164px; color: var(--vp-c-text-3); font-size: 11px; }
-.quality-group { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--vp-c-divider); }
-.rate-label { align-self: center; font-size: 16px; font-weight: 600; line-height: 20px; }
-.rate-label span { display: block; font-size: 11px; font-weight: 400; color: var(--vp-c-text-3); }
-.quality-pair { display: grid; gap: 7px; }
-.quality-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) 34px; gap: 8px; align-items: center; font-size: 11px; line-height: 18px; }
-.quality-row strong { text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; }
-.faac-row { color: var(--audio-icon-cyan); }
-.ffmpeg-row { color: var(--audio-icon-violet); }
-.quality-track { height: 10px; background: rgba(148, 163, 184, 0.1); border-radius: 3px; }
-.quality-track > div { height: 100%; border-radius: inherit; background: currentColor; }
-.quality-chart .profile-note { margin-top: 20px; }
-.quality-data { margin-top: 16px; font-size: 13px; }
+.zoom-panel { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--vp-c-divider); }
+.zoom-title { font-size: 13px; font-weight: 600; color: var(--vp-c-text-2); margin: 0 0 8px; }
+.quality-data { margin-top: 20px; font-size: 12px; }
 .quality-data summary { cursor: pointer; color: var(--vp-c-text-2); }
-.quality-data table { font-size: 12px; }
+.quality-data table { width: 100%; margin-top: 10px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.quality-data th, .quality-data td { padding: 4px 8px; border-bottom: 1px solid var(--vp-c-divider); text-align: right; }
+.quality-data th:first-child { text-align: left; }
 @media (max-width: 640px) {
   .resource-cards { grid-template-columns: 1fr; }
   .metric-card, .quality-chart { padding: 18px; }
   .metric-card .metric-summary { min-height: 0; }
-  .quality-group { grid-template-columns: 36px minmax(0, 1fr); gap: 8px; }
-  .quality-row { grid-template-columns: minmax(0, 1fr) 34px; gap: 4px 8px; }
-  .encoder-label { grid-column: 1 / -1; }
-  .quality-axis { margin-left: 44px; }
+  .axis-label { font-size: 9px; }
 }
 </style>
