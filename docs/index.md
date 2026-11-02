@@ -56,7 +56,7 @@ FAAC encodes 4.3× faster than FDK-AAC, and FAAD3 decodes 2.4× faster. FAAD3 al
 
 ### Build only what you need {data-icon="sliders"}
 
-Every feature is a build option: HE-AAC (SBR), HE-AAC v2 (PS), DAB frames, dynamic range control, and channel count. Switch off what you don't use and the flash cost drops with it. See [Trim the build](/docs/esp32-aac#trim-the-build) for every switch. With everything enabled, FAAC and FAAD3 together are about the size of FFmpeg's AAC build and under a third of FDK-AAC ([whole-library comparison](/docs/optimization#build-size-compare-whole-libraries)).
+Every feature is a build option: HE-AAC (SBR), HE-AAC v2 (PS), DAB frames, dynamic range control, and channel count. Switch off what you don't use and the flash cost drops with it. See [Trim the build](/docs/esp32-aac#trim-the-build) for every switch. With everything enabled, FAAC and FAAD3 together are under a third of the size of FDK-AAC ([whole-library comparison](/docs/optimization#build-size-compare-whole-libraries)).
 
 <Esp32Showcase view="build" />
 
