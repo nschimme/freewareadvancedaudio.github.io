@@ -22,6 +22,6 @@ FAAC supports **AAC-LC** and **HE-AAC v1** encoding, and **HE-AAC v2** (SBR plus
 
 ## Evaluate quality and resource use
 
-Published results compare FAAC with other AAC encoders for quality, throughput, code footprint, and memory use. Results depend on the tested build and hardware; objective quality scores are not listening-test results. See the [benchmark methods, results, and tested builds](/docs/optimization).
+Published results compare FAAC with other AAC encoders for quality, throughput, memory use, and whole-library build size. FAAC is also configurable at build time, so you can ship only the features you need. Results depend on the tested build and hardware; objective quality scores are not listening-test results. See the [benchmark methods, results, and tested builds](/docs/optimization).
 
 For ESP32-class encoding, see [AAC on ESP32](/docs/esp32-aac). For profile support, competing implementations, and licensing context, see the [encoder comparison](/docs/comparison).

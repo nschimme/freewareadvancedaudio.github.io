@@ -1,33 +1,34 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps<{ view: 'resources' | 'decoder' | 'quality' }>()
+const props = defineProps<{ view: 'resources' | 'decoder' | 'speed' | 'quality' }>()
 
 // Published snapshot: leaderboard gist, generated 2026-10-28. Do not mix with local runs.
 const encoders = [
-  { name: 'FAAC', speed: 721.6, footprint: 99.9 },
-  { name: 'FDK-AAC', speed: 169.2, footprint: 940.5 },
-  { name: 'Apple AAC', speed: 181.8, footprint: 100.3 },
-  { name: 'FFmpeg AAC', speed: 51.6, footprint: 274.9 }
+  { name: 'FAAC', speed: 721.6 },
+  { name: 'FDK-AAC', speed: 169.2 },
+  { name: 'Apple AAC', speed: 181.8 },
+  { name: 'FFmpeg AAC', speed: 51.6 }
 ]
 const encoderMetrics = [
-  { key: 'speed' as const, title: 'Encoding throughput', icon: 'gauge-high', value: '721.6×', unit: 'realtime', summary: '4.3× the measured FDK-AAC throughput', max: 721.6, format: (n: number) => `${n.toFixed(1)}×`, note: 'Aggregate throughput · higher is better' },
-  { key: 'footprint' as const, title: 'Encoder code footprint', icon: 'microchip', value: '89%', unit: 'less code', summary: 'FAAC 99.9 KB vs FDK-AAC 940.5 KB', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Code + constants + initialized data · lower is better' }
+  { key: 'speed' as const, title: 'Encoding throughput', icon: 'gauge-high', value: '722×', unit: 'realtime', summary: '4.3× the measured FDK-AAC throughput', max: 721.6, format: (n: number) => `${Math.round(n).toLocaleString('en-US')}×`, note: 'Aggregate throughput · higher is better' }
 ]
 const decoders = [
   // Lead with FAAD3; then follow the encoder card order and append decoder-only implementations.
-  { name: 'FAAD3', speed: 2120.0, footprint: 168.1 },
-  { name: 'FDK AAC', speed: 875.9, footprint: 940.5 },
-  { name: 'Apple AAC', speed: 1145.7, footprint: 100.3 },
-  { name: 'FFmpeg AAC', speed: 579.7, footprint: 274.9 },
-  { name: 'Helix AAC', speed: 943.0, footprint: 121.4 }
+  { name: 'FAAD3', speed: 2120.0 },
+  { name: 'FDK AAC', speed: 875.9 },
+  { name: 'Apple AAC', speed: 1145.7 },
+  { name: 'FFmpeg AAC', speed: 579.7 },
+  { name: 'Helix AAC', speed: 943.0 }
 ]
 const decoderMetrics = [
-  { key: 'speed' as const, title: 'Decoding throughput', icon: 'gauge-high', value: '2,120×', unit: 'realtime', summary: '2.4× the measured FDK AAC throughput', max: 2120.0, format: (n: number) => `${n.toFixed(1)}×`, note: 'Aggregate throughput · higher is better' },
-  { key: 'footprint' as const, title: 'Decoder code footprint', icon: 'microchip', value: '82%', unit: 'less code', summary: 'FAAD3 168.1 KB vs FDK AAC 940.5 KB', max: 940.5, format: (n: number) => `${n.toFixed(1)} KB`, note: 'Code + read-only + initialized data · lower is better' }
+  { key: 'speed' as const, title: 'Decoding throughput', icon: 'gauge-high', value: '2,120×', unit: 'realtime', summary: '2.4× the measured FDK AAC throughput', max: 2120.0, format: (n: number) => `${Math.round(n).toLocaleString('en-US')}×`, note: 'Aggregate throughput · higher is better' }
 ]
 const metrics = computed(() => props.view === 'decoder' ? decoderMetrics : encoderMetrics)
 const implementations = computed(() => props.view === 'decoder' ? decoders : encoders)
+const cards = computed(() => props.view === 'speed'
+  ? [{ metric: encoderMetrics[0], rows: encoders, label: 'Encoding' }, { metric: decoderMetrics[0], rows: decoders, label: 'Decoding' }]
+  : [{ metric: metrics.value[0], rows: implementations.value, label: '' }])
 
 // 48 kHz stereo average MOS, 16–320 kbps. Published snapshot; null means not published.
 const rates = [16, 24, 32, 40, 48, 56, 64, 80, 96, 128, 160, 192, 256, 320]
@@ -126,18 +127,18 @@ const displayScore = (score: number | null) => score === null ? '—' : (Math.ro
 </script>
 
 <template>
-  <div v-if="view !== 'quality'" class="resource-cards" :aria-label="view === 'decoder' ? 'Measured AAC decoder throughput and footprint' : 'Measured encoder throughput and footprint'">
-    <article v-for="metric in metrics" :key="metric.key" class="metric-card">
-      <div class="metric-heading"><i :class="`fa-solid fa-${metric.icon}`" aria-hidden="true"></i><h3>{{ metric.title }}</h3></div>
-      <div class="metric-value">{{ metric.value }} <span>{{ metric.unit }}</span></div>
-      <p class="metric-summary">{{ metric.summary }}</p>
+  <div v-if="view !== 'quality'" :class="['resource-cards', { 'resource-cards--single': view !== 'speed' }]" :aria-label="view === 'speed' ? 'Measured AAC encoder and decoder throughput' : view === 'decoder' ? 'Measured AAC decoder throughput' : 'Measured AAC encoder throughput'">
+    <article v-for="card in cards" :key="card.metric.title" class="metric-card">
+      <div class="metric-heading"><i :class="`fa-solid fa-${card.metric.icon}`" aria-hidden="true"></i><h3>{{ card.metric.title }}</h3></div>
+      <div class="metric-value">{{ card.metric.value }} <span>{{ card.metric.unit }}</span></div>
+      <p class="metric-summary">{{ card.metric.summary }}</p>
       <div class="resource-rows">
-        <div v-for="encoder in implementations" :key="encoder.name" class="resource-row" :class="{ 'is-faac': encoder.name === 'FAAC' || encoder.name === 'FAAD3' }">
-          <div class="resource-label"><span>{{ encoder.name }}</span><strong>{{ metric.format(encoder[metric.key]) }}</strong></div>
-          <div class="resource-track" aria-hidden="true"><div :style="{ width: `${encoder[metric.key] / metric.max * 100}%` }"></div></div>
+        <div v-for="encoder in card.rows" :key="encoder.name" class="resource-row" :class="{ 'is-faac': encoder.name === 'FAAC' || encoder.name === 'FAAD3' }">
+          <div class="resource-label"><span>{{ encoder.name }}</span><strong>{{ card.metric.format(encoder[card.metric.key]) }}</strong></div>
+          <div class="resource-track" aria-hidden="true"><div :style="{ width: `${encoder[card.metric.key] / card.metric.max * 100}%` }"></div></div>
         </div>
       </div>
-      <p class="metric-note">{{ metric.note }}</p>
+      <p class="metric-note">{{ card.metric.note }}</p>
     </article>
   </div>
 
@@ -217,6 +218,7 @@ const displayScore = (score: number | null) => score === null ? '—' : (Math.ro
 
 <style scoped>
 .resource-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 24px 0; }
+.resource-cards--single { grid-template-columns: minmax(0, 1fr); }
 .metric-card, .quality-chart { border: 1px solid var(--vp-c-divider); border-radius: 24px; background: linear-gradient(145deg, var(--vp-c-bg-soft), var(--vp-c-bg)); padding: 32px; }
 .metric-heading { display: flex; gap: 10px; align-items: center; color: var(--audio-icon-cyan); }
 .metric-heading h3 { margin: 0; font-size: 15px; color: var(--vp-c-text-1); }

@@ -1,15 +1,15 @@
 ---
-title: "FAAC vs FDK-AAC Benchmarks"
-description: "Published AAC encoder and decoder benchmarks, the tested builds behind them, and the methodology used for FAAC versus FDK-AAC, FFmpeg and Apple."
+title: "FAAC & FAAD vs FDK-AAC: AAC Speed, Quality, and Build Size"
+description: "Published AAC encoder and decoder benchmarks for FAAC and FAAD versus FDK-AAC, FFmpeg, Apple and Helix: speed, quality, whole-library build size, and the methodology. FAAC and FAAD can be trimmed at build time."
 ---
 
-# FAAC Benchmarks: Speed, Size, and Quality
+# FAAC & FAAD vs FDK-AAC: Speed, Quality, and Build Size
 
 This page reports one benchmark run in three passes: **what it found**, **how each measurement is made**, and **the exact builds and figures** behind the results. Terms such as MOS and BD-rate are defined at the end.
 
 All results come from the **October 28, 2026** run on a **MacBook Pro M1, 32 GB**. Encoder and decoder measurements are separate sections of the same generated leaderboard and should not be treated as a single head-to-head run.
 
-> Running on microcontrollers? See [AAC on ESP32](/docs/esp32-aac) for ESP32-S3, ESP32-C6, and classic ESP32 results.
+> Running on microcontrollers? See [AAC on ESP32](/docs/esp32-aac) for ESP32-S3, ESP32-C6, and classic ESP32 results, and for the [build options](/docs/esp32-aac#trim-the-build) that shrink FAAC and FAAD to fit.
 
 ## What the run found {data-icon="chart-line"}
 
@@ -23,17 +23,29 @@ The chart plots average MOS against bitrate from 16 to 320 kbps on a logarithmic
 
 FAAC ranks first on both aggregate metrics, with 2.785 first-percentile MOS and 4.541 overall MOS. See the [encoder snapshot](#encoder-snapshot) for first-percentile figures, per-scenario results, and the report's [profile breakdowns and bitrate accuracy](https://gist.github.com/nschimme/003da901f4b681f3ee4f679b07d2e31e).
 
-### Encoder speed and footprint {data-icon="gauge-high"}
+### Encoder speed {data-icon="gauge-high"}
 
 <BenchmarkShowcase view="resources" />
 
-FAAC is the fastest encoder in the comparison at 4.3× FDK-AAC throughput, and has the lowest peak RAM (2.6 MB) and smallest ROM image (99.9 KB) of the four encoders.
+FAAC is the fastest encoder in the comparison at 4.3× FDK-AAC throughput, and has the lowest peak RAM (2.6 MB) of the four encoders.
 
 ### Decoder quality and speed {data-icon="headphones"}
 
 <BenchmarkShowcase view="decoder" />
 
-FAAD3 ties the top overall MOS (4.193), leads stereo fidelity and throughput, and keeps peak RAM to 3.0 MB. Apple AAC has the smallest ROM image (100.3 KB). At 48 kHz stereo, FAAD3 matches FFmpeg, Apple, and FDK within about 0.003 MOS (LC and HE-v1) while running 1.85–3.66× faster than Apple and FFmpeg.
+FAAD3 ties the top overall MOS (4.193), leads stereo fidelity and throughput, and keeps peak RAM to 3.0 MB. At 48 kHz stereo, FAAD3 matches FFmpeg, Apple, and FDK within about 0.003 MOS (LC and HE-v1) while running 1.85–3.66× faster than Apple and FFmpeg.
+
+### Build size: compare whole libraries {data-icon="microchip"}
+
+The benchmark measures the ROM image of the library each codec is built into. The FDK-AAC and FFmpeg figures are identical in the encoder and decoder tables because the same library provides both, so the fair comparison is FAAC and FAAD3 added together. Apple AAC is bundled with the operating system, so its size is not a cost to an application and is left out of every size comparison on this page.
+
+| Library | Covers | ROM image (default build) |
+| :--- | :--- | ---: |
+| FAAC + FAAD3 | Encoder (99.9 KB) + decoder (168.1 KB), built separately | 268.0 KB |
+| FFmpeg | Encoder and decoder, measured from one shared library | 274.9 KB |
+| FDK-AAC | Encoder and decoder | 940.5 KB |
+
+With every feature enabled, FAAC and FAAD3 together are about the size of FFmpeg's AAC build, and well under FDK-AAC. The difference is that FAAC and FAAD are configurable: you can build only the encoder or only the decoder, and switch off HE-AAC, HE-AAC v2, DAB, or DRC. On an ESP32-S3 an AAC-LC-only decoder is 28.8 KB and an AAC-LC-only encoder is 37.4 KB. See [build options for ESP32](/docs/esp32-aac#trim-the-build). Desktop and ESP32 figures differ because they use different compilers, targets and option sets.
 
 ## How the measurements are made {data-icon="flask"}
 
@@ -81,7 +93,7 @@ The benchmark documentation defines the [quality and efficiency metrics](https:/
 | :--- | :--- | ---: | ---: | ---: |
 | FAAC | 3.0.0 (`ecc245c0`) | 721.6× realtime | 2.6 MB | 99.9 KB |
 | FDK-AAC | 1.0.9 | 169.2× realtime | 3.3 MB | 940.5 KB |
-| Apple AAC | 27.2 | 181.8× realtime | 8.3 MB | 100.3 KB |
+| Apple AAC | 27.2 | 181.8× realtime | 8.3 MB | OS-bundled |
 | FFmpeg AAC | N-127192-gef52e1cc38, experimental NMR | 51.6× realtime | 18.0 MB | 274.9 KB |
 
 The report ranks encoder quality by 1st-percentile MOS, with overall MOS as the tiebreaker. In the AAC-LC comparison at 48 kbps, FAAC's first-percentile MOS is 3.446 versus 2.933 for FFmpeg, 2.240 for FDK-AAC, and 2.314 for Apple AAC; it also leads all four encoders at 128 kbps (4.867 average / 4.707 first-percentile). From 160–320 kbps it stays within 0.008 average MOS and 0.022 first-percentile MOS of Apple while ahead of FDK-AAC and FFmpeg, and has the leading stereo fidelity at 160–192 kbps. The report also includes per-scenario quality, transient fidelity, and bitrate accuracy. These are objective estimates, not listening-test outcomes.
@@ -94,7 +106,7 @@ The [decoder leaderboard](https://gist.github.com/nschimme/003da901f4b681f3ee4f6
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | FAAD3 | 3.0.0 (`ecc245c0`) | 1.641 | 4.193 | 0.9557 | 20.9 dB | 0.32 ms | 2,120.0× realtime | 3.0 MB | 168.1 KB |
 | FFmpeg AAC | N-127192-gef52e1cc38 | 1.644 | 4.193 | 0.9523 | 20.8 dB | 9.54 ms | 579.7× realtime | 17.0 MB | 274.9 KB |
-| Apple AAC | 27.2 | 1.641 | 3.944 | 0.9500 | 12.5 dB | 0.33 ms | 1,145.7× realtime | 7.8 MB | 100.3 KB |
+| Apple AAC | 27.2 | 1.641 | 3.944 | 0.9500 | 12.5 dB | 0.33 ms | 1,145.7× realtime | 7.8 MB | OS-bundled |
 | FDK AAC | 2.0.0 | 1.641 | 4.188 | 0.9499 | 20.8 dB | 0.33 ms | 875.9× realtime | 7.4 MB | 940.5 KB |
 | Helix AAC | 1.0 | 1.409 | 3.575 | 0.8809 | 12.7 dB | 78.01 ms | 943.0× realtime | 1.9 MB | 121.4 KB |
 

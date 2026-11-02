@@ -347,6 +347,7 @@
 /* AAC on ESP32 story */
 .esp32-showcase { margin: 24px 0; }
 
+.esp32-metric-grid--single { grid-template-columns: minmax(0, 1fr) !important; }
 .esp32-metric-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

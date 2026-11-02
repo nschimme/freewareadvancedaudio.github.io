@@ -2,7 +2,7 @@
 layout: home
 title: "FAAC & FAAD: Dependency-Free AAC Encoder and Decoder in C"
 titleTemplate: false
-description: "FAAC is an LGPL-licensed, dependency-free AAC encoder and decoder suite with a resampler and MP4 muxer, built for fast media pipelines and constrained devices. Read the docs and try it in your browser."
+description: "FAAC is an LGPL-licensed, dependency-free AAC encoder and decoder suite in C with a resampler and MP4 muxer. Configurable at build time, from ESP32 microcontrollers (HE-AAC, AAC-LC) to desktop media pipelines. Read the docs and try it in your browser."
 hero:
   name: "Freeware Advanced Audio"
   text: "Fast, compact AAC encoding and decoding in C"
@@ -22,14 +22,14 @@ hero:
 features:
   - icon: "<i class=\"fa-solid fa-bolt feature-icon feature-icon--cyan\" aria-hidden=\"true\"></i>"
     title: "Fast encoding"
-    details: "Faster aggregate encoding than the compared FDK-AAC, Apple AAC, and FFmpeg AAC builds in published testing."
+    details: "Faster aggregate encoding than the compared FDK-AAC, Apple AAC, and FFmpeg AAC builds in published testing, and real time on the ESP32 and ESP32-S3."
     link: "/docs/optimization"
     linkText: "Compare encoding speed"
-  - icon: "<i class=\"fa-solid fa-microchip feature-icon feature-icon--blue\" aria-hidden=\"true\"></i>"
-    title: "Small encoder footprint"
-    details: "Lower measured code footprint and peak RAM than the compared encoders. Built for applications with limited resources."
-    link: "/docs/optimization"
-    linkText: "Compare code and memory"
+  - icon: "<i class=\"fa-solid fa-sliders feature-icon feature-icon--blue\" aria-hidden=\"true\"></i>"
+    title: "Build only what you need"
+    details: "Switch off HE-AAC, DAB, DRC, or extra channels at build time. On ESP32 the decoder builds from 29 KB and the encoder from 37 KB of flash."
+    link: "/docs/esp32-aac#trim-the-build"
+    linkText: "See build options"
   - icon: "<i class=\"fa-solid fa-headphones feature-icon feature-icon--violet\" aria-hidden=\"true\"></i>"
     title: "Competitive audio quality"
     details: "Leading aggregate objective quality scores in published testing. Fine-tuned across speech, music, and difficult passages."
@@ -37,7 +37,7 @@ features:
     linkText: "See quality results"
   - icon: "<i class=\"fa-solid fa-code feature-icon feature-icon--cyan\" aria-hidden=\"true\"></i>"
     title: "Open development"
-    details: "Source code, CLI guides, and C APIs for AAC encoding and decoding. Check the license and release status for the library you plan to use."
+    details: "One C codebase from microcontrollers to desktops, with CLI guides and C APIs. Check the license and release status of the library you plan to use."
     link: "/docs/install"
     linkText: "Choose your library"
 ---
@@ -46,21 +46,23 @@ features:
 
 ## More audio. Less overhead. {data-icon="gauge-high"}
 
-### FAAC: fast encoding in a small footprint
+### Fast encoding and decoding
 
-<BenchmarkShowcase view="resources" />
+<BenchmarkShowcase view="speed" />
 
-### FAAD3: fast decoding in a small footprint
-
-<BenchmarkShowcase view="decoder" />
-
-FAAD3 targets modern processors with floating-point units and is a development engine. It ties the top overall MOS, leads the measured decoder throughput and stereo fidelity, and keeps peak RAM to 3.0 MB. Helix uses fixed-point arithmetic and a smaller ROM image than FAAD3, making it an option for legacy hardware without an efficient FPU; it lacks HE-AAC v2 Parametric Stereo support.
+FAAC encodes 4.3× faster than FDK-AAC, and FAAD3 decodes 2.4× faster. FAAD3 also ties the top overall MOS and leads stereo fidelity.
 
 **Benchmark snapshot · October 28, 2026 · MacBook Pro M1, 32 GB.** Encoder and decoder figures come from the same generated leaderboard. Results depend on the tested builds and hardware. See the [benchmark results and tested versions](/docs/optimization).
 
-## AAC on ESP32 {data-icon="microchip"}
+### Build only what you need {data-icon="sliders"}
 
-The same FAAC and FAAD libraries that lead on powerful machines also run in real time on ESP32-class hardware. The original ESP32 can run the full AAC decode path without PSRAM.
+Every feature is a build option: HE-AAC (SBR), HE-AAC v2 (PS), DAB frames, dynamic range control, and channel count. Switch off what you don't use and the flash cost drops with it. See [Trim the build](/docs/esp32-aac#trim-the-build) for every switch. With everything enabled, FAAC and FAAD3 together are about the size of FFmpeg's AAC build and under a third of FDK-AAC ([whole-library comparison](/docs/optimization#build-size-compare-whole-libraries)).
+
+<Esp32Showcase view="build" />
+
+## Encoding and decoding AAC in real time on ESP32 {data-icon="microchip"}
+
+The same FAAC and FAAD libraries that lead on powerful machines also run in real time on the ESP32-S3 and the original ESP32. Even the original ESP32, without PSRAM, decodes AAC-LC and HE-AAC v1 in real time.
 
 <Esp32Showcase view="home" />
 
@@ -83,8 +85,9 @@ For measured quality results, see the [AAC benchmark results](/docs/optimization
 | Mux, demux, or tag MP4/M4A files | [FAAM guide](/docs/faam), [libfaam C API](/docs/libfaam), and [faam(1)](/docs/faam-cli) |
 | Convert audio sample rates | [FAAR guide](/docs/faar), [libfaar C API](/docs/libfaar), and [faar(1)](/docs/faar-cli) |
 | Choose an encoder or decoder for your application | [Implementation selection guide](/docs/comparison), including hardware, profiles, and licensing |
-| Compare speed, footprint, and objective quality | [AAC benchmark results](/docs/optimization) |
+| Compare speed, quality, and build size | [AAC benchmark results](/docs/optimization) |
 | Run AAC encoding or decoding on a microcontroller | [AAC on ESP32](/docs/esp32-aac) |
+| Fit AAC in a flash budget | [Trim the build](/docs/esp32-aac#trim-the-build) |
 | Hear FAAC with your own music | [Browser converter](/playground), with an optional [listening guide](/docs/listening) |
 
 ## Where FAAC and FAAD are used {data-icon="layer-group"}

@@ -101,7 +101,7 @@ Profile support does not guarantee every transport, sample rate, or channel layo
 
 </details>
 
-For measured decoder quality, speed, memory, and footprint, see the [decoder snapshot](/docs/optimization#decoder-snapshot).
+For measured decoder quality, speed, and memory, see the [decoder snapshot](/docs/optimization#decoder-snapshot).
 
 ## Software licenses and patent rights {data-icon="scale-balanced"}
 

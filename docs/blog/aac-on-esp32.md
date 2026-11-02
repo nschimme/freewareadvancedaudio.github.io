@@ -15,7 +15,7 @@ The [AAC benchmark results](/docs/optimization) show the libraries at full speed
 
 ## 240 MHz is enough
 
-On an ESP32-S3, it is. FAAC encodes stereo AAC-LC at up to about 10× real time. FAAD decodes HE-AAC at about 5× real time, using roughly a fifth of one core. Both fit in under 100 KB of flash.
+On an ESP32-S3, it is. FAAC encodes stereo AAC-LC at up to about 10× real time. FAAD decodes HE-AAC at about 5× real time, using roughly a fifth of one core. Both are configurable at build time: an AAC-LC-only decoder is 28.8 KB of flash, and the encoder is 37.4 KB to 57.4 KB depending on HE-AAC support.
 
 No bespoke port. The same libraries, cross-compiled for the chip.
 

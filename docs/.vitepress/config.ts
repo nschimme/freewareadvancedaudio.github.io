@@ -6,7 +6,7 @@ const origin = process.env.SITE_ORIGIN || 'https://freewareadvancedaudio.github.
 export default defineConfig({
   base,
   title: 'Freeware Advanced Audio',
-  description: 'FAAC is an LGPL-licensed, dependency-free AAC encoder and decoder suite with a resampler and MP4 muxer, built for fast media pipelines and constrained devices.',
+  description: 'FAAC is an LGPL-licensed, dependency-free AAC encoder and decoder suite with a resampler and MP4 muxer, configurable at build time for fast media pipelines and embedded devices such as the ESP32.',
   titleTemplate: ':title | Freeware Advanced Audio',
   cleanUrls: true,
   vite: {

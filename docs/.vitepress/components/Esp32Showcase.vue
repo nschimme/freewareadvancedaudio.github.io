@@ -1,32 +1,43 @@
 <script setup lang="ts">
-defineProps<{ view: 'home' | 'devices' | 'memory' }>()
+import { computed } from 'vue'
+const props = defineProps<{ view: 'home' | 'build' | 'devices' | 'memory' }>()
 
 const metrics = [
   {
     icon: 'bolt',
-    title: 'Real-time speed',
-    value: 'About 10×',
-    unit: 'realtime',
-    summary: 'Stereo AAC-LC encoding on an ESP32-S3.',
-    rows: [
-      { name: 'FAAC encode', value: 100, label: 'about 10×', tone: 'encode' },
-      { name: 'FAAD decode', value: 50, label: 'about 5×', tone: 'decode' }
-    ],
+    title: 'Microcontroller ready',
+    value: 'Every profile',
+    unit: 'in real time',
+    summary: 'AAC-LC, HE-AAC v1 and HE-AAC v2, encode and decode, on an ESP32-S3.',
+    rows: [] as { name: string; value: number; label: string; tone: string }[],
     note: 'Relative to real time · higher is better'
   },
   {
-    icon: 'microchip',
-    title: 'Flash footprint',
-    value: '100 KB',
-    unit: 'or less per library',
-    summary: 'Each library fits in a small flash budget.',
+    icon: 'sliders',
+    title: 'Build only what you need',
+    value: 'From 29 KB',
+    unit: 'of flash',
+    summary: 'Drop HE-AAC, DAB, or DRC at build time. Flash for the same library, measured on ESP32-S3.',
     rows: [
-      { name: 'FAAC', value: 47, label: 'under 50 KB', tone: 'encode' },
-      { name: 'FAAD', value: 77, label: 'under 80 KB', tone: 'decode' }
+      { name: 'FAAD AAC-LC only', value: 28.8 / 80 * 100, label: '28.8 KB', tone: 'decode' },
+      { name: 'FAAD + HE-AAC v1', value: 57.2 / 80 * 100, label: '57.2 KB', tone: 'decode' },
+      { name: 'FAAD defaults (+ HE-AAC v2)', value: 76.7 / 80 * 100, label: '76.7 KB', tone: 'decode' },
+      { name: 'FAAC AAC-LC only', value: 37.4 / 80 * 100, label: '37.4 KB', tone: 'encode' },
+      { name: 'FAAC + HE-AAC v1 (default)', value: 47.4 / 80 * 100, label: '47.4 KB', tone: 'encode' },
+      { name: 'FAAC + HE-AAC v2', value: 57.4 / 80 * 100, label: '57.4 KB', tone: 'encode' }
     ],
-    note: 'Code + constants + initialized data · lower is better'
+    note: 'Code + constants + initialized data, two channels · lower is better'
   }
 ]
+
+// Home-card rows come straight from the ESP32-S3 entry of `devices`, so the two can't drift.
+const s3Rows = computed(() => devices[0].rows.flatMap(r => [
+  { name: `${r.profile} decode`, value: r.decode.value / deviceMax * 100, label: r.decode.label, tone: 'decode' },
+  { name: `${r.profile} encode`, value: r.encode.value / deviceMax * 100, label: r.encode.label, tone: 'encode' }
+]))
+const shownMetrics = computed(() => metrics
+  .filter(m => (props.view === 'build') === (m.icon === 'sliders'))
+  .map(m => m.icon === 'bolt' ? { ...m, rows: s3Rows.value } : m))
 
 // Times faster than real time, stereo 44.1/48 kHz music. `value` is the bar length (midpoint of the
 // measured range); `label` is what is printed. value 0 / label 'No' means no tested real-time path.
@@ -64,14 +75,14 @@ const barWidth = (value: number) => `${Math.max((value / deviceMax) * 100, value
 
 const memoryRows = [
   { label: 'AAC-LC speed', value: 100, display: '100%' },
-  { label: 'HE-AAC speed', value: 88, display: '~90%' }
+  { label: 'HE-AAC speed', value: 87, display: '~87%' }
 ]
 </script>
 
 <template>
   <div class="esp32-showcase">
-    <div v-if="view === 'home'" class="esp32-metric-grid">
-      <article v-for="metric in metrics" :key="metric.title" class="esp32-card esp32-card--interactive">
+    <div v-if="view === 'home' || view === 'build'" class="esp32-metric-grid esp32-metric-grid--single">
+      <article v-for="metric in shownMetrics" :key="metric.title" class="esp32-card esp32-card--interactive">
         <div class="esp32-card-heading">
           <i :class="`fa-solid fa-${metric.icon}`" aria-hidden="true"></i>
           <h3>{{ metric.title }}</h3>
@@ -133,7 +144,7 @@ const memoryRows = [
         </div>
         <div class="esp32-compare-panel is-highlight">
           <span class="esp32-compare-label">PSRAM</span>
-          <strong>~15 KB</strong>
+          <strong>~16 KB</strong>
           <span>internal RAM after the move</span>
         </div>
       </div>

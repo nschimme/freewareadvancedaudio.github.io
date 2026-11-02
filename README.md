@@ -1,6 +1,6 @@
 # FAAC & FAAD
 
-Website and documentation for **FAAC**, an LGPL-licensed, dependency-free AAC encoder and decoder suite with a resampler and MP4 muxer, built with VitePress. It targets high-throughput media pipelines and constrained devices where footprint, speed, and quality all matter.
+Website and documentation for **FAAC**, an LGPL-licensed, dependency-free AAC encoder and decoder suite with a resampler and MP4 muxer, built with VitePress. It targets high-throughput media pipelines and embedded devices, and is configurable at build time so each project ships only the features it needs.
 
 ---
 

@@ -6,7 +6,7 @@ pageClass: esp32-aac-page
 
 # AAC on ESP32
 
-Two things decide what an ESP32 project can do with AAC: whether the chip has an **FPU**, and how much **internal RAM** the codec state needs. PSRAM is how you get past the second limit.
+Two things decide what an ESP32 project can do with AAC: whether the chip has an **FPU**, and how much **internal RAM** the codec state needs. PSRAM is how you get past the second limit. A third lever is the build: every FAAC and FAAD feature is optional, so an AAC-LC-only decoder is 28.8 KB of flash and the encoder starts at 37.4 KB. See [Trim the build](#trim-the-build).
 
 - **ESP32-S3 with PSRAM** is the board to pick. It runs every path tested here: decode through HE-AAC v2, encode through HE-AAC v2, and 5.1 encode.
 - **Classic ESP32 without PSRAM** decodes AAC-LC and HE-AAC v1 and encodes AAC-LC and HE-AAC v1, though a stereo HE-AAC v1 encoder leaves only about 115 KB of its internal RAM for everything else. HE-AAC v2 encode does not open, and an HE-AAC v2 stream plays as its mono half-rate core.
@@ -44,7 +44,7 @@ The state is allocated when you open the codec. It is the same at every bitrate 
 
 - **Stack:** an encoder task used about 9 KB for AAC-LC and 9.5 KB for HE-AAC, so budget 10–14 KB. A decoder task used about 2 KB for AAC-LC and 8 KB for HE-AAC.
 - **Flash and static RAM:** with default options FAAD takes about 77 KB of flash and 69 KB of static RAM, and FAAC about 47 KB of flash (57 KB with the HE-AAC v2 encoder) and 22 KB of static RAM. Most of FAAD's footprint is optional; see [Trim the build](#trim-the-build).
-- **HE-AAC v2 support costs RAM for every HE stream.** With it built into the encoder, HE-AAC v1 state grows from 142 KB to 184 KB for stereo and from 83 KB to 126 KB for mono, even if you never encode v2.
+- **HE-AAC v2 support costs RAM for every HE stream.** With `-Dencoder-ps=true`, HE-AAC v1 state grows from 142 KB to 184 KB for stereo and from 83 KB to 126 KB for mono, even if you never encode v2.
 - **More channels cost nothing on stereo streams.** A 6-channel encoder build uses the same state for a stereo stream as a 2-channel build.
 
 ## When you need PSRAM
@@ -76,6 +76,14 @@ When opening the codec returns an out-of-memory error, work down this list:
 ## Trim the build
 
 The defaults switch on every feature, including ones most ESP32 projects never use. Pick the smallest build that covers what you need. Figures are libfaad and libfaac on an ESP32-S3, built for two channels, and decoded audio was identical for every stream a build still supports.
+
+**What a build changes:** options cut flash for both libraries, and some decoder options also cut static RAM. The encoder's static RAM stays at 22 KB, and what you encode decides its codec state. This table pairs each profile's flash with the codec state it needs at run time (stereo).
+
+| You need | Decoder flash | Decoder state | Encoder flash | Encoder state |
+| :--- | ---: | ---: | ---: | ---: |
+| AAC-LC | 28.8 KB | 49 KB | 37.4 KB | 90 KB |
+| AAC-LC + HE-AAC v1 | 57.2 KB | 98 KB | 47.4 KB | 142 KB |
+| AAC-LC + HE-AAC v1 + v2 | 76.7 KB | 120 KB | 57.4 KB | 184 KB |
 
 ### Playing AAC (FAAD)
 
