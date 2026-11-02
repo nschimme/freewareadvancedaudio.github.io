@@ -45,7 +45,7 @@ const devices: { name: string; note: string; rows: { profile: string; decode: Sp
     name: 'Classic ESP32', note: '240 MHz · no PSRAM',
     rows: [
       { profile: 'AAC-LC', decode: { value: 10.4, label: '8.6–12.2×' }, encode: { value: 6, label: '4.0–7.9×' } },
-      { profile: 'HE-AAC v1', decode: { value: 3.9, label: '3.6–4.2×' }, encode: no },
+      { profile: 'HE-AAC v1', decode: { value: 3.9, label: '3.6–4.2×' }, encode: { value: 2.8, label: '2.8×+' } },
       { profile: 'HE-AAC v2', decode: no, encode: no }
     ]
   },
