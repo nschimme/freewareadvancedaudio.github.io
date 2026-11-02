@@ -518,7 +518,7 @@
   position: absolute;
   top: -4px;
   bottom: -4px;
-  left: 10%;
+  left: calc(100% / 13); /* 1× on a 0–13× scale; keep in step with deviceMax in Esp32Showcase.vue */
   border-left: 1px dashed rgba(203, 213, 225, 0.55);
 }
 

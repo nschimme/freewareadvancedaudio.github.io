@@ -1,6 +1,6 @@
 ---
 title: "AAC Encoder and Decoder for ESP32"
-description: "What hardware AAC needs on ESP32: which chips have the FPU and RAM for FAAC encoding, FAAD decoding, HE-AAC v2 and 5.1, and when you need PSRAM."
+description: "Run FAAC encoding and FAAD decoding in real time on ESP32, ESP32-S3, and ESP32-C6 microcontrollers, or Helix on the FPU-less ESP8266. Find out which chip handles HE-AAC v2 and 5.1, and when you need PSRAM."
 pageClass: esp32-aac-page
 ---
 
@@ -27,7 +27,7 @@ Memory is the codec state allocated when you open it. It is the same at every bi
 | Encode 5.1 (6 channels) | [FAAC](/docs/faac) | Yes | about 250 KB | Required |
 
 - **Stack:** an encoder task used about 9 KB for AAC-LC and about 9.5 KB for HE-AAC v1 and v2, so budget 10–14 KB. FAAD3 needs about 6 KB; FAAD2 needs about 56 KB.
-- **Flash:** FAAD3 is about 67 KB with HE-AAC v2 decode built in. FAAC is about 44 KB for AAC-LC and HE-AAC v1.
+- **Flash and static RAM:** with default options FAAD3 takes about 77 KB of flash and 69 KB of static RAM, and FAAC about 47 KB of flash (57 KB with the HE-AAC v2 encoder) and 22 KB of static RAM. Most of FAAD3's footprint is optional; see [Trim the build](#trim-the-build).
 - **Speed is separate.** An FPU-less chip can often hold the state and still be too slow. See the support matrix below.
 
 ### Why PSRAM, not "a big enough block"
@@ -90,10 +90,44 @@ HE-AAC v2 encode runs at about 2× real time on the ESP32-S3 for 48 kHz stereo. 
 - **Other chips:** a 5.1 encoder needs about 250 KB of state. Chips without PSRAM do not have a practical way to hold it alongside the application.
 - **Decode:** 5.1 decode is not measured on ESP32. The decoder benchmark builds were limited to two channels.
 
+## Trim the build
+
+The defaults switch on every feature, including ones most ESP32 projects never use. Pick the smallest build that covers what you need. Figures are libfaad and libfaac on an ESP32-S3, built for two channels, and decoded audio was identical for every stream a build still supports.
+
+### Playing AAC (FAAD)
+
+| I need to play | Build | Flash | Static RAM |
+| :--- | :--- | :--- | :--- |
+| Everything, including HE-AAC v2 | Defaults | 76.7 KB | 68.7 KB |
+| AAC-LC and HE-AAC v1 | `-Ddecoder-ps=false -Ddecoder-dab=false -Ddecoder-drc=false` | 57.2 KB | 38.6 KB |
+| AAC-LC only | The same, plus `-Ddecoder-sbr=false` | 28.8 KB | 34.5 KB |
+
+Each switch on its own, against the defaults:
+
+| Option | Removes | Flash | Static RAM |
+| :--- | :--- | :--- | :--- |
+| `-Ddecoder-dab=false` | DAB 960/120-sample frames; ordinary 1024-sample AAC is unaffected | −4.7 KB | −13.2 KB |
+| `-Ddecoder-drc=false` | Dynamic range control | −2.9 KB | none |
+| `-Ddecoder-ps=false` | HE-AAC v2 decode | −11.8 KB | −16.9 KB |
+| `-Ddecoder-sbr=false` | All HE-AAC (also removes PS); HE streams then play as the half-rate core | −40.5 KB | −21.0 KB |
+
+### Recording AAC (FAAC)
+
+| I need to record | Build | Flash | Static RAM | Encoder state |
+| :--- | :--- | :--- | :--- | :--- |
+| AAC-LC (voice or music) | `-Dencoder-sbr=false` | 37.4 KB | 22.0 KB | mono 49 KB, stereo 90 KB |
+| Low-bitrate HE-AAC v1 | Defaults | 47.4 KB | 22.0 KB | mono 83 KB, stereo 142 KB |
+| Low-bitrate stereo HE-AAC v2 | `-Dencoder-ps=true` | 57.4 KB | 22.0 KB | stereo 184 KB |
+| 5.1 surround | `-Dmax-channels=6` as well | +0.7 KB | unchanged | AAC-LC about 250 KB, needs PSRAM |
+
+- **Build options save flash, not RAM.** The encoder's static RAM is 22 KB in every build, and the AAC-LC state is the same with or without HE-AAC compiled in. What you encode decides RAM use: mono against stereo, and AAC-LC against HE-AAC.
+- **HE-AAC v2 support costs RAM for every HE stream.** With `encoder-ps` on, HE-AAC v1 state grows from 142 KB to 184 KB for stereo and from 83 KB to 126 KB for mono, even when you never encode v2.
+- **More channels cost nothing on stereo streams.** A 6-channel build uses the same state for a stereo stream as a 2-channel build. Do not raise `max-channels` for the decoder without measuring: an 8-channel decoder build was not measured.
+
 ## Start building
 
 1. **Build for ESP-IDF.** Use the FAAC and FAAD sources with the [installation guide](/docs/install).
-2. **Pick build options.** Use `encoder-ps` only if you need HE-AAC v2 encode, and `max-channels` only as high as your widest stream.
+2. **Pick build options.** Start from the table in [Trim the build](#trim-the-build) that matches your goal.
 3. **Feed frames or PCM.** FAAD consumes AAC frames; FAAC consumes PCM. See the [libfaad API](/docs/libfaad) and [libfaac API](/docs/libfaac).
 4. **Choose where state lives.** It uses internal RAM by default. On the ESP32-S3, move it to PSRAM when you need the headroom.
 

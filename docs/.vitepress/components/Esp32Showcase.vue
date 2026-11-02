@@ -21,20 +21,45 @@ const metrics = [
     unit: 'or less per library',
     summary: 'Each library fits in a small flash budget.',
     rows: [
-      { name: 'FAAC', value: 45, label: 'under 50 KB', tone: 'encode' },
-      { name: 'FAAD', value: 65, label: 'under 70 KB', tone: 'decode' }
+      { name: 'FAAC', value: 47, label: 'under 50 KB', tone: 'encode' },
+      { name: 'FAAD', value: 77, label: 'under 80 KB', tone: 'decode' }
     ],
     note: 'Code + constants + initialized data · lower is better'
   }
 ]
 
-const devices = [
-  { name: 'ESP32-S3', note: '240 MHz · FPU', decode: 5, decodeLabel: '~5×', encode: 10, encodeLabel: '~10×' },
-  { name: 'Classic ESP32', note: '240 MHz · no PSRAM', decode: 5, decodeLabel: '~5×', encode: 10, encodeLabel: '~10×' },
-  { name: 'ESP32-C6', note: '160 MHz · no FPU', decode: 0.3, decodeLabel: '~0.3×', encode: 0.6, encodeLabel: '~0.6×' }
+// Times faster than real time, stereo 44.1/48 kHz music. `value` is the bar length (midpoint of the
+// measured range); `label` is what is printed. value 0 / label 'No' means no tested real-time path.
+type Speed = { value: number; label: string }
+const no: Speed = { value: 0, label: 'No' }
+const devices: { name: string; note: string; rows: { profile: string; decode: Speed; encode: Speed }[] }[] = [
+  {
+    name: 'ESP32-S3', note: '240 MHz · FPU',
+    rows: [
+      { profile: 'AAC-LC', decode: { value: 11.1, label: '9.3–12.9×' }, encode: { value: 7.5, label: '4.6–10.4×' } },
+      { profile: 'HE-AAC v1', decode: { value: 4.5, label: '4.2–4.8×' }, encode: { value: 5.9, label: '4.7–7.1×' } },
+      { profile: 'HE-AAC v2', decode: { value: 4.55, label: '4.3–4.8×' }, encode: { value: 2, label: '~2×' } }
+    ]
+  },
+  {
+    name: 'Classic ESP32', note: '240 MHz · no PSRAM',
+    rows: [
+      { profile: 'AAC-LC', decode: { value: 10.4, label: '8.6–12.2×' }, encode: { value: 6, label: '4.0–7.9×' } },
+      { profile: 'HE-AAC v1', decode: { value: 3.9, label: '3.6–4.2×' }, encode: no },
+      { profile: 'HE-AAC v2', decode: no, encode: no }
+    ]
+  },
+  {
+    name: 'ESP32-C6', note: '160 MHz · no FPU · Helix decode',
+    rows: [
+      { profile: 'AAC-LC', decode: { value: 9.35, label: '6.5–12.2×' }, encode: { value: 0.5, label: '0.38–0.60×' } },
+      { profile: 'HE-AAC v1', decode: { value: 2.45, label: '2.3–2.6×' }, encode: { value: 0.23, label: '0.22–0.24×' } },
+      { profile: 'HE-AAC v2', decode: no, encode: { value: 0.1, label: '~0.1×' } }
+    ]
+  }
 ]
 
-const deviceMax = 10
+const deviceMax = 13
 const barWidth = (value: number) => `${Math.max((value / deviceMax) * 100, value > 0 ? 2 : 0)}%`
 
 const memoryRows = [
@@ -75,24 +100,26 @@ const memoryRows = [
             <span>{{ device.note }}</span>
           </div>
           <div class="esp32-device-bars">
-            <div class="esp32-bar-row">
-              <span class="esp32-bar-label">HE-AAC decode</span>
-              <span class="esp32-bar-value">{{ device.decodeLabel }}</span>
-              <div class="esp32-bar-track" aria-hidden="true">
-                <div class="esp32-bar-fill esp32-bar-fill--decode" :style="{ width: barWidth(device.decode) }"></div>
+            <template v-for="row in device.rows" :key="row.profile">
+              <div class="esp32-bar-row">
+                <span class="esp32-bar-label">{{ row.profile }} decode</span>
+                <span class="esp32-bar-value">{{ row.decode.label }}</span>
+                <div class="esp32-bar-track" aria-hidden="true">
+                  <div class="esp32-bar-fill esp32-bar-fill--decode" :style="{ width: barWidth(row.decode.value) }"></div>
+                </div>
               </div>
-            </div>
-            <div class="esp32-bar-row">
-              <span class="esp32-bar-label">AAC-LC stereo encode</span>
-              <span class="esp32-bar-value">{{ device.encodeLabel }}</span>
-              <div class="esp32-bar-track" aria-hidden="true">
-                <div class="esp32-bar-fill esp32-bar-fill--encode" :style="{ width: barWidth(device.encode) }"></div>
+              <div class="esp32-bar-row">
+                <span class="esp32-bar-label">{{ row.profile }} encode</span>
+                <span class="esp32-bar-value">{{ row.encode.label }}</span>
+                <div class="esp32-bar-track" aria-hidden="true">
+                  <div class="esp32-bar-fill esp32-bar-fill--encode" :style="{ width: barWidth(row.encode.value) }"></div>
+                </div>
               </div>
-            </div>
+            </template>
           </div>
         </div>
       </div>
-      <p class="esp32-chart-note">The dashed line marks 1× real time. Rounded figures; see the full notes for exact results.</p>
+      <p class="esp32-chart-note">The dashed line marks 1× real time. Bars show the middle of the measured range. HE-AAC v2 encode is a single 48 kHz stereo scenario. See the full notes for exact results.</p>
     </figure>
 
     <figure v-else class="esp32-chart-card">
