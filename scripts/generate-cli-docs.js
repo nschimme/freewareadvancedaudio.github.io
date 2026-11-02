@@ -1,27 +1,45 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-function unescapeRoff(str) {
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const FONT_MACROS = {
+  '.B': 'B', '.I': 'I', '.SB': 'B', '.SM': 'R',
+  '.BR': 'BR', '.BI': 'BI', '.RB': 'RB', '.IR': 'IR', '.RI': 'RI', '.IB': 'IB'
+};
+const IGNORED_MACROS = new Set(['.nh', '.hy', '.ad', '.na', '.fi', '.in', '.ne', '.ll', '.ta']);
+
+const SPECIAL_CHARS = {
+  hy: '-', '-': '-', em: '—', en: '–', bu: '•', co: '©', aq: "'", lq: '“', rq: '”',
+  oq: '‘', cq: '’', dq: '"', rs: '\\', ti: '~', ha: '^', 'ga': '`', 'aa': '´', '->': '→', '<-': '←'
+};
+
+/* Convert roff escapes to text. Font escapes become Markdown emphasis unless
+ * `plain` is set (used for option terms and code, where they must vanish). */
+function unescapeRoff(str, plain = false) {
   if (!str) return '';
-  let res = str;
-  // Font escape sequences
-  res = res.replace(/\\f[BIPR]/g, '');
-  res = res.replace(/\\f\[[A-Za-z0-9]+\]/g, '');
-  // Hyphen and special character unescaping
-  res = res.replace(/\\-\^\-/g, '--');
-  res = res.replace(/\\-\^?/g, '-');
-  res = res.replace(/\\\^\-/g, '-');
-  res = res.replace(/\\\^/g, '');
-  res = res.replace(/\\\(hy/g, '-');
-  res = res.replace(/\\hy\(/g, '-');
-  res = res.replace(/\\\(em/g, '—');
-  res = res.replace(/\\\(en/g, '–');
-  res = res.replace(/\\ /g, ' ');
+  let res = str.replace(/\\".*$/, '');
+  res = res.replace(/\\&|\\c|\\\||\\\^/g, '');
+  res = res.replace(/\\ |\\~/g, ' ');
+  res = res.replace(/\\\((..)/g, (m, n) => SPECIAL_CHARS[n] ?? m);
+  res = res.replace(/\\\[u([0-9A-Fa-f]{4,6})\]/g, (m, h) => String.fromCodePoint(parseInt(h, 16)));
+  res = res.replace(/\\\[([^\]]+)\]/g, (m, n) => (/^[BIPR]$|^CR$/.test(n) ? m : SPECIAL_CHARS[n] ?? m));
+  res = res.replace(/\\(-|<|>)/g, '$1');
+
+  // Fonts: \fB bold, \fI italic, \fR/\fP back to roman.
+  let font = 'R';
+  res = res.replace(/\\f(?:\[([A-Z]+)\]|(.))/g, (m, long, short) => {
+    const next = long || short;
+    const prev = font;
+    font = next === 'P' ? 'R' : next;
+    if (plain) return '';
+    const mark = f => (f === 'B' ? '**' : f === 'I' ? '*' : '');
+    return mark(prev) + mark(font);
+  });
+  if (!plain && (font === 'B' || font === 'I')) res += font === 'B' ? '**' : '*';
+
   res = res.replace(/\\e/g, '\\');
-  res = res.replace(/\\~/g, ' ');
-  res = res.replace(/\\</g, '<');
-  res = res.replace(/\\>/g, '>');
-  res = res.replace(/\\hy/g, '');
   return res;
 }
 
@@ -75,11 +93,25 @@ function parseMacroArgs(line) {
   return tokens;
 }
 
-function formatAlternatingArgs(args) {
+/* Join the arguments of a font-alternating macro (.BR, .IR, .B, ...).
+ * `fonts` holds one font letter per alternating position. With `styled`, bold
+ * and italic words become Markdown emphasis; otherwise the text stays plain. */
+function formatAlternatingArgs(args, fonts = 'R', styled = false) {
+  if (styled && fonts.length === 1 && (fonts === 'B' || fonts === 'I')) {
+    // One font for the whole macro: a single emphasis span, not one per word.
+    const text = formatAlternatingArgs(args, 'R', false);
+    const mark = fonts === 'B' ? '**' : '*';
+    return text ? `${mark}${text}${mark}` : '';
+  }
   let res = '';
   args.forEach((arg, idx) => {
-    let cleanArg = unescapeRoff(arg);
+    let cleanArg = unescapeRoff(arg, !styled);
     if (!cleanArg) return;
+    const font = fonts[idx % fonts.length];
+    if (styled && cleanArg.trim()) {
+      const mark = font === 'B' ? '**' : font === 'I' ? '*' : '';
+      if (mark && !cleanArg.includes(mark)) cleanArg = cleanArg.replace(/^(\s*)(.*?)(\s*)$/, `$1${mark}$2${mark}$3`);
+    }
     if (idx > 0) {
       if (!/^\s*[\.,;:\)\]\>]/.test(cleanArg) && !/\s$/.test(res) && !/^\s/.test(cleanArg)) {
         res += ' ';
@@ -98,7 +130,7 @@ function splitTblRow(raw, columns) {
 }
 
 function tblCell(value) {
-  return escapeVueHtml(unescapeRoff((value || '').trim())).replace(/\|/g, '\\|');
+  return escapeVueHtml(unescapeRoff((value || '').trim(), true)).replace(/\|/g, '\\|');
 }
 
 /* Convert a tbl(1) table (.TS/.TE) into a GFM table. Handles the simple
@@ -168,6 +200,20 @@ function parseManpageToMarkdown(manContent) {
   let section = '';
   let exampleEligible = false;
   let exampleLines = [];
+  let inNofill = false;
+  let nofillLines = [];
+  let listItem = null; // null, or { started } while inside an .IP list item
+  const warned = new Set();
+
+  /* Emit a prose line, folding it into the open list item if there is one. */
+  function emit(text) {
+    if (listItem) {
+      md.push((listItem.started ? '  ' : listItem.marker + ' ') + text);
+      listItem.started = true;
+    } else {
+      md.push(text);
+    }
+  }
 
   function flushExample() {
     if (!exampleLines.length) return;
@@ -179,7 +225,7 @@ function parseManpageToMarkdown(manContent) {
   function flushTP() {
     if (inTP) {
       if (tpTerm) {
-        let cleanTerm = unescapeRoff(tpTerm).replace(/\s+/g, ' ').trim();
+        let cleanTerm = unescapeRoff(tpTerm, true).replace(/\s+/g, ' ').trim();
         cleanTerm = cleanTerm.replace(/\s+,/g, ',');
 
         // Check if term is a bullet item like "* Portable" or "- Fast"
@@ -229,6 +275,17 @@ function parseManpageToMarkdown(manContent) {
   }
 
   for (let i = 0; i < lines.length; i++) {
+    if (inNofill) {
+      if (/^\.fi\b/.test(lines[i].trim())) {
+        inNofill = false;
+        md.push('', '```', ...nofillLines, '```', '');
+        nofillLines = [];
+      } else if (!lines[i].startsWith('.')) {
+        nofillLines.push(unescapeRoff(lines[i], true));
+      }
+      continue;
+    }
+
     let line = lines[i].trim();
     if (!line) {
       if (inTP) {
@@ -246,18 +303,20 @@ function parseManpageToMarkdown(manContent) {
       const tokens = parseMacroArgs(line);
       const macro = tokens[0];
 
+      if (['.SH', '.SS', '.PP', '.P', '.TP', '.TS', '.IP', '.nf'].includes(macro)) listItem = null;
+
       if (macro === '.TH') {
         continue;
       } else if (macro === '.SH') {
         flushTP();
         flushExample();
         const sectionName = tokens.slice(1).join(' ').replace(/^"(.*)"$/, '$1');
-        section = unescapeRoff(sectionName).trim().toUpperCase();
-        md.push(`\n### ${unescapeRoff(sectionName)}\n`);
+        section = unescapeRoff(sectionName, true).trim().toUpperCase();
+        md.push(`\n### ${unescapeRoff(sectionName, true)}\n`);
       } else if (macro === '.SS') {
         flushTP();
         const subSec = tokens.slice(1).join(' ').replace(/^"(.*)"$/, '$1');
-        md.push(`\n#### ${unescapeRoff(subSec)}\n`);
+        md.push(`\n#### ${unescapeRoff(subSec, true)}\n`);
       } else if (macro === '.TS') {
         flushTP();
         const table = parseTblTable(lines, i);
@@ -278,9 +337,15 @@ function parseManpageToMarkdown(manContent) {
       } else if (macro === '.IP') {
         if (inTP) {
           tpDesc.push('\n');
+          if (/^(•|-|\*)$/.test(unescapeRoff(tokens[1] || '', true).trim())) tpDesc.push('-');
         } else if (section === 'EXAMPLES') {
           flushExample();
           exampleEligible = true;
+        } else if (tokens[1]) {
+          const tag = unescapeRoff(tokens[1], true).trim();
+          if (/^(•|-|\*)$/.test(tag)) listItem = { marker: '-', started: false };
+          else if (/^\d+[.)]$/.test(tag)) listItem = { marker: tag, started: false };
+          else listItem = { marker: `- **${escapeVueHtml(tag)}**`, started: false };
         }
       } else if (macro === '.br') {
         if (inTP) {
@@ -294,33 +359,44 @@ function parseManpageToMarkdown(manContent) {
       } else if (macro === '.RE') {
         if (rsLevel > 0) rsLevel--;
         if (inTP) tpDesc.push('\n');
-      } else if (macro === '.BR' || macro === '.BI' || macro === '.B' || macro === '.I' || macro === '.RI') {
-        const rawArgs = tokens.slice(1);
-        let formatted = formatAlternatingArgs(rawArgs);
+      } else if (FONT_MACROS[macro]) {
+        const inExample = section === 'EXAMPLES' && (exampleEligible || exampleLines.length);
+        const inTerm = inTP && !tpTerm;
+        const formatted = formatAlternatingArgs(tokens.slice(1), FONT_MACROS[macro], !inExample && !inTerm);
 
-        if (section === 'EXAMPLES' && (exampleEligible || exampleLines.length)) {
+        if (inExample) {
           if (formatted) exampleLines.push(formatted);
-        } else if (inTP && !tpTerm) {
+        } else if (inTerm) {
           tpTerm = formatted;
         } else if (inTP) {
           tpDesc.push(formatted);
         } else {
-          md.push(escapeVueHtml(formatted));
+          emit(escapeVueHtml(formatted));
         }
-      } else if (macro === '.nh') {
-        // ignore hyphenation macro
+      } else if (macro === '.nf') {
+        flushTP();
+        flushExample();
+        inNofill = true;
+      } else if (macro === '.sp') {
+        md.push('');
+      } else if (IGNORED_MACROS.has(macro)) {
+        // layout-only macros with no Markdown equivalent
       } else {
+        if (!warned.has(macro)) {
+          warned.add(macro);
+          console.warn(`generate-cli-docs: unsupported macro ${macro} (line ${i + 1}); treating arguments as text`);
+        }
         const rest = unescapeRoff(tokens.slice(1).join(' '));
         if (rest && !/^\d+$/.test(rest)) {
           if (inTP) tpDesc.push(rest);
-          else md.push(escapeVueHtml(rest));
+          else emit(escapeVueHtml(rest));
         }
       }
     } else {
       const cleanLine = unescapeRoff(line);
       if (inTP) {
         if (!tpTerm) {
-          tpTerm = cleanLine;
+          tpTerm = unescapeRoff(line, true);
         } else {
           tpDesc.push(cleanLine);
         }
@@ -333,7 +409,7 @@ function parseManpageToMarkdown(manContent) {
           const match = cleanLine.match(/^(\d+):\s+(.*)$/);
           md.push(`- **${match[1]}**: ${escapeVueHtml(match[2])}`);
         } else {
-          md.push(escapeVueHtml(cleanLine));
+          emit(escapeVueHtml(cleanLine));
         }
       }
     }
@@ -345,20 +421,26 @@ function parseManpageToMarkdown(manContent) {
   return md.join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
+const docsDir = path.join(ROOT, 'vendor/faac/docs');
+if (!fs.existsSync(docsDir)) {
+  console.error('generate-cli-docs: vendor/faac/docs not found; run `git submodule update --init`');
+  process.exit(1);
+}
+
 for (const name of ['faac', 'faad', 'faam', 'faar']) {
-  const manPath = path.join(process.cwd(), 'vendor/faac/docs', `${name}.1`);
+  const manPath = path.join(ROOT, 'vendor/faac/docs', `${name}.1`);
   if (fs.existsSync(manPath)) {
     const man = fs.readFileSync(manPath, 'utf8');
     const md = parseManpageToMarkdown(man);
-    fs.writeFileSync(path.join(process.cwd(), 'docs/docs', `${name}-cli-gen.md`), md);
+    fs.writeFileSync(path.join(ROOT, 'docs/docs', `${name}-cli-gen.md`), md);
     console.log(`Generated docs/docs/${name}-cli-gen.md`);
   }
 }
 
 for (const name of ['libfaac', 'libfaad', 'libfaam', 'libfaar']) {
-  const source = path.join(process.cwd(), 'vendor/faac/docs', `${name}.md`);
+  const source = path.join(ROOT, 'vendor/faac/docs', `${name}.md`);
   if (fs.existsSync(source)) {
-    fs.writeFileSync(path.join(process.cwd(), 'docs/docs', `${name}-api-gen.md`), fs.readFileSync(source, 'utf8'));
+    fs.writeFileSync(path.join(ROOT, 'docs/docs', `${name}-api-gen.md`), fs.readFileSync(source, 'utf8'));
     console.log(`Generated docs/docs/${name}-api-gen.md`);
   }
 }
