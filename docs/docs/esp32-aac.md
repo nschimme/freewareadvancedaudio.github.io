@@ -26,7 +26,7 @@ Memory is the codec state allocated when you open it. It is the same at every bi
 | Encode HE-AAC v2 (stereo only) | [FAAC](/docs/faac) | Yes | 184 KB | Recommended |
 | Encode 5.1 (6 channels) | [FAAC](/docs/faac) | Yes | about 250 KB | Required |
 
-- **Stack:** budget about 24 KB for an encoder task. FAAD3 needs about 6 KB; FAAD2 needs about 56 KB.
+- **Stack:** an encoder task used about 9 KB for AAC-LC and about 9.5 KB for HE-AAC v1 and v2, so budget 10–14 KB. FAAD3 needs about 6 KB; FAAD2 needs about 56 KB.
 - **Flash:** FAAD3 is about 67 KB with HE-AAC v2 decode built in. FAAC is about 44 KB for AAC-LC and HE-AAC v1.
 - **Speed is separate.** An FPU-less chip can often hold the state and still be too slow. See the support matrix below.
 
@@ -104,7 +104,6 @@ HE-AAC v2 encode runs at about 2× real time on the ESP32-S3 for 48 kHz stereo. 
 - Memory figures are heap taken at open on bare firmware. Wi-Fi, Bluetooth and your own tasks come out of the same pool and were not measured.
 - Not tested: an ESP32-S3 without PSRAM, and a WROVER-class classic ESP32 with PSRAM-backed encoder state.
 - 5.1 input in the encoder tests was synthesized from a stereo clip. It is valid for memory, not for speed.
-- Encoder stack usage was about 24 KB in the test harness, higher than earlier runs. Treat it as a planning figure.
 - Gate subset; speed and bitrate accuracy, not listening quality.
 
 ## Common questions
