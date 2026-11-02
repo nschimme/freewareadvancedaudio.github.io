@@ -1,6 +1,6 @@
 ---
-title: FAAM CLI Manual Page
-description: Command-line interface reference for the FAAM MP4 muxer, demuxer, and tag editor generated from its upstream manpage.
+title: "faam Man Page: MP4 Muxer CLI"
+description: "faam command-line reference: mux AAC, H.264 and H.265 into MP4, M4A and M4B, plus the info, dump, demux, tag and chapter subcommands."
 ---
 
 # FAAM Command-Line Manual Page

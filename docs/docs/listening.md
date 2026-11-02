@@ -1,6 +1,6 @@
 ---
-title: FAAC Listening Tests — Compare AAC Audio Quality
-description: Test FAAC with your own music. Match AAC profiles and bitrates, run blind listening comparisons, and report reproducible audio quality issues.
+title: "AAC Listening Tests with FAAC"
+description: "Test FAAC with your own music. Match AAC profiles and bitrates, run blind listening comparisons, and report reproducible audio quality issues."
 ---
 
 # FAAC Listening Tests: Compare Audio Quality

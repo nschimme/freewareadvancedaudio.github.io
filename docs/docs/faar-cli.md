@@ -1,6 +1,6 @@
 ---
-title: FAAR CLI Manual Page
-description: Command-line interface reference for the FAAR sample rate converter generated from its upstream manpage.
+title: "faar Man Page: Resampler CLI"
+description: "faar command-line reference: convert audio sample rates with the FAAR resampler and its Fast, Good and High quality profiles."
 ---
 
 # FAAR Command-Line Manual Page

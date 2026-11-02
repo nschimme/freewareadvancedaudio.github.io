@@ -1,8 +1,13 @@
+---
+title: "The New FAAC & FAAD Website"
+description: "A refreshed home for FAAC and FAAD: documentation, benchmarks, CLI manuals, C API references and a browser-based AAC converter."
+---
+
 # Introducing the New Freeware Advanced Audio Website
 
 *Published: September 2026*
 
-Welcome to the new official website for the **Freeware Advanced Audio** organization!
+Welcome to the new website for **FAAC** and **FAAD**!
 
 We are excited to announce a complete refresh of our online presence, documentation, and web demonstration tools for **FAAC** and **FAAD**.
 

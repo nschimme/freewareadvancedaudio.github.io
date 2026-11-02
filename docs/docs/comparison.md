@@ -1,6 +1,6 @@
 ---
-title: Choose an AAC Encoder or Decoder
-description: Compare FAAC, FAAD, FDK-AAC, Apple AudioToolbox, and FFmpeg. Choose an AAC implementation by profile support, integration needs, software license, and patent status.
+title: "Choose an AAC Encoder or Decoder"
+description: "Compare FAAC, FAAD, FDK-AAC, Apple AudioToolbox and FFmpeg by AAC profile support, integration needs, software license and patent status."
 pageClass: comparison-page
 ---
 

@@ -1,3 +1,8 @@
+---
+title: "FAAC and FAAD Blog"
+description: "News and release notes for FAAC and FAAD: the LGPL-licensed AAC encoder, decoder, resampler and MP4 muxer."
+---
+
 # Freeware Advanced Audio Blog
 
 Welcome to the blog and announcement channel for Freeware Advanced Audio (FAAC & FAAD).

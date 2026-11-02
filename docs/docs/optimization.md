@@ -1,6 +1,6 @@
 ---
-title: FAAC Benchmarks — Speed, Size & Quality
-description: "Published AAC encoder and decoder benchmarks, the tested builds behind them, and the methodology used for FAAC versus FDK-AAC, FFmpeg, and Apple."
+title: "FAAC vs FDK-AAC Benchmarks"
+description: "Published AAC encoder and decoder benchmarks, the tested builds behind them, and the methodology used for FAAC versus FDK-AAC, FFmpeg and Apple."
 ---
 
 # FAAC Benchmarks: Speed, Size, and Quality

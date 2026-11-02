@@ -1,6 +1,6 @@
 ---
-title: Try FAAC — Browser Audio Converter
-description: Encode audio to M4A locally in your browser with FAAC. Your files stay on your device.
+title: "Free Online AAC Converter: FAAC"
+description: "Convert audio to AAC (M4A) in your browser with FAAC compiled to WebAssembly. Your files never leave your device; compare bitrates and profiles."
 ---
 
 # Try FAAC in Your Browser

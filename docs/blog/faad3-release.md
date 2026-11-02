@@ -1,6 +1,6 @@
 ---
-title: Introducing the FAAD Decoder Rewrite
-description: Why FAAD was rewritten as a modern C11 decoder library, how its new library boundary works, and where to find integration and comparison details.
+title: "Introducing the FAAD C11 Rewrite"
+description: "Why FAAD was rewritten as a modern C11 decoder library, how its new library boundary works, and where to find integration and comparison details."
 ---
 
 # Introducing the FAAD Decoder Rewrite

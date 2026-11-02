@@ -1,6 +1,6 @@
 ---
-title: "AAC on ESP32: Real-Time Encoding and Decoding"
-description: "FAAC and FAAD bring real-time AAC encoding and decoding to ESP32, ESP32-S3, and ESP32-C6 microcontrollers."
+title: "FAAC and FAAD Now Run on ESP32"
+description: "Announcing real-time AAC encoding and decoding on ESP32, ESP32-S3 and ESP32-C6: what changed in FAAC and FAAD and what the results show."
 ---
 
 # AAC on ESP32: Real-Time Encoding and Decoding

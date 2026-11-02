@@ -1,6 +1,6 @@
 ---
-title: Tested Versions and Benchmark Snapshots
-description: Tested AAC encoder and decoder versions, build identifiers, hardware, and measured results used on this site.
+title: "Tested AAC Encoder Versions"
+description: "Tested AAC encoder and decoder versions, build identifiers, hardware, and measured results used on this site."
 ---
 
 # Tested Versions and Benchmark Snapshots
