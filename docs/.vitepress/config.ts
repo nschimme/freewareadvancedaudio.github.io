@@ -6,7 +6,7 @@ const origin = process.env.SITE_ORIGIN || 'https://freewareadvancedaudio.github.
 export default defineConfig({
   base,
   title: 'Freeware Advanced Audio',
-  description: 'FAAC and FAAD documentation, benchmarks and a free online AAC converter. LGPL-licensed AAC encoder and decoder libraries in C.',
+  description: 'FAAC is an LGPL-licensed, dependency-free AAC encoder and decoder suite with a resampler and MP4 muxer, built for fast media pipelines and constrained devices.',
   titleTemplate: ':title | Freeware Advanced Audio',
   cleanUrls: true,
   vite: {
@@ -71,7 +71,7 @@ export default defineConfig({
       ['meta', { property: 'og:image:type', content: 'image/jpeg' }],
       ['meta', { property: 'og:image:width', content: '1200' }],
       ['meta', { property: 'og:image:height', content: '630' }],
-      ['meta', { property: 'og:image:alt', content: 'FAAC and FAAD: AAC encoder and decoder in C' }],
+      ['meta', { property: 'og:image:alt', content: 'FAAC and FAAD: dependency-free AAC encoder, decoder, resampler and MP4 muxer' }],
       ['meta', { name: 'twitter:title', content: fullTitle }],
       ['meta', { name: 'twitter:description', content: description }],
       ['meta', { name: 'twitter:image', content: image }]
@@ -89,6 +89,17 @@ export default defineConfig({
             alternateName: ['FAAC', 'FAAD', 'FAAC and FAAD'],
             description: site.description,
             inLanguage: 'en'
+          },
+          {
+            '@type': 'SoftwareSourceCode',
+            '@id': `${root}#software`,
+            name: 'FAAC',
+            alternateName: ['FAAD', 'FAAM', 'FAAR'],
+            description: 'LGPL-licensed, dependency-free AAC encoder and decoder suite with a resampler and MP4 muxer.',
+            programmingLanguage: 'C',
+            license: 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html',
+            codeRepository: 'https://github.com/FreewareAdvancedAudio',
+            url: root
           },
           {
             '@type': 'Organization',

@@ -1,7 +1,7 @@
 {
   "name": "freeware-advanced-audio-website",
   "version": "1.0.0",
-  "description": "Website for Freeware Advanced Audio Organization (FAAC & FAAD)",
+  "description": "Website and documentation for FAAC, a dependency-free AAC encoder and decoder suite with a resampler and MP4 muxer",
   "type": "module",
   "scripts": {
     "docs:generate-cli": "node scripts/generate-cli-docs.js",

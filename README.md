@@ -1,6 +1,6 @@
-# Freeware Advanced Audio Organization (FAAC & FAAD)
+# FAAC & FAAD
 
-Official website and technical documentation platform for **FAAC** (AAC encoder) and **FAAD** (AAC decoder), built with VitePress. Both libraries are licensed under LGPL v2.1+.
+Website and documentation for **FAAC**, an LGPL-licensed, dependency-free AAC encoder and decoder suite with a resampler and MP4 muxer, built with VitePress. It targets high-throughput media pipelines and constrained devices where footprint, speed, and quality all matter.
 
 ---
 
