@@ -239,6 +239,9 @@ function parseManpageToMarkdown(manContent) {
       continue;
     }
 
+    // Roff comments (e.g. the `'\" t` tbl preprocessor hint) are not content.
+    if (line.startsWith('\'\\"') || line.startsWith('.\\"')) continue;
+
     if (line.startsWith('.')) {
       const tokens = parseMacroArgs(line);
       const macro = tokens[0];
