@@ -1,5 +1,8 @@
 ---
 layout: home
+title: "FAAC & FAAD: Fast, Free AAC Encoder and Decoder in C"
+titleTemplate: false
+description: "FAAC and FAAD are LGPL-licensed AAC encoder and decoder libraries in C. Read the docs, compare benchmarks, and convert audio online in your browser."
 hero:
   name: "Freeware Advanced Audio"
   text: "Fast, compact AAC encoding and decoding in C"

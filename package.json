@@ -1,7 +1,7 @@
 {
   "name": "freeware-advanced-audio-website",
   "version": "1.0.0",
-  "description": "Official website for Freeware Advanced Audio Organization (FAAC & FAAD)",
+  "description": "Website for Freeware Advanced Audio Organization (FAAC & FAAD)",
   "type": "module",
   "scripts": {
     "docs:generate-cli": "node scripts/generate-cli-docs.js",

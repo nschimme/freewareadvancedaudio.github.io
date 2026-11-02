@@ -6,7 +6,8 @@ const origin = process.env.SITE_ORIGIN || 'https://freewareadvancedaudio.github.
 export default defineConfig({
   base,
   title: 'Freeware Advanced Audio',
-  description: 'Official documentation and interactive online audio converter for FAAC and FAAD, LGPL-licensed AAC encoder and decoder libraries in C.',
+  description: 'FAAC and FAAD documentation, benchmarks and a free online AAC converter. LGPL-licensed AAC encoder and decoder libraries in C.',
+  titleTemplate: ':title | Freeware Advanced Audio',
   cleanUrls: true,
   vite: {
     server: {
@@ -50,6 +51,59 @@ export default defineConfig({
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }]
   ],
+  transformPageData(pageData, { siteConfig }) {
+    const site = siteConfig.site
+    const root = `${origin.replace(/\/$/, '')}${base}`
+    const path = pageData.relativePath.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '')
+    const url = `${root}${path}`
+    const isHome = pageData.relativePath === 'index.md'
+    const title = String(pageData.frontmatter.title || pageData.title || site.title)
+    const fullTitle = isHome || title === site.title ? title : `${title} | ${site.title}`
+    const description = String(pageData.frontmatter.description || pageData.description || site.description)
+    const image = `${root}og.jpg`
+
+    const head: [string, Record<string, string>, string?][] = [
+      ['link', { rel: 'canonical', href: url }],
+      ['meta', { property: 'og:title', content: fullTitle }],
+      ['meta', { property: 'og:description', content: description }],
+      ['meta', { property: 'og:url', content: url }],
+      ['meta', { property: 'og:image', content: image }],
+      ['meta', { property: 'og:image:type', content: 'image/jpeg' }],
+      ['meta', { property: 'og:image:width', content: '1200' }],
+      ['meta', { property: 'og:image:height', content: '630' }],
+      ['meta', { property: 'og:image:alt', content: 'FAAC and FAAD: AAC encoder and decoder in C' }],
+      ['meta', { name: 'twitter:title', content: fullTitle }],
+      ['meta', { name: 'twitter:description', content: description }],
+      ['meta', { name: 'twitter:image', content: image }]
+    ]
+
+    if (isHome) {
+      head.push(['script', { type: 'application/ld+json' }, JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'WebSite',
+            '@id': `${root}#website`,
+            url: root,
+            name: site.title,
+            alternateName: ['FAAC', 'FAAD', 'FAAC and FAAD'],
+            description: site.description,
+            inLanguage: 'en'
+          },
+          {
+            '@type': 'Organization',
+            '@id': `${root}#organization`,
+            name: 'Freeware Advanced Audio Organization',
+            url: root,
+            logo: `${root}logo.svg`,
+            sameAs: ['https://github.com/FreewareAdvancedAudio']
+          }
+        ]
+      })])
+    }
+
+    pageData.frontmatter.head = [...(pageData.frontmatter.head || []), ...head]
+  },
   themeConfig: {
     logo: '/logo.svg',
     siteTitle: 'Freeware Advanced Audio',
