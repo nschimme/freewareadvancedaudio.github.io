@@ -113,7 +113,7 @@ function formatAlternatingArgs(args, fonts = 'R', styled = false) {
       if (mark && !cleanArg.includes(mark)) cleanArg = cleanArg.replace(/^(\s*)(.*?)(\s*)$/, `$1${mark}$2${mark}$3`);
     }
     if (idx > 0) {
-      if (!/^\s*[\.,;:\)\]\>]/.test(cleanArg) && !/\s$/.test(res) && !/^\s/.test(cleanArg)) {
+      if (!/^\s*[\.,;:\)\]\>]/.test(cleanArg) && !/[\s\[({<]$/.test(res) && !/^\s/.test(cleanArg)) {
         res += ' ';
       }
     }
@@ -188,6 +188,24 @@ function parseTblTable(lines, start) {
     ...rows.map(render)
   ];
   return { markdown, next: i };
+}
+
+/* Markdown needs a blank line between a list and the paragraph around it,
+ * or the paragraph is absorbed into the last list item. */
+function separateLists(lines) {
+  const out = [];
+  let fenced = false;
+  for (const line of lines) {
+    const prev = out[out.length - 1];
+    if (/^\s*```/.test(line)) fenced = !fenced;
+    if (!fenced && prev !== undefined && prev.trim() && line.trim()) {
+      const prevInList = /^(- |\s{2,}\S)/.test(prev);
+      const lineInList = /^(- |\s{2,}\S)/.test(line);
+      if (prevInList !== lineInList) out.push('');
+    }
+    out.push(line);
+  }
+  return out;
 }
 
 function parseManpageToMarkdown(manContent) {
@@ -326,14 +344,11 @@ function parseManpageToMarkdown(manContent) {
         flushTP();
         inTP = true;
       } else if (macro === '.PP' || macro === '.P') {
-        if (inTP) {
-          tpDesc.push('\n');
-        } else {
-          flushTP();
-          flushExample();
-          md.push('');
-          if (section === 'EXAMPLES') exampleEligible = true;
-        }
+        // In roff, .PP ends a .TP entry and returns to the left margin.
+        flushTP();
+        flushExample();
+        md.push('');
+        if (section === 'EXAMPLES') exampleEligible = true;
       } else if (macro === '.IP') {
         if (inTP) {
           tpDesc.push('\n');
@@ -418,7 +433,7 @@ function parseManpageToMarkdown(manContent) {
   flushTP();
   flushExample();
 
-  return md.join('\n').replace(/\n{3,}/g, '\n\n');
+  return separateLists(md.join('\n').split('\n')).join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
 const docsDir = path.join(ROOT, 'vendor/faac/docs');
