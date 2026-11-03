@@ -41,7 +41,9 @@ export default defineConfig({
   },
   appearance: 'force-dark',
   sitemap: {
-    hostname: `${origin.replace(/\/$/, '')}${base}`
+    hostname: `${origin.replace(/\/$/, '')}${base}`,
+    // Redirect stubs are not indexable destinations; keep only the canonical URL in the sitemap.
+    transformItems: items => items.filter(item => !item.url.endsWith('docs/optimization'))
   },
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}logo.svg` }],
@@ -55,7 +57,9 @@ export default defineConfig({
     const site = siteConfig.site
     const root = `${origin.replace(/\/$/, '')}${base}`
     const path = pageData.relativePath.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '')
-    const url = `${root}${path}`
+    // Pages renamed under GitHub Pages (no server redirects) set `redirect:` to the new path.
+    const redirect = pageData.frontmatter.redirect ? String(pageData.frontmatter.redirect).replace(/^\/+/, '') : ''
+    const url = `${root}${redirect || path}`
     const isHome = pageData.relativePath === 'index.md'
     const title = String(pageData.frontmatter.title || pageData.title || site.title)
     const fullTitle = isHome || title === site.title ? title : `${title} | ${site.title}`
@@ -76,6 +80,8 @@ export default defineConfig({
       ['meta', { name: 'twitter:description', content: description }],
       ['meta', { name: 'twitter:image', content: image }]
     ]
+
+    if (redirect) head.push(['meta', { 'http-equiv': 'refresh', content: `0; url=${url}` }])
 
     if (isHome) {
       head.push(['script', { type: 'application/ld+json' }, JSON.stringify({
@@ -159,7 +165,7 @@ export default defineConfig({
         text: 'Compare & Evaluate',
         items: [
           { text: 'Choose an Encoder or Decoder', link: '/docs/comparison' },
-          { text: 'AAC Benchmark Results', link: '/docs/optimization' },
+          { text: 'AAC Benchmark Results', link: '/docs/aac-benchmark' },
           { text: 'AAC on ESP32', link: '/docs/esp32-aac' },
           { text: 'Listening-Test Guide', link: '/docs/listening' }
         ]

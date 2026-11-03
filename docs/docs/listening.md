@@ -7,7 +7,7 @@ description: "Test FAAC with your own music. Match AAC profiles and bitrates, ru
 
 Find the **AAC settings that sound right with your music**. Start with a quick browser conversion, then use a controlled listening test when you need a reliable comparison.
 
-Looking for implementation support or speed measurements? Use the [selection guide](/docs/comparison) or [benchmark results](/docs/optimization).
+Looking for implementation support or speed measurements? Use the [selection guide](/docs/comparison) or [benchmark results](/docs/aac-benchmark).
 
 ## Try your own music {data-icon="headphones"}
 

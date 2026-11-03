@@ -101,7 +101,7 @@ Profile support does not guarantee every transport, sample rate, or channel layo
 
 </details>
 
-For measured decoder quality, speed, and memory, see the [decoder snapshot](/docs/optimization#decoder-snapshot).
+For measured decoder quality, speed, and memory, see the [decoder results](/docs/aac-benchmark#aac-decoder-quality-and-speed).
 
 ## Software licenses and patent rights {data-icon="scale-balanced"}
 

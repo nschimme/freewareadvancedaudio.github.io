@@ -23,7 +23,7 @@ features:
   - icon: "<i class=\"fa-solid fa-bolt feature-icon feature-icon--cyan\" aria-hidden=\"true\"></i>"
     title: "Fast encoding"
     details: "Faster aggregate encoding than the compared FDK-AAC, Apple AAC, and FFmpeg AAC builds in published testing, and real time on the ESP32 and ESP32-S3."
-    link: "/docs/optimization"
+    link: "/docs/aac-benchmark"
     linkText: "Compare encoding speed"
   - icon: "<i class=\"fa-solid fa-sliders feature-icon feature-icon--blue\" aria-hidden=\"true\"></i>"
     title: "Build only what you need"
@@ -33,7 +33,7 @@ features:
   - icon: "<i class=\"fa-solid fa-headphones feature-icon feature-icon--violet\" aria-hidden=\"true\"></i>"
     title: "Competitive audio quality"
     details: "Leading aggregate objective quality scores in published testing. Fine-tuned across speech, music, and difficult passages."
-    link: "/docs/optimization"
+    link: "/docs/aac-benchmark"
     linkText: "See quality results"
   - icon: "<i class=\"fa-solid fa-code feature-icon feature-icon--cyan\" aria-hidden=\"true\"></i>"
     title: "Open development"
@@ -50,13 +50,13 @@ features:
 
 <BenchmarkShowcase view="speed" />
 
-FAAC encodes 4.3× faster than FDK-AAC, and FAAD3 decodes 2.4× faster. FAAD3 also ties the top overall MOS and leads stereo fidelity.
+FAAC encodes 4.3× faster than FDK-AAC, and FAAD3 decodes 2.4× faster. FAAD3 also ties the top overall MOS.
 
-**Benchmark snapshot · October 28, 2026 · MacBook Pro M1, 32 GB.** Encoder and decoder figures come from the same generated leaderboard. Results depend on the tested builds and hardware. See the [benchmark results and tested versions](/docs/optimization).
+**Benchmark snapshot · October 28, 2026 · MacBook Pro M1, 32 GB.** Encoder and decoder figures come from the same generated leaderboard. Results depend on the tested builds and hardware. See the [benchmark results and tested versions](/docs/aac-benchmark).
 
 ### Build only what you need {data-icon="sliders"}
 
-Every feature is a build option: HE-AAC (SBR), HE-AAC v2 (PS), DAB frames, dynamic range control, and channel count. Switch off what you don't use and the flash cost drops with it. See [Trim the build](/docs/esp32-aac#trim-the-build) for every switch. With everything enabled, FAAC and FAAD3 together are under a third of the size of FDK-AAC ([whole-library comparison](/docs/optimization#build-size-compare-whole-libraries)).
+Every feature is a build option: HE-AAC (SBR), HE-AAC v2 (PS), DAB frames, dynamic range control, and channel count. Switch off what you don't use and the flash cost drops with it. See [Trim the build](/docs/esp32-aac#trim-the-build) for every switch. With everything enabled, FAAC and FAAD3 together are under a third of the size of FDK-AAC ([whole-library comparison](/docs/aac-benchmark#aac-library-size-faac-and-faad3-vs-fdk-aac)).
 
 <Esp32Showcase view="build" />
 
@@ -74,7 +74,7 @@ Try FAAC with familiar tracks and choose the settings that work for you. The bro
 
 [Drop your own music into the converter](/playground), choose a bitrate, and listen. For a closer comparison, the [listening guide](/docs/listening) walks through a controlled test. Your feedback helps us understand what works well and what still needs attention.
 
-For measured quality results, see the [AAC benchmark results](/docs/optimization). Objective scores complement listening, and results depend on the tested builds and hardware.
+For measured quality results, see the [AAC benchmark results](/docs/aac-benchmark). Objective scores complement listening, and results depend on the tested builds and hardware.
 
 ## Choose your starting point {data-icon="compass"}
 
@@ -85,7 +85,7 @@ For measured quality results, see the [AAC benchmark results](/docs/optimization
 | Mux, demux, or tag MP4/M4A files | [FAAM guide](/docs/faam), [libfaam C API](/docs/libfaam), and [faam(1)](/docs/faam-cli) |
 | Convert audio sample rates | [FAAR guide](/docs/faar), [libfaar C API](/docs/libfaar), and [faar(1)](/docs/faar-cli) |
 | Choose an encoder or decoder for your application | [Implementation selection guide](/docs/comparison), including hardware, profiles, and licensing |
-| Compare speed, quality, and build size | [AAC benchmark results](/docs/optimization) |
+| Compare speed, quality, and build size | [AAC benchmark results](/docs/aac-benchmark) |
 | Run AAC encoding or decoding on a microcontroller | [AAC on ESP32](/docs/esp32-aac) |
 | Fit AAC in a flash budget | [Trim the build](/docs/esp32-aac#trim-the-build) |
 | Hear FAAC with your own music | [Browser converter](/playground), with an optional [listening guide](/docs/listening) |

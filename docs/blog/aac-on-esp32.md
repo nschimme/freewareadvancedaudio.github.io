@@ -11,7 +11,7 @@ FAAC and FAAD are known for fast AAC encoding and decoding on desktop-class hard
 
 ## The desktop was never the hard part
 
-The [AAC benchmark results](/docs/optimization) show the libraries at full speed on a modern laptop. That is expected. The question is whether the same code can finish a real stream on a microcontroller.
+The [AAC benchmark results](/docs/aac-benchmark) show the libraries at full speed on a modern laptop. That is expected. The question is whether the same code can finish a real stream on a microcontroller.
 
 ## 240 MHz is enough
 
