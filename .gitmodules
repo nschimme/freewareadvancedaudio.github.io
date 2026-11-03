@@ -2,3 +2,8 @@
 	path = vendor/faac
 	url = https://github.com/nschimme/faac.git
 	branch = master
+[submodule "vendor/faac-media"]
+	path = vendor/faac-media
+	url = https://github.com/FreewareAdvancedAudio/faac-media.git
+	branch = master
+	shallow = true

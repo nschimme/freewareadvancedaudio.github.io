@@ -66,9 +66,15 @@ COPY --from=builder /build/out_wasm/ /app/docs/public/wasm/
 # can restore the generated assets when the repository mount hides docs/public.
 COPY --from=builder /build/out_wasm/ /opt/faac-wasm/
 
+# Demo song from the faac-media submodule, served at /media/. Also kept outside
+# the bind-mounted tree so development can restore it.
+RUN mkdir -p /app/docs/public/media /opt/media && \
+    cp vendor/faac-media/audio/songs/pipeline-tighter/pipeline-tighter.m4a /app/docs/public/media/ && \
+    cp vendor/faac-media/audio/songs/pipeline-tighter/pipeline-tighter.m4a /opt/media/
+
 EXPOSE 5173 4173
 
-CMD ["sh", "-lc", "cp /opt/faac-wasm/* docs/public/wasm/ && exec npm run docs:dev -- --host 0.0.0.0"]
+CMD ["sh", "-lc", "mkdir -p docs/public/media && cp /opt/faac-wasm/* docs/public/wasm/ && cp /opt/media/* docs/public/media/ && exec npm run docs:dev -- --host 0.0.0.0"]
 
 # Static site builder stage for production deployment
 FROM app AS site-builder
