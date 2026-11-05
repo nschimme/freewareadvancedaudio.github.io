@@ -52,6 +52,10 @@
                 {{ formatFileSize(selectedFile.size) }} · {{ selectedFile.name.split('.').pop()?.toUpperCase() || 'Audio' }}
               </span>
               <span class="metadata-chip">
+                <span class="metadata-label">Duration</span>
+                {{ formatDuration(decodedAudio?.duration || 0) }}
+              </span>
+              <span class="metadata-chip">
                 <span class="metadata-label">Audio</span>
                 <template v-if="decodedAudio">{{ decodedAudio.sampleRate }} Hz · {{ formatChannelLayout(decodedAudio.channels) }} · {{ decodedAudio.bitDepth }}-bit</template>
                 <template v-else>{{ isDecoding ? `Decoding (${progress}%)…` : 'Preparing audio…' }}</template>
@@ -202,11 +206,15 @@
       <div class="results-section" v-if="results.length > 0">
         <h4 class="results-title"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Encoded M4A Output</h4>
         <div class="result-card" v-for="item in results" :key="item.id">
-          <!-- Card Header: Title & Meta on the left, Download & Discard on the right -->
+          <!-- Card Header: Title & Meta Chips on left, Download & Discard Pills on right (above waveform) -->
           <div class="result-card-header">
             <div class="result-info">
               <span class="result-name">{{ item.name }}</span>
               <div class="result-meta">
+                <span class="metadata-chip">
+                  <span class="metadata-label">Duration</span>
+                  {{ formatDuration(item.duration || decodedAudio?.duration || 0) }}
+                </span>
                 <span v-for="detail in item.details" :key="detail.label" class="metadata-chip">
                   <span class="metadata-label">{{ detail.label }}</span>
                   <span>{{ detail.value }}</span>
@@ -214,15 +222,18 @@
               </div>
             </div>
 
-            <div class="result-action-buttons">
-              <a :href="item.url" :download="item.name" class="icon-action download-link"
+            <!-- Pill Action Buttons next to metadata chips row above waveform -->
+            <div class="result-action-pills">
+              <a :href="item.url" :download="item.name" class="pill-action download-pill"
                 :aria-label="`Download ${item.name}`" title="Download output">
                 <i class="fa-solid fa-download" aria-hidden="true"></i>
+                <span>Download</span>
               </a>
-              <button ref="discardButtons" type="button" class="icon-action discard-button"
+              <button ref="discardButtons" type="button" class="pill-action discard-pill"
                 :aria-label="`Discard ${item.name}`" title="Discard output"
                 @click="discardResult(item)">
                 <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                <span>Discard</span>
               </button>
             </div>
           </div>
@@ -1341,12 +1352,65 @@ async function startEncoding() {
   text-transform: uppercase;
 }
 
-.result-action-buttons {
+/* Pill Action Buttons in the Header Row next to Metadata Chips */
+.result-action-pills {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
   flex-shrink: 0;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .result-action-pills {
+    margin-top: 1.6rem;
+  }
+}
+
+.pill-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 2.35rem;
+  padding: 0 0.85rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.download-pill {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  text-decoration: none;
+}
+
+.download-pill:hover,
+.download-pill:focus-visible {
+  background: #10b981;
+  color: #0f172a;
+}
+
+.discard-pill {
+  background: rgba(248, 113, 113, 0.1);
+  color: #fca5a5;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.discard-pill:hover,
+.discard-pill:focus-visible {
+  background: #ef4444;
+  color: #fff;
+}
+
+.pill-action:focus-visible {
+  outline: 2px solid #e2e8f0;
+  outline-offset: 2px;
 }
 
 .result-player-fullwidth {
@@ -1365,49 +1429,6 @@ async function startEncoding() {
   border: 0;
 }
 
-.icon-action {
-  display: inline-flex;
-  width: 2.5rem;
-  height: 2.5rem;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-.download-link {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  text-decoration: none;
-}
-
-.download-link:hover,
-.download-link:focus-visible {
-  background: #10b981;
-  color: #0f172a;
-}
-
-.discard-button {
-  background: rgba(248, 113, 113, 0.1);
-  color: #fca5a5;
-  border: 1px solid rgba(248, 113, 113, 0.3);
-}
-
-.discard-button:hover,
-.discard-button:focus-visible {
-  background: #ef4444;
-  color: #fff;
-}
-
-.icon-action:focus-visible {
-  outline: 2px solid #e2e8f0;
-  outline-offset: 2px;
-}
-
 @media (max-width: 420px) {
   .converter-title {
     font-size: 1.15rem;
@@ -1423,6 +1444,14 @@ async function startEncoding() {
 
   .preset-btn {
     flex: 1 0 3rem;
+  }
+
+  .pill-action span {
+    display: none;
+  }
+
+  .pill-action {
+    padding: 0 0.75rem;
   }
 }
 </style>
