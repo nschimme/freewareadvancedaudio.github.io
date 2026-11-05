@@ -115,7 +115,9 @@ self.onmessage = async function(e) {
           self.postMessage({ type: 'progress', progress, status: 'Encoding M4A audio...' });
           lastProgress = progress;
           // Yield so the progress message is delivered instead of batching until the end.
-          await new Promise((resolve) => setTimeout(resolve, 0));
+          if (typeof setTimeout !== 'undefined') {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
         }
       }
       self.postMessage({ type: 'progress', progress: 98, status: 'Finalizing M4A audio...' });
