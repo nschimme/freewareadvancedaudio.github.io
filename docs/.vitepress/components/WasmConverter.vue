@@ -43,21 +43,24 @@
 
       <!-- Original Audio Player -->
       <div v-if="selectedFile" class="result-card original-audio-card">
-        <div class="result-info">
-          <span class="result-name">{{ selectedFile.name }}</span>
-          <div class="result-meta">
-            <span class="metadata-chip">
-              <span class="metadata-label">Source file</span>
-              {{ formatFileSize(selectedFile.size) }} · {{ selectedFile.name.split('.').pop()?.toUpperCase() || 'Audio' }}
-            </span>
-            <span class="metadata-chip">
-              <span class="metadata-label">Audio</span>
-              <template v-if="decodedAudio">{{ decodedAudio.sampleRate }} Hz · {{ formatChannelLayout(decodedAudio.channels) }} · {{ decodedAudio.bitDepth }}-bit</template>
-              <template v-else>{{ isDecoding ? `Decoding (${progress}%)…` : 'Preparing audio…' }}</template>
-            </span>
+        <div class="result-card-header">
+          <div class="result-info">
+            <span class="result-name">{{ selectedFile.name }}</span>
+            <div class="result-meta">
+              <span class="metadata-chip">
+                <span class="metadata-label">Source file</span>
+                {{ formatFileSize(selectedFile.size) }} · {{ selectedFile.name.split('.').pop()?.toUpperCase() || 'Audio' }}
+              </span>
+              <span class="metadata-chip">
+                <span class="metadata-label">Audio</span>
+                <template v-if="decodedAudio">{{ decodedAudio.sampleRate }} Hz · {{ formatChannelLayout(decodedAudio.channels) }} · {{ decodedAudio.bitDepth }}-bit</template>
+                <template v-else>{{ isDecoding ? `Decoding (${progress}%)…` : 'Preparing audio…' }}</template>
+              </span>
+            </div>
           </div>
         </div>
-        <div v-if="originalAudioUrl" class="result-actions">
+
+        <div v-if="originalAudioUrl" class="result-player-fullwidth">
           <WaveformPlayer
             ref="originalPlayerRef"
             track-id="original"
@@ -67,11 +70,15 @@
             :duration="decodedAudio?.duration || 0"
             :active-track-id="activeTrackId"
             :shared-time="sharedPlaybackTime"
+            :playback-start-time="sharedPlaybackStartTime"
+            :loop-region="sharedLoopRegion"
             :loading="isDecoding"
             @play="onTrackPlay"
             @pause="onTrackPause"
             @seek="onTrackSeek"
             @timeupdate="onTrackTimeUpdate"
+            @update:playback-start-time="onUpdatePlaybackStartTime"
+            @update:loop-region="onUpdateLoopRegion"
           />
         </div>
       </div>
@@ -194,34 +201,19 @@
       <p class="visually-hidden" aria-live="polite" aria-atomic="true">{{ resultAnnouncement }}</p>
       <div class="results-section" v-if="results.length > 0">
         <h4 class="results-title"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Encoded M4A Output</h4>
-        <div class="result-card" v-for="item in results" :key="item.url">
-          <div class="result-info">
-            <span class="result-name">{{ item.name }}</span>
-            <div class="result-meta">
-              <span v-for="detail in item.details" :key="detail.label" class="metadata-chip">
-                <span class="metadata-label">{{ detail.label }}</span>
-                <span>{{ detail.value }}</span>
-              </span>
+        <div class="result-card" v-for="item in results" :key="item.id">
+          <!-- Card Header: Title & Meta on the left, Download & Discard on the right -->
+          <div class="result-card-header">
+            <div class="result-info">
+              <span class="result-name">{{ item.name }}</span>
+              <div class="result-meta">
+                <span v-for="detail in item.details" :key="detail.label" class="metadata-chip">
+                  <span class="metadata-label">{{ detail.label }}</span>
+                  <span>{{ detail.value }}</span>
+                </span>
+              </div>
             </div>
-          </div>
 
-          <div class="result-actions">
-            <div class="result-player-wrapper">
-              <WaveformPlayer
-                :track-id="item.id"
-                :aria-label="item.name"
-                :src="item.url"
-                :peaks="item.peaks"
-                :duration="item.duration || decodedAudio?.duration || 0"
-                :active-track-id="activeTrackId"
-                :shared-time="sharedPlaybackTime"
-                :loading="item.isWaveformLoading"
-                @play="onTrackPlay"
-                @pause="onTrackPause"
-                @seek="onTrackSeek"
-                @timeupdate="onTrackTimeUpdate"
-              />
-            </div>
             <div class="result-action-buttons">
               <a :href="item.url" :download="item.name" class="icon-action download-link"
                 :aria-label="`Download ${item.name}`" title="Download output">
@@ -233,6 +225,28 @@
                 <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
               </button>
             </div>
+          </div>
+
+          <!-- Waveform Player spans 100% full width to align perfectly with the original audio waveform -->
+          <div class="result-player-fullwidth">
+            <WaveformPlayer
+              :track-id="item.id"
+              :aria-label="item.name"
+              :src="item.url"
+              :peaks="item.peaks"
+              :duration="item.duration || decodedAudio?.duration || 0"
+              :active-track-id="activeTrackId"
+              :shared-time="sharedPlaybackTime"
+              :playback-start-time="sharedPlaybackStartTime"
+              :loop-region="sharedLoopRegion"
+              :loading="false"
+              @play="onTrackPlay"
+              @pause="onTrackPause"
+              @seek="onTrackSeek"
+              @timeupdate="onTrackTimeUpdate"
+              @update:playback-start-time="onUpdatePlaybackStartTime"
+              @update:loop-region="onUpdateLoopRegion"
+            />
           </div>
         </div>
       </div>
@@ -250,12 +264,16 @@ const selectedFile = ref(null)
 const originalAudioUrl = ref(null)
 const originalPlayerRef = ref(null)
 const originalPeaks = ref([])
+const referenceMaxRms = ref(0.001) // Track reference file's peak RMS for relative normalization
 const decodedAudio = ref(null)
 const isDecoding = ref(false)
 
 // Synchronized playback state across all versions of the song
 const activeTrackId = ref('')
 const sharedPlaybackTime = ref(0)
+const sharedPlaybackStartTime = ref(null)
+const sharedLoopRegion = ref({ start: 0, end: null })
+
 let decodeRequest = 0
 const isDragOver = ref(false)
 const isDemoLoading = ref(false)
@@ -353,6 +371,8 @@ function clearResults() {
   results.value = []
   activeTrackId.value = ''
   sharedPlaybackTime.value = 0
+  sharedPlaybackStartTime.value = null
+  sharedLoopRegion.value = { start: 0, end: null }
 }
 
 function handleBeforeUnload(event) {
@@ -392,6 +412,8 @@ function selectFile(file) {
   isDemoLoading.value = false
   activeTrackId.value = ''
   sharedPlaybackTime.value = 0
+  sharedPlaybackStartTime.value = null
+  sharedLoopRegion.value = { start: 0, end: null }
   if (originalAudioUrl.value) {
     URL.revokeObjectURL(originalAudioUrl.value)
     originalAudioUrl.value = null
@@ -399,6 +421,7 @@ function selectFile(file) {
   selectedFile.value = file
   originalAudioUrl.value = null
   originalPeaks.value = []
+  referenceMaxRms.value = 0.001
   decodedAudio.value = null
   statusMessage.value = ''
   const request = ++decodeRequest
@@ -422,6 +445,14 @@ function onTrackSeek(time) {
 
 function onTrackTimeUpdate(time) {
   sharedPlaybackTime.value = time
+}
+
+function onUpdatePlaybackStartTime(time) {
+  sharedPlaybackStartTime.value = time
+}
+
+function onUpdateLoopRegion(region) {
+  sharedLoopRegion.value = region
 }
 
 onUnmounted(() => {
@@ -526,26 +557,26 @@ function audioBufferToFloat32(audioBuffer) {
   return pcmFloat
 }
 
-// Extract downsampled waveform peaks (0.0 - 1.0) for visual display
-function computeWaveformPeaksFromPcm(pcmData, channels, sampleFormat, barCount = 70) {
-  if (!pcmData || !pcmData.length || !channels) return []
+// Extract high-resolution waveform peaks (e.g. 360 slices) from PCM with RMS & peak calculation
+function computeWaveformPeaksFromPcm(pcmData, channels, sampleFormat, sliceCount = 360) {
+  if (!pcmData || !pcmData.length || !channels) return { peaks: [], maxRms: 0.001 }
   const totalFrames = Math.floor(pcmData.length / channels)
-  const framesPerBar = Math.floor(totalFrames / barCount)
-  if (framesPerBar <= 0) return []
+  const framesPerSlice = Math.floor(totalFrames / sliceCount)
+  if (framesPerSlice <= 0) return { peaks: [], maxRms: 0.001 }
 
-  const peaks = new Float32Array(barCount)
+  const rmsArray = new Float32Array(sliceCount)
   const isFloat = sampleFormat === 'float'
   const normalizer = isFloat ? 1.0 : 32768.0
 
   let maxObserved = 0.001
-  for (let bar = 0; bar < barCount; bar++) {
-    const startFrame = bar * framesPerBar
-    const endFrame = bar === barCount - 1 ? totalFrames : (bar + 1) * framesPerBar
+  for (let slice = 0; slice < sliceCount; slice++) {
+    const startFrame = slice * framesPerSlice
+    const endFrame = slice === sliceCount - 1 ? totalFrames : (slice + 1) * framesPerSlice
     let sumSquares = 0
     let count = 0
 
-    // Sample every Nth frame within the window to keep calculation instant
-    const step = Math.max(1, Math.floor((endFrame - startFrame) / 100))
+    // Sample across the window for high accuracy
+    const step = Math.max(1, Math.floor((endFrame - startFrame) / 120))
     for (let f = startFrame; f < endFrame; f += step) {
       for (let ch = 0; ch < channels; ch++) {
         const sample = pcmData[f * channels + ch] / normalizer
@@ -554,21 +585,21 @@ function computeWaveformPeaksFromPcm(pcmData, channels, sampleFormat, barCount =
       }
     }
     const rms = count > 0 ? Math.sqrt(sumSquares / count) : 0
-    peaks[bar] = rms
+    rmsArray[slice] = rms
     if (rms > maxObserved) maxObserved = rms
   }
 
   // Normalize peaks relative to max observed so quiet tracks still show meaningful waveforms
   const normalized = []
-  for (let bar = 0; bar < barCount; bar++) {
-    const val = maxObserved > 0 ? peaks[bar] / maxObserved : 0.1
-    normalized.push(Math.max(0.08, Math.min(1.0, val)))
+  for (let slice = 0; slice < sliceCount; slice++) {
+    const val = maxObserved > 0 ? rmsArray[slice] / maxObserved : 0.1
+    normalized.push(Math.max(0.06, Math.min(1.0, val)))
   }
-  return normalized
+  return { peaks: normalized, maxRms: maxObserved }
 }
 
-// Compute waveform peaks for encoded M4A outputs
-async function extractWaveformFromM4a(buffer) {
+// Compute high-resolution waveform peaks for encoded M4A outputs relative to the reference track's peak amplitude
+async function extractWaveformFromM4a(buffer, refMaxRms = 0.001, sliceCount = 360) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext
   if (!AudioContextClass) return []
   const tempCtx = new AudioContextClass()
@@ -576,19 +607,18 @@ async function extractWaveformFromM4a(buffer) {
     const audioBuffer = await tempCtx.decodeAudioData(buffer.slice(0))
     const channels = audioBuffer.numberOfChannels
     const length = audioBuffer.length
-    const barCount = 70
-    const framesPerBar = Math.floor(length / barCount)
-    if (framesPerBar <= 0) return []
+    const framesPerSlice = Math.floor(length / sliceCount)
+    if (framesPerSlice <= 0) return []
 
-    const peaks = new Float32Array(barCount)
-    let maxObserved = 0.001
+    const rmsArray = new Float32Array(sliceCount)
+    let maxEncodedRms = 0.001
 
-    for (let bar = 0; bar < barCount; bar++) {
-      const start = bar * framesPerBar
-      const end = bar === barCount - 1 ? length : (bar + 1) * framesPerBar
+    for (let slice = 0; slice < sliceCount; slice++) {
+      const start = slice * framesPerSlice
+      const end = slice === sliceCount - 1 ? length : (slice + 1) * framesPerSlice
       let sumSquares = 0
       let count = 0
-      const step = Math.max(1, Math.floor((end - start) / 100))
+      const step = Math.max(1, Math.floor((end - start) / 120))
 
       for (let ch = 0; ch < channels; ch++) {
         const channelData = audioBuffer.getChannelData(ch)
@@ -599,14 +629,16 @@ async function extractWaveformFromM4a(buffer) {
         }
       }
       const rms = count > 0 ? Math.sqrt(sumSquares / count) : 0
-      peaks[bar] = rms
-      if (rms > maxObserved) maxObserved = rms
+      rmsArray[slice] = rms
+      if (rms > maxEncodedRms) maxEncodedRms = rms
     }
 
+    // Shared scale: scale against the reference max RMS so dynamic level differences are visible
+    const scaleBase = Math.max(refMaxRms, maxEncodedRms * 0.8)
     const normalized = []
-    for (let bar = 0; bar < barCount; bar++) {
-      const val = maxObserved > 0 ? peaks[bar] / maxObserved : 0.1
-      normalized.push(Math.max(0.08, Math.min(1.0, val)))
+    for (let slice = 0; slice < sliceCount; slice++) {
+      const val = scaleBase > 0 ? rmsArray[slice] / scaleBase : 0.1
+      normalized.push(Math.max(0.06, Math.min(1.0, val)))
     }
     return normalized
   } catch {
@@ -704,8 +736,10 @@ async function decodeSelectedFile(file, request) {
     statusMessage.value = 'Generating audio waveform...'
     await nextPaint()
 
-    // Extract waveform peaks
-    originalPeaks.value = computeWaveformPeaksFromPcm(pcmData, decodedBuffer.numberOfChannels, sampleFormat)
+    // Extract high-resolution waveform peaks
+    const { peaks, maxRms } = computeWaveformPeaksFromPcm(pcmData, decodedBuffer.numberOfChannels, sampleFormat, 360)
+    originalPeaks.value = peaks
+    referenceMaxRms.value = maxRms
 
     decodedAudio.value = {
       pcmData,
@@ -793,17 +827,16 @@ async function startEncoding() {
           url: url,
           peaks: originalPeaks.value ? [...originalPeaks.value] : [],
           duration: duration,
-          isWaveformLoading: true,
+          isWaveformLoading: false,
           rawBuffer: outputBuffer
         }
         results.value.unshift(resultItem)
 
-        // Compute actual waveform of the encoded M4A output
-        void extractWaveformFromM4a(outputBuffer.buffer).then(encodedPeaks => {
+        // Compute actual waveform of the encoded M4A output with shared normalization against reference
+        void extractWaveformFromM4a(outputBuffer.buffer, referenceMaxRms.value, 360).then(encodedPeaks => {
           if (encodedPeaks && encodedPeaks.length > 0) {
             resultItem.peaks = encodedPeaks
           }
-          resultItem.isWaveformLoading = false
         })
 
         worker.terminate()
@@ -1245,31 +1278,51 @@ async function startEncoding() {
 .result-card {
   background: #0f172a;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 0.85rem 1rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.75rem;
+}
+
+.result-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+@media (min-width: 640px) {
+  .result-card-header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+}
+
+.result-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .result-name {
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   color: #f8fafc;
   display: block;
 }
 
 .result-meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.6rem;
+  margin-top: 0.5rem;
 }
 
 .metadata-chip {
   min-width: 0;
-  padding: 0.55rem 0.65rem;
+  padding: 0.45rem 0.65rem;
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 8px;
   color: #e2e8f0;
@@ -1288,6 +1341,18 @@ async function startEncoding() {
   text-transform: uppercase;
 }
 
+.result-action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.result-player-fullwidth {
+  width: 100%;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -1300,62 +1365,15 @@ async function startEncoding() {
   border: 0;
 }
 
-.result-actions {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  gap: 0.75rem;
-}
-
-.result-player-wrapper {
-  flex: 1;
-  min-width: 0;
-  width: 100%;
-}
-
-@media (min-width: 640px) {
-  .result-actions {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-  }
-}
-
-@media (max-width: 420px) {
-  .converter-title {
-    font-size: 1.15rem;
-  }
-
-  .drop-zone {
-    padding: 1.5rem 0.75rem;
-  }
-
-  .preset-buttons {
-    gap: 0.35rem;
-  }
-
-  .preset-btn {
-    flex: 1 0 3rem;
-  }
-}
-
-.result-action-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
 .icon-action {
   display: inline-flex;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.5rem;
+  height: 2.5rem;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
   touch-action: manipulation;
 }
@@ -1388,5 +1406,23 @@ async function startEncoding() {
 .icon-action:focus-visible {
   outline: 2px solid #e2e8f0;
   outline-offset: 2px;
+}
+
+@media (max-width: 420px) {
+  .converter-title {
+    font-size: 1.15rem;
+  }
+
+  .drop-zone {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .preset-buttons {
+    gap: 0.35rem;
+  }
+
+  .preset-btn {
+    flex: 1 0 3rem;
+  }
 }
 </style>
