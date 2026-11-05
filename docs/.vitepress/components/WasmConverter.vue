@@ -53,11 +53,7 @@
             <span class="metadata-chip">
               <span class="metadata-label">Audio</span>
               <template v-if="decodedAudio">{{ decodedAudio.sampleRate }} Hz · {{ formatChannelLayout(decodedAudio.channels) }} · {{ decodedAudio.bitDepth }}-bit</template>
-              <template v-else>{{ isDecoding ? `Decoding (${progress}%)…` : 'Waiting to decode' }}</template>
-            </span>
-            <span class="metadata-chip">
-              <span class="metadata-label">Duration</span>
-              {{ decodedAudio ? formatDuration(decodedAudio.duration) : '—' }}
+              <template v-else>{{ isDecoding ? `Decoding (${progress}%)…` : 'Preparing audio…' }}</template>
             </span>
           </div>
         </div>
@@ -786,7 +782,7 @@ async function startEncoding() {
             label: 'Encoding',
             value: `${profileName} · ${modeLabel} · ${msg.resolvedRateControl === 'vbr' ? `Quality ${msg.resolvedQuality}` : `Target ${Math.round(msg.resolvedBitrate / 1000)} kbps`}`,
           },
-          { label: 'Input', value: `${sampleRate} Hz · ${bitDepth ? bitDepth + '-bit · ' : ''}${formatChannelLayout(channels)} · ${formatDuration(duration)}` },
+          { label: 'Input', value: `${sampleRate} Hz · ${bitDepth ? bitDepth + '-bit · ' : ''}${formatChannelLayout(channels)}` },
           { label: 'Output', value: `${formatFileSize(outputBuffer.byteLength)} · ~${Math.round(averageKbps)} kbps${msg.resolvedSampleRate && msg.resolvedSampleRate !== sampleRate ? ` · resampled to ${msg.resolvedSampleRate} Hz` : ''}` },
         ]
 
