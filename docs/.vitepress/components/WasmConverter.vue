@@ -54,7 +54,7 @@
               <span class="metadata-chip">
                 <span class="metadata-label">Audio</span>
                 <template v-if="decodedAudio">{{ decodedAudio.sampleRate }} Hz · {{ formatChannelLayout(decodedAudio.channels) }} · {{ decodedAudio.bitDepth }}-bit</template>
-                <template v-else>{{ isDecoding ? `Decoding (${progress}%)…` : 'Preparing audio…' }}</template>
+                <template v-else>{{ isDecoding ? 'Decoding audio…' : 'Preparing audio…' }}</template>
               </span>
             </div>
           </div>
@@ -434,6 +434,9 @@ function selectFile(file) {
   demoRequest++
   isDemoLoading.value = false
   activeTrackId.value = ''
+  sharedPlaybackTime.value = 0
+  sharedPlaybackStartTime.value = null
+  sharedLoopRegion.value = { start: 0, end: null, repeat: false }
   if (originalAudioUrl.value) {
     URL.revokeObjectURL(originalAudioUrl.value)
     originalAudioUrl.value = null
@@ -1382,6 +1385,24 @@ async function startEncoding() {
 }
 
 /* Waveform Player Action Buttons (Download & Discard) */
+.player-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.player-btn:focus-visible {
+  outline: 2px solid #34d399;
+  outline-offset: 2px;
+}
+
 .download-btn {
   width: 2.25rem;
   height: 2.25rem;
@@ -1448,5 +1469,11 @@ async function startEncoding() {
     flex: 1 0 3rem;
   }
 
+  .player-btn.download-btn,
+  .player-btn.discard-btn {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.8rem;
+  }
 }
 </style>
