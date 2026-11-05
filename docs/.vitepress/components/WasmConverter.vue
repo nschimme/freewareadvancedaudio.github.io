@@ -53,7 +53,7 @@
             <span class="metadata-chip">
               <span class="metadata-label">Audio</span>
               <template v-if="decodedAudio">{{ decodedAudio.sampleRate }} Hz · {{ formatChannelLayout(decodedAudio.channels) }} · {{ decodedAudio.bitDepth }}-bit</template>
-              <template v-else>{{ isDecoding ? 'Decoding…' : 'Waiting to decode' }}</template>
+              <template v-else>{{ isDecoding ? `Decoding (${progress}%)…` : 'Waiting to decode' }}</template>
             </span>
             <span class="metadata-chip">
               <span class="metadata-label">Duration</span>
@@ -62,14 +62,21 @@
           </div>
         </div>
         <div v-if="originalAudioUrl" class="result-actions">
-          <audio
-            ref="originalPlayer"
-            controls
+          <WaveformPlayer
+            ref="originalPlayerRef"
+            track-id="original"
+            aria-label="Original audio"
             :src="originalAudioUrl"
-            class="audio-player"
-            @play="onPlayOriginal"
-            aria-label="Original audio preview"
-          ></audio>
+            :peaks="originalPeaks"
+            :duration="decodedAudio?.duration || 0"
+            :active-track-id="activeTrackId"
+            :shared-time="sharedPlaybackTime"
+            :loading="isDecoding"
+            @play="onTrackPlay"
+            @pause="onTrackPause"
+            @seek="onTrackSeek"
+            @timeupdate="onTrackTimeUpdate"
+          />
         </div>
       </div>
 
@@ -203,7 +210,22 @@
           </div>
 
           <div class="result-actions">
-            <audio ref="resultPlayers" controls :src="item.url" class="audio-player" @play="onPlayResult($event.target)"></audio>
+            <div class="result-player-wrapper">
+              <WaveformPlayer
+                :track-id="item.id"
+                :aria-label="item.name"
+                :src="item.url"
+                :peaks="item.peaks"
+                :duration="item.duration || decodedAudio?.duration || 0"
+                :active-track-id="activeTrackId"
+                :shared-time="sharedPlaybackTime"
+                :loading="item.isWaveformLoading"
+                @play="onTrackPlay"
+                @pause="onTrackPause"
+                @seek="onTrackSeek"
+                @timeupdate="onTrackTimeUpdate"
+              />
+            </div>
             <div class="result-action-buttons">
               <a :href="item.url" :download="item.name" class="icon-action download-link"
                 :aria-label="`Download ${item.name}`" title="Download output">
@@ -225,13 +247,19 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { withBase } from 'vitepress'
+import WaveformPlayer from './WaveformPlayer.vue'
 
 const fileInput = ref(null)
 const selectedFile = ref(null)
 const originalAudioUrl = ref(null)
-const originalPlayer = ref(null)
+const originalPlayerRef = ref(null)
+const originalPeaks = ref([])
 const decodedAudio = ref(null)
 const isDecoding = ref(false)
+
+// Synchronized playback state across all versions of the song
+const activeTrackId = ref('')
+const sharedPlaybackTime = ref(0)
 let decodeRequest = 0
 const isDragOver = ref(false)
 const isDemoLoading = ref(false)
@@ -267,7 +295,6 @@ const isProcessing = ref(false)
 const progress = ref(0)
 const statusMessage = ref('')
 const results = ref([])
-const resultPlayers = ref([])
 const convertButton = ref(null)
 const discardButtons = ref([])
 const resultAnnouncement = ref('')
@@ -288,12 +315,14 @@ function normalizeQuality() {
 async function discardResult(item) {
   const index = results.value.indexOf(item)
   if (index < 0) return
-  resultPlayers.value[index]?.pause()
+  if (activeTrackId.value === item.id) {
+    activeTrackId.value = ''
+  }
   URL.revokeObjectURL(item.url)
   results.value.splice(index, 1)
   resultAnnouncement.value = `Discarded ${item.name}.`
   await nextTick()
-  const nextButton = discardButtons.value[Math.min(index, discardButtons.value.length - 1)]
+  const nextButton = discardButtons.value ? discardButtons.value[Math.min(index, discardButtons.value.length - 1)] : null
   const focusTarget = nextButton || convertButton.value
   focusTarget?.focus()
 }
@@ -326,6 +355,8 @@ function clearResults() {
     if (item?.url) URL.revokeObjectURL(item.url)
   }
   results.value = []
+  activeTrackId.value = ''
+  sharedPlaybackTime.value = 0
 }
 
 function handleBeforeUnload(event) {
@@ -363,36 +394,38 @@ async function loadDemo() {
 function selectFile(file) {
   demoRequest++
   isDemoLoading.value = false
+  activeTrackId.value = ''
+  sharedPlaybackTime.value = 0
   if (originalAudioUrl.value) {
-    if (originalPlayer.value) originalPlayer.value.pause()
     URL.revokeObjectURL(originalAudioUrl.value)
     originalAudioUrl.value = null
   }
   selectedFile.value = file
   originalAudioUrl.value = null
+  originalPeaks.value = []
   decodedAudio.value = null
   statusMessage.value = ''
   const request = ++decodeRequest
   void decodeSelectedFile(file, request)
 }
 
-function onPlayOriginal() {
-  for (const player of resultPlayers.value) {
-    if (player && !player.paused) {
-      player.pause()
-    }
+// Synchronized playback event handlers
+function onTrackPlay({ trackId }) {
+  activeTrackId.value = trackId
+}
+
+function onTrackPause({ trackId }) {
+  if (activeTrackId.value === trackId) {
+    activeTrackId.value = ''
   }
 }
 
-function onPlayResult(targetAudio) {
-  if (originalPlayer.value && !originalPlayer.value.paused) {
-    originalPlayer.value.pause()
-  }
-  for (const player of resultPlayers.value) {
-    if (player && player !== targetAudio && !player.paused) {
-      player.pause()
-    }
-  }
+function onTrackSeek(time) {
+  sharedPlaybackTime.value = time
+}
+
+function onTrackTimeUpdate(time) {
+  sharedPlaybackTime.value = time
 }
 
 onUnmounted(() => {
@@ -497,6 +530,96 @@ function audioBufferToFloat32(audioBuffer) {
   return pcmFloat
 }
 
+// Extract downsampled waveform peaks (0.0 - 1.0) for visual display
+function computeWaveformPeaksFromPcm(pcmData, channels, sampleFormat, barCount = 70) {
+  if (!pcmData || !pcmData.length || !channels) return []
+  const totalFrames = Math.floor(pcmData.length / channels)
+  const framesPerBar = Math.floor(totalFrames / barCount)
+  if (framesPerBar <= 0) return []
+
+  const peaks = new Float32Array(barCount)
+  const isFloat = sampleFormat === 'float'
+  const normalizer = isFloat ? 1.0 : 32768.0
+
+  let maxObserved = 0.001
+  for (let bar = 0; bar < barCount; bar++) {
+    const startFrame = bar * framesPerBar
+    const endFrame = bar === barCount - 1 ? totalFrames : (bar + 1) * framesPerBar
+    let sumSquares = 0
+    let count = 0
+
+    // Sample every Nth frame within the window to keep calculation instant
+    const step = Math.max(1, Math.floor((endFrame - startFrame) / 100))
+    for (let f = startFrame; f < endFrame; f += step) {
+      for (let ch = 0; ch < channels; ch++) {
+        const sample = pcmData[f * channels + ch] / normalizer
+        sumSquares += sample * sample
+        count++
+      }
+    }
+    const rms = count > 0 ? Math.sqrt(sumSquares / count) : 0
+    peaks[bar] = rms
+    if (rms > maxObserved) maxObserved = rms
+  }
+
+  // Normalize peaks relative to max observed so quiet tracks still show meaningful waveforms
+  const normalized = []
+  for (let bar = 0; bar < barCount; bar++) {
+    const val = maxObserved > 0 ? peaks[bar] / maxObserved : 0.1
+    normalized.push(Math.max(0.08, Math.min(1.0, val)))
+  }
+  return normalized
+}
+
+// Compute waveform peaks for encoded M4A outputs
+async function extractWaveformFromM4a(buffer) {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext
+  if (!AudioContextClass) return []
+  const tempCtx = new AudioContextClass()
+  try {
+    const audioBuffer = await tempCtx.decodeAudioData(buffer.slice(0))
+    const channels = audioBuffer.numberOfChannels
+    const length = audioBuffer.length
+    const barCount = 70
+    const framesPerBar = Math.floor(length / barCount)
+    if (framesPerBar <= 0) return []
+
+    const peaks = new Float32Array(barCount)
+    let maxObserved = 0.001
+
+    for (let bar = 0; bar < barCount; bar++) {
+      const start = bar * framesPerBar
+      const end = bar === barCount - 1 ? length : (bar + 1) * framesPerBar
+      let sumSquares = 0
+      let count = 0
+      const step = Math.max(1, Math.floor((end - start) / 100))
+
+      for (let ch = 0; ch < channels; ch++) {
+        const channelData = audioBuffer.getChannelData(ch)
+        for (let i = start; i < end; i += step) {
+          const sample = channelData[i]
+          sumSquares += sample * sample
+          count++
+        }
+      }
+      const rms = count > 0 ? Math.sqrt(sumSquares / count) : 0
+      peaks[bar] = rms
+      if (rms > maxObserved) maxObserved = rms
+    }
+
+    const normalized = []
+    for (let bar = 0; bar < barCount; bar++) {
+      const val = maxObserved > 0 ? peaks[bar] / maxObserved : 0.1
+      normalized.push(Math.max(0.08, Math.min(1.0, val)))
+    }
+    return normalized
+  } catch {
+    return []
+  } finally {
+    try { await tempCtx.close() } catch {}
+  }
+}
+
 function createPreviewWav(pcmData, sampleRate, channels, sampleFormat) {
   // PCM WAV is broadly playable in native browser audio controls, even when
   // the browser can decode the chosen source format but cannot play it.
@@ -532,14 +655,18 @@ async function decodeSelectedFile(file, request) {
     return
   }
   isDecoding.value = true
-  progress.value = 0
-  statusMessage.value = 'Decoding audio for reuse…'
-  const nextPaint = () => new Promise((resolve) => setTimeout(resolve, 0))
+  progress.value = 5
+  statusMessage.value = 'Reading audio file...'
+  const nextPaint = () => new Promise((resolve) => setTimeout(resolve, 30))
   let audioCtx
   let trickle
   try {
     const fileBuffer = await file.arrayBuffer()
-    progress.value = 10
+    if (request !== decodeRequest) return
+    progress.value = 25
+    statusMessage.value = 'Decoding audio stream...'
+    await nextPaint()
+
     // decodeAudioData detaches fileBuffer, so keep a copy of M4A sources for tag carry-over.
     const fileBytes = new Uint8Array(fileBuffer)
     const isM4aSource = fileBytes.length > 12 && String.fromCharCode(...fileBytes.subarray(4, 8)) === 'ftyp'
@@ -556,15 +683,19 @@ async function decodeSelectedFile(file, request) {
       audioCtx = new AudioContextClass()
     }
 
-    progress.value = 20
-    // decodeAudioData reports no progress; creep toward 70% while it runs.
+    // Steady, smooth progression while decodeAudioData runs asynchronously
     trickle = setInterval(() => {
-      if (request === decodeRequest && progress.value < 70) progress.value += Math.max(1, Math.round((70 - progress.value) / 10))
-    }, 150)
+      if (request === decodeRequest && progress.value < 75) {
+        progress.value += Math.max(1, Math.round((75 - progress.value) / 6))
+      }
+    }, 120)
+
     const decodedBuffer = await audioCtx.decodeAudioData(fileBuffer)
     clearInterval(trickle)
     if (request !== decodeRequest) return
-    progress.value = 75
+
+    progress.value = 80
+    statusMessage.value = 'Processing PCM audio...'
     await nextPaint()
 
     const isHighPrecision = parsedBitDepth && parsedBitDepth > 16
@@ -572,8 +703,13 @@ async function decodeSelectedFile(file, request) {
     const pcmData = isHighPrecision
       ? audioBufferToFloat32(decodedBuffer)
       : audioBufferToPcm16(decodedBuffer)
+
     progress.value = 90
+    statusMessage.value = 'Generating audio waveform...'
     await nextPaint()
+
+    // Extract waveform peaks
+    originalPeaks.value = computeWaveformPeaksFromPcm(pcmData, decodedBuffer.numberOfChannels, sampleFormat)
 
     decodedAudio.value = {
       pcmData,
@@ -586,14 +722,16 @@ async function decodeSelectedFile(file, request) {
     }
     if (originalAudioUrl.value) URL.revokeObjectURL(originalAudioUrl.value)
     originalAudioUrl.value = createPreviewWav(pcmData, decodedBuffer.sampleRate, decodedBuffer.numberOfChannels, sampleFormat)
+
+    progress.value = 100
     statusMessage.value = 'Audio decoded and ready to encode.'
+    await nextPaint()
   } catch (err) {
     if (request === decodeRequest) statusMessage.value = 'Could not decode this audio: ' + err.message
   } finally {
     clearInterval(trickle)
     if (request === decodeRequest) {
       isDecoding.value = false
-      if (!isProcessing.value) progress.value = 0
     }
     if (audioCtx?.close) {
       try { await audioCtx.close() } catch {}
@@ -604,8 +742,7 @@ async function decodeSelectedFile(file, request) {
 async function startEncoding() {
   if (!selectedFile.value || !decodedAudio.value || isDecoding.value) return
 
-  if (originalPlayer.value) originalPlayer.value.pause()
-  for (const player of resultPlayers.value) player?.pause()
+  activeTrackId.value = ''
 
   isProcessing.value = true
   progress.value = 0
@@ -652,11 +789,25 @@ async function startEncoding() {
           { label: 'Input', value: `${sampleRate} Hz · ${bitDepth ? bitDepth + '-bit · ' : ''}${formatChannelLayout(channels)} · ${formatDuration(duration)}` },
           { label: 'Output', value: `${formatFileSize(outputBuffer.byteLength)} · ~${Math.round(averageKbps)} kbps${msg.resolvedSampleRate && msg.resolvedSampleRate !== sampleRate ? ` · resampled to ${msg.resolvedSampleRate} Hz` : ''}` },
         ]
-        results.value.unshift({
+
+        const resultItem = {
+          id: `encoded-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           name: outName,
           details,
           url: url,
+          peaks: originalPeaks.value ? [...originalPeaks.value] : [],
+          duration: duration,
+          isWaveformLoading: true,
           rawBuffer: outputBuffer
+        }
+        results.value.unshift(resultItem)
+
+        // Compute actual waveform of the encoded M4A output
+        void extractWaveformFromM4a(outputBuffer.buffer).then(encodedPeaks => {
+          if (encodedPeaks && encodedPeaks.length > 0) {
+            resultItem.peaks = encodedPeaks
+          }
+          resultItem.isWaveformLoading = false
         })
 
         worker.terminate()
@@ -1157,7 +1308,13 @@ async function startEncoding() {
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 0.5rem;
+  gap: 0.75rem;
+}
+
+.result-player-wrapper {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
 }
 
 @media (min-width: 640px) {
@@ -1167,11 +1324,6 @@ async function startEncoding() {
     justify-content: space-between;
     width: 100%;
   }
-}
-
-.audio-player {
-  height: 54px;
-  width: 100%;
 }
 
 @media (max-width: 420px) {
@@ -1189,12 +1341,6 @@ async function startEncoding() {
 
   .preset-btn {
     flex: 1 0 3rem;
-  }
-}
-
-@media (min-width: 640px) {
-  .audio-player {
-    flex: 1;
   }
 }
 
