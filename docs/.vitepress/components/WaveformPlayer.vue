@@ -168,6 +168,7 @@
       <!-- Scrub Playhead Line -->
       <div
         class="waveform-playhead"
+        :class="{ 'is-animating': isPlaying }"
         :style="{ left: `${progressPercent}%` }"
         aria-hidden="true"
       ></div>
@@ -254,6 +255,7 @@ const trackRef = ref(null)
 const isPlaying = ref(false)
 const localMuted = ref(false)
 const localDuration = ref(0)
+const localPlayTime = ref(0) // High-frequency continuous play time during playback
 const isDraggingTrack = ref(false)
 const isSeekingInternal = ref(false)
 const isHovering = ref(false)
@@ -261,6 +263,8 @@ const hoverPercent = ref(null)
 const activeDragHandle = ref(null) // 'start' | 'end' | null
 const trackPixelWidth = ref(600)
 let resizeObserver = null
+let animationFrameId = null
+let lastEmittedSec = -1
 
 const clipId = `waveform-clip-${Math.random().toString(36).slice(2, 9)}`
 
@@ -268,13 +272,21 @@ const totalDuration = computed(() => {
   return props.duration || localDuration.value || 0
 })
 
+const isSelfActive = computed(() => {
+  return props.activeTrackId === props.trackId
+})
+
 const currentTime = computed(() => {
+  if (isSelfActive.value && isPlaying.value) {
+    return localPlayTime.value
+  }
   return props.sharedTime || 0
 })
 
 const progressPercent = computed(() => {
   if (!totalDuration.value || totalDuration.value <= 0) return 0
-  const pct = (currentTime.value / totalDuration.value) * 100
+  const time = isSelfActive.value && isPlaying.value ? localPlayTime.value : (props.sharedTime || 0)
+  const pct = (time / totalDuration.value) * 100
   return Math.min(100, Math.max(0, pct))
 })
 
@@ -382,25 +394,104 @@ function handleLoadedMetadata() {
   }
 }
 
+function startPlaybackLoop() {
+  stopPlaybackLoop()
+  // If tab is in background, do not start RAF loop to save battery
+  if (typeof document !== 'undefined' && document.hidden) return
+
+  const tick = () => {
+    if (!audioEl.value || !isPlaying.value || !isSelfActive.value) {
+      stopPlaybackLoop()
+      return
+    }
+
+    const curTime = audioEl.value.currentTime
+    localPlayTime.value = curTime
+
+    // Check loop / trimmed end wrap-around smoothly
+    if (isTrimmed.value && curTime >= loopEnd.value) {
+      if (isRepeatEnabled.value) {
+        audioEl.value.currentTime = loopStart.value
+        localPlayTime.value = loopStart.value
+        emit('timeupdate', loopStart.value)
+        emit('seek', loopStart.value)
+        animationFrameId = requestAnimationFrame(tick)
+        return
+      } else {
+        // Repeat is OFF: stop cleanly at the end handle
+        audioEl.value.pause()
+        audioEl.value.currentTime = loopStart.value
+        localPlayTime.value = loopStart.value
+        emit('timeupdate', loopStart.value)
+        emit('seek', loopStart.value)
+        emit('pause', { trackId: props.trackId })
+        stopPlaybackLoop()
+        return
+      }
+    }
+
+    // Emit timeupdate throttled to roughly 4-5 times/sec or when integer second changes
+    // This keeps parent shared state in sync without flooding reactive trees every frame
+    const curSec = Math.floor(curTime)
+    if (curSec !== lastEmittedSec) {
+      lastEmittedSec = curSec
+      emit('timeupdate', curTime)
+    }
+
+    animationFrameId = requestAnimationFrame(tick)
+  }
+
+  animationFrameId = requestAnimationFrame(tick)
+}
+
+function stopPlaybackLoop() {
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId)
+    animationFrameId = null
+  }
+}
+
+function handleVisibilityChange() {
+  if (typeof document === 'undefined') return
+  if (document.hidden) {
+    // Pause RAF when backgrounded to prevent battery drain
+    stopPlaybackLoop()
+  } else if (isPlaying.value && isSelfActive.value) {
+    // Resume RAF when returning to foreground
+    startPlaybackLoop()
+  }
+}
+
 function handleNativePlay() {
   isPlaying.value = true
+  if (audioEl.value) {
+    localPlayTime.value = audioEl.value.currentTime
+  }
   emit('play', { trackId: props.trackId })
+  startPlaybackLoop()
 }
 
 function handleNativePause() {
   isPlaying.value = false
+  stopPlaybackLoop()
+  if (audioEl.value) {
+    localPlayTime.value = audioEl.value.currentTime
+    emit('timeupdate', audioEl.value.currentTime)
+  }
   emit('pause', { trackId: props.trackId })
 }
 
 function handleTimeUpdate() {
   if (!audioEl.value || isDraggingTrack.value || isSeekingInternal.value) return
-  if (props.activeTrackId === props.trackId) {
+  if (isSelfActive.value) {
     const curTime = audioEl.value.currentTime
+    localPlayTime.value = curTime
 
     // Check loop / trimmed end wrap-around
     if (isTrimmed.value && curTime >= loopEnd.value) {
       if (isRepeatEnabled.value) {
         audioEl.value.currentTime = loopStart.value
+        localPlayTime.value = loopStart.value
         emit('timeupdate', loopStart.value)
         emit('seek', loopStart.value)
         return
@@ -408,6 +499,7 @@ function handleTimeUpdate() {
         // Repeat is OFF: stop cleanly at the end handle
         audioEl.value.pause()
         audioEl.value.currentTime = loopStart.value
+        localPlayTime.value = loopStart.value
         emit('timeupdate', loopStart.value)
         emit('seek', loopStart.value)
         emit('pause', { trackId: props.trackId })
@@ -421,15 +513,18 @@ function handleTimeUpdate() {
 
 function handleEnded() {
   isPlaying.value = false
+  stopPlaybackLoop()
   if (isRepeatEnabled.value) {
     // If repeat is ON, wrap to loopStart (or 0) and replay
     const targetStart = isTrimmed.value ? loopStart.value : 0
     if (audioEl.value) {
       audioEl.value.currentTime = targetStart
+      localPlayTime.value = targetStart
       emit('seek', targetStart)
       audioEl.value.play().catch(() => {})
     }
   } else {
+    localPlayTime.value = isTrimmed.value ? loopStart.value : 0
     emit('seek', isTrimmed.value ? loopStart.value : 0)
   }
 }
@@ -607,12 +702,14 @@ watch(effectiveMuted, (newVal) => {
 // Watch sharedTime from parent: sync audio element when not actively updating itself
 watch(() => props.sharedTime, (newTime) => {
   if (!audioEl.value) return
-  if (props.activeTrackId !== props.trackId) {
-    // Only update currentTime if there's noticeable drift to prevent micro-stutter
+  if (!isSelfActive.value) {
+    // Other inactive tracks mirror the shared playback position
+    localPlayTime.value = newTime
     if (Math.abs(audioEl.value.currentTime - newTime) > 0.05) {
       audioEl.value.currentTime = newTime
     }
   } else if (isDraggingTrack.value) {
+    localPlayTime.value = newTime
     audioEl.value.currentTime = newTime
   }
 })
@@ -641,12 +738,19 @@ onMounted(() => {
     })
     resizeObserver.observe(trackRef.value)
   }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+  }
 })
 
 onUnmounted(() => {
+  stopPlaybackLoop()
   if (resizeObserver) {
     resizeObserver.disconnect()
     resizeObserver = null
+  }
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
   }
 })
 
@@ -920,7 +1024,12 @@ defineExpose({
   pointer-events: none;
   transform: translateX(-50%);
   z-index: 4;
-  transition: left 0.05s linear;
+  transition: left 0.1s ease-out;
+}
+
+/* While actively playing, remove CSS transition to prevent fighting 60fps RAF updates */
+.waveform-playhead.is-animating {
+  transition: none;
 }
 
 /* Hover Guide Line */
