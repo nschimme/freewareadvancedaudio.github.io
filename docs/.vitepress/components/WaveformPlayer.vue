@@ -188,27 +188,34 @@
       <span class="total-duration">{{ formatDuration(totalDuration) }}</span>
     </div>
 
-    <!-- Repeat Toggle Button (FontAwesome fa-repeat) -->
-    <button
-      type="button"
-      class="player-btn repeat-btn"
-      :class="{ 'is-active': isRepeatEnabled }"
-      :aria-label="isRepeatEnabled ? 'Repeat is ON (click to disable)' : 'Repeat is OFF (click to enable)'"
-      :title="isRepeatEnabled ? 'Repeat is ON' : 'Repeat is OFF'"
-      @click="toggleRepeat"
-    >
-      <i class="fa-solid fa-repeat" aria-hidden="true"></i>
-    </button>
+    <!-- Trailing Action Controls: customizable via slot or default Repeat/Mute -->
+    <div class="player-actions">
+      <slot name="actions">
+        <!-- Default: Repeat Toggle Button (FontAwesome fa-repeat) -->
+        <button
+          type="button"
+          class="player-btn repeat-btn"
+          :class="{ 'is-active': isRepeatEnabled }"
+          :aria-label="isRepeatEnabled ? 'Repeat is ON (click to disable)' : 'Repeat is OFF (click to enable)'"
+          :title="isRepeatEnabled ? 'Repeat is ON' : 'Repeat is OFF'"
+          @click="toggleRepeat"
+        >
+          <i class="fa-solid fa-repeat" aria-hidden="true"></i>
+        </button>
 
-    <!-- Mute / Unmute Toggle Button -->
-    <button
-      type="button"
-      class="player-btn mute-btn"
-      :aria-label="isMuted ? 'Unmute' : 'Mute'"
-      @click="toggleMute"
-    >
-      <i :class="isMuted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high'" aria-hidden="true"></i>
-    </button>
+        <!-- Default: Mute / Unmute Toggle Button -->
+        <button
+          type="button"
+          class="player-btn mute-btn"
+          :class="{ 'is-muted': effectiveMuted }"
+          :aria-label="effectiveMuted ? 'Unmute' : 'Mute'"
+          :title="effectiveMuted ? 'Unmute' : 'Mute'"
+          @click="toggleMute"
+        >
+          <i :class="effectiveMuted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high'" aria-hidden="true"></i>
+        </button>
+      </slot>
+    </div>
   </div>
 </template>
 
@@ -226,9 +233,10 @@ const props = defineProps({
   playbackStartTime: { type: Number, default: null },
   loopRegion: {
     type: Object,
-    default: () => ({ start: 0, end: null, repeat: true })
+    default: () => ({ start: 0, end: null, repeat: false })
   },
-  loading: { type: Boolean, default: false }
+  loading: { type: Boolean, default: false },
+  muted: { type: Boolean, default: null } // Optional controlled mute state
 })
 
 const emit = defineEmits([
@@ -237,13 +245,14 @@ const emit = defineEmits([
   'seek',
   'timeupdate',
   'update:playbackStartTime',
-  'update:loopRegion'
+  'update:loopRegion',
+  'update:muted'
 ])
 
 const audioEl = ref(null)
 const trackRef = ref(null)
 const isPlaying = ref(false)
-const isMuted = ref(false)
+const localMuted = ref(false)
 const localDuration = ref(0)
 const isDraggingTrack = ref(false)
 const isSeekingInternal = ref(false)
@@ -291,8 +300,12 @@ const isTrimmed = computed(() => {
   return trimmedLeft || trimmedRight
 })
 
+const effectiveMuted = computed(() => {
+  return props.muted !== null ? props.muted : localMuted.value
+})
+
 const isRepeatEnabled = computed(() => {
-  return props.loopRegion?.repeat !== false
+  return props.loopRegion?.repeat === true
 })
 
 const loopStartPercent = computed(() => {
@@ -450,9 +463,12 @@ function toggleRepeat() {
 }
 
 function toggleMute() {
-  if (!audioEl.value) return
-  isMuted.value = !isMuted.value
-  audioEl.value.muted = isMuted.value
+  const newMuted = !effectiveMuted.value
+  localMuted.value = newMuted
+  if (audioEl.value) {
+    audioEl.value.muted = newMuted
+  }
+  emit('update:muted', newMuted)
 }
 
 // Coordinate to time calculation
@@ -580,6 +596,13 @@ function handleKeydown(event) {
     emit('seek', totalDuration.value)
   }
 }
+
+// Sync muted state to native audio element
+watch(effectiveMuted, (newVal) => {
+  if (audioEl.value) {
+    audioEl.value.muted = newVal
+  }
+}, { immediate: true })
 
 // Watch sharedTime from parent: sync audio element when not actively updating itself
 watch(() => props.sharedTime, (newTime) => {
@@ -734,6 +757,12 @@ defineExpose({
   color: #94a3b8;
 }
 
+.mute-btn.is-muted {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+
 .waveform-track {
   position: relative;
   flex: 1;
@@ -759,16 +788,28 @@ defineExpose({
   display: block;
 }
 
+.player-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 .waveform-bars-unplayed rect {
   fill: rgba(148, 163, 184, 0.28);
-  transition: fill 0.2s;
 }
 
 .waveform-player:hover .waveform-bars-unplayed rect {
   fill: rgba(148, 163, 184, 0.38);
 }
 
+/* Default non-playing played bars: neutral slate grey */
 .waveform-bars-played rect {
+  fill: rgba(148, 163, 184, 0.55);
+}
+
+/* Actively playing track: vibrant emerald green */
+.waveform-player.is-playing .waveform-bars-played rect {
   fill: #34d399;
 }
 
@@ -914,8 +955,8 @@ defineExpose({
     gap: 0.45rem;
     padding: 0.4rem 0.5rem;
   }
-  .mute-btn {
-    display: none;
+  .player-actions {
+    gap: 0.35rem;
   }
   .player-time {
     font-size: 0.75rem;
@@ -923,6 +964,13 @@ defineExpose({
   .trimmer-handle {
     width: 22px;
     margin-left: -11px;
+  }
+  .player-btn.repeat-btn,
+  .player-btn.mute-btn,
+  :deep(.player-btn) {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.8rem;
   }
 }
 </style>

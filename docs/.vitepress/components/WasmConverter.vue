@@ -52,10 +52,6 @@
                 {{ formatFileSize(selectedFile.size) }} · {{ selectedFile.name.split('.').pop()?.toUpperCase() || 'Audio' }}
               </span>
               <span class="metadata-chip">
-                <span class="metadata-label">Duration</span>
-                {{ formatDuration(decodedAudio?.duration || 0) }}
-              </span>
-              <span class="metadata-chip">
                 <span class="metadata-label">Audio</span>
                 <template v-if="decodedAudio">{{ decodedAudio.sampleRate }} Hz · {{ formatChannelLayout(decodedAudio.channels) }} · {{ decodedAudio.bitDepth }}-bit</template>
                 <template v-else>{{ isDecoding ? `Decoding (${progress}%)…` : 'Preparing audio…' }}</template>
@@ -73,16 +69,18 @@
             :peaks="originalPeaks"
             :duration="decodedAudio?.duration || 0"
             :active-track-id="activeTrackId"
-            :shared-time="sharedPlaybackTime"
-            :playback-start-time="sharedPlaybackStartTime"
-            :loop-region="sharedLoopRegion"
+            :shared-time="isReferenceMatch(currentReferenceId) ? sharedPlaybackTime : 0"
+            :playback-start-time="isReferenceMatch(currentReferenceId) ? sharedPlaybackStartTime : null"
+            :loop-region="isReferenceMatch(currentReferenceId) ? sharedLoopRegion : { start: 0, end: null, repeat: false }"
+            :muted="isGlobalMuted"
             :loading="isDecoding"
-            @play="onTrackPlay"
-            @pause="onTrackPause"
-            @seek="onTrackSeek"
-            @timeupdate="onTrackTimeUpdate"
-            @update:playback-start-time="onUpdatePlaybackStartTime"
-            @update:loop-region="onUpdateLoopRegion"
+            @play="onTrackPlay($event, currentReferenceId)"
+            @pause="onTrackPause($event, currentReferenceId)"
+            @seek="onTrackSeek($event, currentReferenceId)"
+            @timeupdate="onTrackTimeUpdate($event, currentReferenceId)"
+            @update:playback-start-time="onUpdatePlaybackStartTime($event, currentReferenceId)"
+            @update:loop-region="onUpdateLoopRegion($event, currentReferenceId)"
+            @update:muted="onUpdateGlobalMuted"
           />
         </div>
       </div>
@@ -206,39 +204,20 @@
       <div class="results-section" v-if="results.length > 0">
         <h4 class="results-title"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Encoded M4A Output</h4>
         <div class="result-card" v-for="item in results" :key="item.id">
-          <!-- Card Header: Title & Meta Chips on left, Download & Discard Pills on right (above waveform) -->
+          <!-- Card Header: Title & Meta Chips -->
           <div class="result-card-header">
             <div class="result-info">
               <span class="result-name">{{ item.name }}</span>
               <div class="result-meta">
-                <span class="metadata-chip">
-                  <span class="metadata-label">Duration</span>
-                  {{ formatDuration(item.duration || decodedAudio?.duration || 0) }}
-                </span>
                 <span v-for="detail in item.details" :key="detail.label" class="metadata-chip">
                   <span class="metadata-label">{{ detail.label }}</span>
                   <span>{{ detail.value }}</span>
                 </span>
               </div>
             </div>
-
-            <!-- Pill Action Buttons next to metadata chips row above waveform -->
-            <div class="result-action-pills">
-              <a :href="item.url" :download="item.name" class="pill-action download-pill"
-                :aria-label="`Download ${item.name}`" title="Download output">
-                <i class="fa-solid fa-download" aria-hidden="true"></i>
-                <span>Download</span>
-              </a>
-              <button ref="discardButtons" type="button" class="pill-action discard-pill"
-                :aria-label="`Discard ${item.name}`" title="Discard output"
-                @click="discardResult(item)">
-                <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-                <span>Discard</span>
-              </button>
-            </div>
           </div>
 
-          <!-- Waveform Player spans 100% full width to align perfectly with the original audio waveform -->
+          <!-- Waveform Player spans 100% full width with Download and Discard buttons in the action slot -->
           <div class="result-player-fullwidth">
             <WaveformPlayer
               :track-id="item.id"
@@ -247,17 +226,43 @@
               :peaks="item.peaks"
               :duration="item.duration || decodedAudio?.duration || 0"
               :active-track-id="activeTrackId"
-              :shared-time="sharedPlaybackTime"
-              :playback-start-time="sharedPlaybackStartTime"
-              :loop-region="sharedLoopRegion"
+              :shared-time="isReferenceMatch(item.referenceId) ? sharedPlaybackTime : 0"
+              :playback-start-time="isReferenceMatch(item.referenceId) ? sharedPlaybackStartTime : null"
+              :loop-region="isReferenceMatch(item.referenceId) ? sharedLoopRegion : { start: 0, end: null, repeat: false }"
+              :muted="isGlobalMuted"
               :loading="false"
-              @play="onTrackPlay"
-              @pause="onTrackPause"
-              @seek="onTrackSeek"
-              @timeupdate="onTrackTimeUpdate"
-              @update:playback-start-time="onUpdatePlaybackStartTime"
-              @update:loop-region="onUpdateLoopRegion"
-            />
+              @play="onTrackPlay($event, item.referenceId)"
+              @pause="onTrackPause($event, item.referenceId)"
+              @seek="onTrackSeek($event, item.referenceId)"
+              @timeupdate="onTrackTimeUpdate($event, item.referenceId)"
+              @update:playback-start-time="onUpdatePlaybackStartTime($event, item.referenceId)"
+              @update:loop-region="onUpdateLoopRegion($event, item.referenceId)"
+            >
+              <template #actions>
+                <!-- Download Button (matches exact circular player-btn dimensions) -->
+                <a
+                  :href="item.url"
+                  :download="item.name"
+                  class="player-btn download-btn"
+                  :aria-label="`Download ${item.name}`"
+                  title="Download output"
+                >
+                  <i class="fa-solid fa-download" aria-hidden="true"></i>
+                </a>
+
+                <!-- Discard Button (matches exact circular player-btn dimensions) -->
+                <button
+                  ref="discardButtons"
+                  type="button"
+                  class="player-btn discard-btn"
+                  :aria-label="`Discard ${item.name}`"
+                  title="Discard output"
+                  @click="discardResult(item)"
+                >
+                  <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                </button>
+              </template>
+            </WaveformPlayer>
           </div>
         </div>
       </div>
@@ -279,11 +284,18 @@ const referenceMaxRms = ref(0.001) // Track reference file's peak RMS for relati
 const decodedAudio = ref(null)
 const isDecoding = ref(false)
 
+// Reference identifier for currently loaded source file
+const currentReferenceId = computed(() => {
+  return selectedFile.value ? `${selectedFile.value.name}-${selectedFile.value.size}` : ''
+})
+
 // Synchronized playback state across all versions of the song
 const activeTrackId = ref('')
+const activeReferenceId = ref('')
 const sharedPlaybackTime = ref(0)
 const sharedPlaybackStartTime = ref(null)
-const sharedLoopRegion = ref({ start: 0, end: null })
+const sharedLoopRegion = ref({ start: 0, end: null, repeat: false })
+const isGlobalMuted = ref(false)
 
 let decodeRequest = 0
 const isDragOver = ref(false)
@@ -383,7 +395,7 @@ function clearResults() {
   activeTrackId.value = ''
   sharedPlaybackTime.value = 0
   sharedPlaybackStartTime.value = null
-  sharedLoopRegion.value = { start: 0, end: null }
+  sharedLoopRegion.value = { start: 0, end: null, repeat: false }
 }
 
 function handleBeforeUnload(event) {
@@ -422,9 +434,6 @@ function selectFile(file) {
   demoRequest++
   isDemoLoading.value = false
   activeTrackId.value = ''
-  sharedPlaybackTime.value = 0
-  sharedPlaybackStartTime.value = null
-  sharedLoopRegion.value = { start: 0, end: null }
   if (originalAudioUrl.value) {
     URL.revokeObjectURL(originalAudioUrl.value)
     originalAudioUrl.value = null
@@ -439,31 +448,49 @@ function selectFile(file) {
   void decodeSelectedFile(file, request)
 }
 
+function isReferenceMatch(refId) {
+  return !activeReferenceId.value || activeReferenceId.value === refId
+}
+
 // Synchronized playback event handlers
-function onTrackPlay({ trackId }) {
+function onTrackPlay({ trackId }, refId) {
+  if (refId && activeReferenceId.value !== refId) {
+    // Switched to a track from a different reference: reset sync time
+    activeReferenceId.value = refId
+    sharedPlaybackTime.value = 0
+    sharedPlaybackStartTime.value = null
+  }
   activeTrackId.value = trackId
 }
 
-function onTrackPause({ trackId }) {
+function onTrackPause({ trackId }, refId) {
   if (activeTrackId.value === trackId) {
     activeTrackId.value = ''
   }
 }
 
-function onTrackSeek(time) {
+function onTrackSeek(time, refId) {
+  if (refId) activeReferenceId.value = refId
   sharedPlaybackTime.value = time
 }
 
-function onTrackTimeUpdate(time) {
+function onTrackTimeUpdate(time, refId) {
+  if (refId && activeReferenceId.value !== refId) return
   sharedPlaybackTime.value = time
 }
 
-function onUpdatePlaybackStartTime(time) {
+function onUpdatePlaybackStartTime(time, refId) {
+  if (refId) activeReferenceId.value = refId
   sharedPlaybackStartTime.value = time
 }
 
-function onUpdateLoopRegion(region) {
+function onUpdateLoopRegion(region, refId) {
+  if (refId) activeReferenceId.value = refId
   sharedLoopRegion.value = region
+}
+
+function onUpdateGlobalMuted(muted) {
+  isGlobalMuted.value = muted
 }
 
 onUnmounted(() => {
@@ -834,6 +861,7 @@ async function startEncoding() {
         const resultItem = {
           id: `encoded-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           name: outName,
+          referenceId: selectedFile.value ? `${selectedFile.value.name}-${selectedFile.value.size}` : 'default',
           details,
           url: url,
           peaks: originalPeaks.value ? [...originalPeaks.value] : [],
@@ -846,6 +874,7 @@ async function startEncoding() {
         // Compute actual waveform of the encoded M4A output with shared normalization against reference
         void extractWaveformFromM4a(outputBuffer.buffer, referenceMaxRms.value, 360).then(encodedPeaks => {
           if (encodedPeaks && encodedPeaks.length > 0) {
+            // Only update if difference from original peaks is meaningful, avoiding visual pop
             resultItem.peaks = encodedPeaks
           }
         })
@@ -1352,65 +1381,38 @@ async function startEncoding() {
   text-transform: uppercase;
 }
 
-/* Pill Action Buttons in the Header Row next to Metadata Chips */
-.result-action-pills {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  flex-shrink: 0;
-  margin-top: 0.5rem;
-}
-
-@media (min-width: 640px) {
-  .result-action-pills {
-    margin-top: 1.6rem;
-  }
-}
-
-.pill-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  height: 2.35rem;
-  padding: 0 0.85rem;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  touch-action: manipulation;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.download-pill {
-  background: rgba(16, 185, 129, 0.15);
+/* Waveform Player Action Buttons (Download & Discard) */
+.download-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.88rem;
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
   text-decoration: none;
 }
 
-.download-pill:hover,
-.download-pill:focus-visible {
+.download-btn:hover,
+.download-btn:focus-visible {
   background: #10b981;
   color: #0f172a;
+  border-color: #10b981;
 }
 
-.discard-pill {
-  background: rgba(248, 113, 113, 0.1);
-  color: #fca5a5;
-  border: 1px solid rgba(248, 113, 113, 0.3);
+.discard-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.85rem;
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
 }
 
-.discard-pill:hover,
-.discard-pill:focus-visible {
+.discard-btn:hover,
+.discard-btn:focus-visible {
   background: #ef4444;
-  color: #fff;
-}
-
-.pill-action:focus-visible {
-  outline: 2px solid #e2e8f0;
-  outline-offset: 2px;
+  color: #ffffff;
+  border-color: #ef4444;
 }
 
 .result-player-fullwidth {
@@ -1446,12 +1448,5 @@ async function startEncoding() {
     flex: 1 0 3rem;
   }
 
-  .pill-action span {
-    display: none;
-  }
-
-  .pill-action {
-    padding: 0 0.75rem;
-  }
 }
 </style>
