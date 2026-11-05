@@ -682,7 +682,8 @@ defineExpose({
   background: rgba(15, 23, 42, 0.85);
 }
 
-.player-btn {
+.player-btn,
+:deep(.player-btn) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -694,20 +695,24 @@ defineExpose({
   flex-shrink: 0;
   touch-action: manipulation;
   transition: all 0.15s ease;
+  box-sizing: border-box;
 }
 
-.player-btn:hover:not(:disabled) {
+.player-btn:hover:not(:disabled),
+:deep(.player-btn:hover:not(:disabled)) {
   background: rgba(16, 185, 129, 0.2);
   color: #34d399;
   border-color: rgba(16, 185, 129, 0.35);
 }
 
-.player-btn:focus-visible {
+.player-btn:focus-visible,
+:deep(.player-btn:focus-visible) {
   outline: 2px solid #34d399;
   outline-offset: 2px;
 }
 
-.player-btn:disabled {
+.player-btn:disabled,
+:deep(.player-btn:disabled) {
   opacity: 0.4;
   cursor: not-allowed;
 }
