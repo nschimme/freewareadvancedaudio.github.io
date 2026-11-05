@@ -24,10 +24,13 @@
       type="button"
       class="player-btn play-pause-btn"
       :aria-label="isPlaying ? 'Pause' : 'Play'"
-      :disabled="loading || !src"
+      :disabled="!src"
       @click="togglePlay"
     >
-      <i :class="isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play'" aria-hidden="true"></i>
+      <i
+        :class="isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play icon-play'"
+        aria-hidden="true"
+      ></i>
     </button>
 
     <!-- Interactive Waveform Timeline -->
@@ -42,25 +45,27 @@
       :aria-valuenow="Math.round(currentTime)"
       :aria-valuetext="`${formatDuration(currentTime)} of ${formatDuration(totalDuration)}`"
       @keydown="handleKeydown"
-      @pointerdown="handlePointerDown"
-      @pointermove="handlePointerMove"
-      @pointerup="handlePointerUp"
-      @pointercancel="handlePointerCancel"
+      @pointerdown="handleTrackPointerDown"
+      @pointermove="handleTrackPointerMove"
+      @pointerup="handleTrackPointerUp"
+      @pointercancel="handleTrackPointerCancel"
+      @mouseenter="isHovering = true"
+      @mouseleave="handleMouseLeave"
     >
       <!-- Background Waveform SVG Bars -->
       <svg
         class="waveform-svg"
-        viewBox="0 0 100 100"
+        viewBox="0 0 1000 100"
         preserveAspectRatio="none"
         aria-hidden="true"
       >
         <defs>
           <clipPath :id="clipId">
-            <rect :x="0" :y="0" :width="progressPercent" height="100" />
+            <rect :x="0" :y="0" :width="progressPercent * 10" height="100" />
           </clipPath>
         </defs>
 
-        <!-- Unplayed waveform bars (dimmed) -->
+        <!-- Dimmed unplayed bars -->
         <g class="waveform-bars-unplayed">
           <rect
             v-for="(bar, i) in normalizedBars"
@@ -69,11 +74,11 @@
             :y="bar.y"
             :width="bar.width"
             :height="bar.height"
-            rx="1.2"
+            rx="1.0"
           />
         </g>
 
-        <!-- Played waveform bars (colored, clipped to progress) -->
+        <!-- Colored played bars clipped to progress -->
         <g class="waveform-bars-played" :clip-path="`url(#${clipId})`">
           <rect
             v-for="(bar, i) in normalizedBars"
@@ -82,10 +87,83 @@
             :y="bar.y"
             :width="bar.width"
             :height="bar.height"
-            rx="1.2"
+            rx="1.0"
           />
         </g>
       </svg>
+
+      <!-- Shaded Dim Overlay for outside loop region (iOS trimmer style) -->
+      <div
+        v-if="isTrimmed"
+        class="trimmer-dim dimmer-left"
+        :style="{ width: `${loopStartPercent}%` }"
+        aria-hidden="true"
+      ></div>
+      <div
+        v-if="isTrimmed"
+        class="trimmer-dim dimmer-right"
+        :style="{ left: `${loopEndPercent}%`, width: `${100 - loopEndPercent}%` }"
+        aria-hidden="true"
+      ></div>
+
+      <!-- Active Loop Window Border & Highlight Frame -->
+      <div
+        v-if="isTrimmed"
+        class="trimmer-frame"
+        :style="{ left: `${loopStartPercent}%`, width: `${loopEndPercent - loopStartPercent}%` }"
+        aria-hidden="true"
+      ></div>
+
+      <!-- Trimmer Left Handle (Start) -->
+      <div
+        class="trimmer-handle trimmer-handle-start"
+        :class="{ 'is-active': isTrimmed, 'is-dragging': activeDragHandle === 'start' }"
+        :style="{ left: `${loopStartPercent}%` }"
+        role="slider"
+        tabindex="0"
+        aria-label="Loop start trim handle"
+        :aria-valuemin="0"
+        :aria-valuemax="Math.round(totalDuration)"
+        :aria-valuenow="Math.round(loopStart)"
+        title="Drag to trim loop start"
+        @pointerdown.stop="handleHandlePointerDown('start', $event)"
+        @pointermove="handleHandlePointerMove('start', $event)"
+        @pointerup="handleHandlePointerUp('start', $event)"
+        @pointercancel="handleHandlePointerCancel('start', $event)"
+      >
+        <div class="handle-bar"></div>
+      </div>
+
+      <!-- Trimmer Right Handle (End) -->
+      <div
+        class="trimmer-handle trimmer-handle-end"
+        :class="{ 'is-active': isTrimmed, 'is-dragging': activeDragHandle === 'end' }"
+        :style="{ left: `${loopEndPercent}%` }"
+        role="slider"
+        tabindex="0"
+        aria-label="Loop end trim handle"
+        :aria-valuemin="0"
+        :aria-valuemax="Math.round(totalDuration)"
+        :aria-valuenow="Math.round(loopEnd)"
+        title="Drag to trim loop end"
+        @pointerdown.stop="handleHandlePointerDown('end', $event)"
+        @pointermove="handleHandlePointerMove('end', $event)"
+        @pointerup="handleHandlePointerUp('end', $event)"
+        @pointercancel="handleHandlePointerCancel('end', $event)"
+      >
+        <div class="handle-bar"></div>
+      </div>
+
+      <!-- Last Started Playback Indicator (Grey bar, only visible when hovering over waveform) -->
+      <div
+        v-if="isHovering && lastStartedPercent !== null"
+        class="waveform-last-started-marker"
+        :style="{ left: `${lastStartedPercent}%` }"
+        aria-hidden="true"
+        title="Playback last started here"
+      >
+        <span class="last-started-pill"></span>
+      </div>
 
       <!-- Scrub Playhead Line -->
       <div
@@ -94,7 +172,7 @@
         aria-hidden="true"
       ></div>
 
-      <!-- Hover Guide Line -->
+      <!-- Mouse Pointer Hover Guide Line -->
       <div
         v-if="hoverPercent !== null"
         class="waveform-hover-line"
@@ -109,6 +187,18 @@
       <span class="time-sep">/</span>
       <span class="total-duration">{{ formatDuration(totalDuration) }}</span>
     </div>
+
+    <!-- Repeat Toggle Button (FontAwesome fa-repeat) -->
+    <button
+      type="button"
+      class="player-btn repeat-btn"
+      :class="{ 'is-active': isRepeatEnabled }"
+      :aria-label="isRepeatEnabled ? 'Repeat is ON (click to disable)' : 'Repeat is OFF (click to enable)'"
+      :title="isRepeatEnabled ? 'Repeat is ON' : 'Repeat is OFF'"
+      @click="toggleRepeat"
+    >
+      <i class="fa-solid fa-repeat" aria-hidden="true"></i>
+    </button>
 
     <!-- Mute / Unmute Toggle Button -->
     <button
@@ -133,6 +223,11 @@ const props = defineProps({
   activeTrackId: { type: String, default: '' },
   trackId: { type: String, required: true },
   sharedTime: { type: Number, default: 0 },
+  playbackStartTime: { type: Number, default: null },
+  loopRegion: {
+    type: Object,
+    default: () => ({ start: 0, end: null, repeat: true })
+  },
   loading: { type: Boolean, default: false }
 })
 
@@ -140,7 +235,9 @@ const emit = defineEmits([
   'play',
   'pause',
   'seek',
-  'timeupdate'
+  'timeupdate',
+  'update:playbackStartTime',
+  'update:loopRegion'
 ])
 
 const audioEl = ref(null)
@@ -148,9 +245,14 @@ const trackRef = ref(null)
 const isPlaying = ref(false)
 const isMuted = ref(false)
 const localDuration = ref(0)
-const isDragging = ref(false)
+const isDraggingTrack = ref(false)
 const isSeekingInternal = ref(false)
+const isHovering = ref(false)
 const hoverPercent = ref(null)
+const activeDragHandle = ref(null) // 'start' | 'end' | null
+const trackPixelWidth = ref(600)
+let resizeObserver = null
+
 const clipId = `waveform-clip-${Math.random().toString(36).slice(2, 9)}`
 
 const totalDuration = computed(() => {
@@ -167,29 +269,80 @@ const progressPercent = computed(() => {
   return Math.min(100, Math.max(0, pct))
 })
 
-// Normalize bars for SVG rendering (100 total bars across 0-100 viewBox coordinate space)
+// Loop window bounds
+const loopStart = computed(() => {
+  if (props.loopRegion && typeof props.loopRegion.start === 'number') {
+    return Math.max(0, Math.min(totalDuration.value, props.loopRegion.start))
+  }
+  return 0
+})
+
+const loopEnd = computed(() => {
+  if (props.loopRegion && typeof props.loopRegion.end === 'number' && props.loopRegion.end > 0) {
+    return Math.max(loopStart.value + 0.1, Math.min(totalDuration.value, props.loopRegion.end))
+  }
+  return totalDuration.value
+})
+
+const isTrimmed = computed(() => {
+  if (!totalDuration.value || totalDuration.value <= 0) return false
+  const trimmedLeft = loopStart.value > 0.05
+  const trimmedRight = loopEnd.value < totalDuration.value - 0.05
+  return trimmedLeft || trimmedRight
+})
+
+const isRepeatEnabled = computed(() => {
+  return props.loopRegion?.repeat !== false
+})
+
+const loopStartPercent = computed(() => {
+  if (!totalDuration.value || totalDuration.value <= 0) return 0
+  return Math.min(100, Math.max(0, (loopStart.value / totalDuration.value) * 100))
+})
+
+const loopEndPercent = computed(() => {
+  if (!totalDuration.value || totalDuration.value <= 0) return 100
+  return Math.min(100, Math.max(0, (loopEnd.value / totalDuration.value) * 100))
+})
+
+// Last started position as percent of total duration
+const lastStartedPercent = computed(() => {
+  if (props.playbackStartTime === null || props.playbackStartTime === undefined || !totalDuration.value) {
+    return null
+  }
+  const pct = (props.playbackStartTime / totalDuration.value) * 100
+  return Math.min(100, Math.max(0, pct))
+})
+
+// Responsive bar density based on actual pixel width of track
 const normalizedBars = computed(() => {
-  const barCount = 70
+  // Density: approx 1 bar per 3.6px on desktop, scaling cleanly down on smaller screens
+  const width = trackPixelWidth.value || 600
+  const barCount = Math.max(45, Math.min(220, Math.floor(width / 3.6)))
   const result = []
   const inputPeaks = props.peaks && props.peaks.length > 0 ? props.peaks : []
 
-  const gapRatio = 0.35 // 35% gap, 65% bar
   const totalSlots = barCount
-  const slotWidth = 100 / totalSlots
-  const barWidth = slotWidth * (1 - gapRatio)
+  const slotWidth = 1000 / totalSlots
+  const barWidth = Math.max(1.8, slotWidth * 0.68)
 
   for (let i = 0; i < barCount; i++) {
     let val = 0.2
     if (inputPeaks.length > 0) {
-      const idx = Math.floor((i / barCount) * inputPeaks.length)
-      val = inputPeaks[idx] ?? 0.2
+      // High-resolution sampling over inputPeaks
+      const peakIndex = Math.min(
+        inputPeaks.length - 1,
+        Math.floor((i / barCount) * inputPeaks.length)
+      )
+      val = inputPeaks[peakIndex] ?? 0.2
     } else {
-      // Gentle pseudo-wave placeholder if peaks not yet computed
-      val = 0.2 + 0.15 * Math.sin(i * 0.25)
+      // Gentle subtle placeholder when loading
+      val = 0.18 + 0.12 * Math.sin(i * 0.2)
     }
-    // Clamp height between 8% and 90%
-    val = Math.max(0.08, Math.min(0.92, val))
-    const height = val * 85
+
+    // Dynamic height mapping: preserve contrast for quiet vs loud parts
+    val = Math.max(0.06, Math.min(0.96, val))
+    const height = val * 86
     const y = (100 - height) / 2
     const x = i * slotWidth + (slotWidth - barWidth) / 2
 
@@ -227,28 +380,73 @@ function handleNativePause() {
 }
 
 function handleTimeUpdate() {
-  if (!audioEl.value || isDragging.value || isSeekingInternal.value) return
+  if (!audioEl.value || isDraggingTrack.value || isSeekingInternal.value) return
   if (props.activeTrackId === props.trackId) {
-    emit('timeupdate', audioEl.value.currentTime)
+    const curTime = audioEl.value.currentTime
+
+    // Check loop / trimmed end wrap-around
+    if (isTrimmed.value && curTime >= loopEnd.value) {
+      if (isRepeatEnabled.value) {
+        audioEl.value.currentTime = loopStart.value
+        emit('timeupdate', loopStart.value)
+        emit('seek', loopStart.value)
+        return
+      } else {
+        // Repeat is OFF: stop cleanly at the end handle
+        audioEl.value.pause()
+        audioEl.value.currentTime = loopStart.value
+        emit('timeupdate', loopStart.value)
+        emit('seek', loopStart.value)
+        emit('pause', { trackId: props.trackId })
+        return
+      }
+    }
+
+    emit('timeupdate', curTime)
   }
 }
 
 function handleEnded() {
   isPlaying.value = false
-  emit('seek', 0)
+  if (isRepeatEnabled.value) {
+    // If repeat is ON, wrap to loopStart (or 0) and replay
+    const targetStart = isTrimmed.value ? loopStart.value : 0
+    if (audioEl.value) {
+      audioEl.value.currentTime = targetStart
+      emit('seek', targetStart)
+      audioEl.value.play().catch(() => {})
+    }
+  } else {
+    emit('seek', isTrimmed.value ? loopStart.value : 0)
+  }
 }
 
 function togglePlay() {
-  if (!audioEl.value || props.loading) return
-  if (isPlaying.value) {
+  if (!audioEl.value) return
+  if (isPlaying.value && props.activeTrackId === props.trackId) {
     audioEl.value.pause()
   } else {
-    // If not this active track, ensure audioEl is synced to sharedTime before playing
-    if (Math.abs(audioEl.value.currentTime - props.sharedTime) > 0.05) {
-      audioEl.value.currentTime = props.sharedTime
+    // Start playback: ensure audio is synced to sharedTime and within loop bounds
+    let targetTime = props.sharedTime
+    if (isTrimmed.value && (targetTime >= loopEnd.value || targetTime < loopStart.value)) {
+      targetTime = loopStart.value
     }
+    if (Math.abs(audioEl.value.currentTime - targetTime) > 0.05) {
+      audioEl.value.currentTime = targetTime
+    }
+    emit('update:playbackStartTime', targetTime)
+    emit('play', { trackId: props.trackId })
     audioEl.value.play().catch(() => {})
   }
+}
+
+function toggleRepeat() {
+  const newRepeat = !isRepeatEnabled.value
+  emit('update:loopRegion', {
+    start: loopStart.value,
+    end: loopEnd.value,
+    repeat: newRepeat
+  })
 }
 
 function toggleMute() {
@@ -259,44 +457,105 @@ function toggleMute() {
 
 // Coordinate to time calculation
 function getTimeFromPointer(event) {
-  if (!trackRef.value) return 0
+  if (!trackRef.value || !totalDuration.value) return 0
   const rect = trackRef.value.getBoundingClientRect()
   const offsetX = event.clientX - rect.left
   const ratio = Math.max(0, Math.min(1, offsetX / rect.width))
   return ratio * totalDuration.value
 }
 
-function handlePointerDown(event) {
-  if (props.loading || !totalDuration.value) return
-  trackRef.value?.setPointerCapture?.(event.pointerId)
-  isDragging.value = true
-  const seekTime = getTimeFromPointer(event)
-  emit('seek', seekTime)
+function handleMouseLeave() {
+  isHovering.value = false
+  hoverPercent.value = null
 }
 
-function handlePointerMove(event) {
+// Waveform Track Pointer Events (Click-to-seek and switch active track with instant playback)
+function handleTrackPointerDown(event) {
+  if (!totalDuration.value) return
+  // If pointerdown on a trim handle, do not treat as track seek
+  if (event.target.closest('.trimmer-handle')) return
+
+  trackRef.value?.setPointerCapture?.(event.pointerId)
+  isDraggingTrack.value = true
+
+  const seekTime = getTimeFromPointer(event)
+
+  // Update last started playback point to the clicked position
+  emit('update:playbackStartTime', seekTime)
+  emit('seek', seekTime)
+  emit('play', { trackId: props.trackId })
+
+  if (audioEl.value) {
+    audioEl.value.currentTime = seekTime
+    audioEl.value.play().catch(() => {})
+  }
+}
+
+function handleTrackPointerMove(event) {
   if (!trackRef.value || !totalDuration.value) return
   const rect = trackRef.value.getBoundingClientRect()
   const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width))
   hoverPercent.value = Number((ratio * 100).toFixed(1))
 
-  if (isDragging.value) {
+  if (isDraggingTrack.value) {
     const seekTime = ratio * totalDuration.value
     emit('seek', seekTime)
+    if (audioEl.value && Math.abs(audioEl.value.currentTime - seekTime) > 0.1) {
+      audioEl.value.currentTime = seekTime
+    }
   }
 }
 
-function handlePointerUp(event) {
-  if (isDragging.value) {
-    trackRef.value?.releasePointerCapture?.(event.pointerId)
-    isDragging.value = false
-    hoverPercent.value = null
+function handleTrackPointerUp(event) {
+  if (isDraggingTrack.value) {
+    try {
+      trackRef.value?.releasePointerCapture?.(event.pointerId)
+    } catch {}
+    isDraggingTrack.value = false
   }
 }
 
-function handlePointerCancel() {
-  isDragging.value = false
-  hoverPercent.value = null
+function handleTrackPointerCancel() {
+  isDraggingTrack.value = false
+}
+
+// Trimmer Handle Pointer Events (iOS-style loop region trimmer)
+function handleHandlePointerDown(handle, event) {
+  if (!totalDuration.value) return
+  activeDragHandle.value = handle
+  event.currentTarget?.setPointerCapture?.(event.pointerId)
+}
+
+function handleHandlePointerMove(handle, event) {
+  if (activeDragHandle.value !== handle || !trackRef.value || !totalDuration.value) return
+  const rect = trackRef.value.getBoundingClientRect()
+  const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width))
+  const newTime = ratio * totalDuration.value
+
+  const minGap = Math.max(0.2, totalDuration.value * 0.02) // minimum 2% or 0.2s loop window
+
+  if (handle === 'start') {
+    const clampedStart = Math.max(0, Math.min(loopEnd.value - minGap, newTime))
+    emit('update:loopRegion', { start: clampedStart, end: loopEnd.value, repeat: isRepeatEnabled.value })
+  } else if (handle === 'end') {
+    const clampedEnd = Math.min(totalDuration.value, Math.max(loopStart.value + minGap, newTime))
+    emit('update:loopRegion', { start: loopStart.value, end: clampedEnd, repeat: isRepeatEnabled.value })
+  }
+}
+
+function handleHandlePointerUp(handle, event) {
+  if (activeDragHandle.value === handle) {
+    try {
+      event.currentTarget?.releasePointerCapture?.(event.pointerId)
+    } catch {}
+    activeDragHandle.value = null
+  }
+}
+
+function handleHandlePointerCancel(handle) {
+  if (activeDragHandle.value === handle) {
+    activeDragHandle.value = null
+  }
 }
 
 function handleKeydown(event) {
@@ -330,7 +589,7 @@ watch(() => props.sharedTime, (newTime) => {
     if (Math.abs(audioEl.value.currentTime - newTime) > 0.05) {
       audioEl.value.currentTime = newTime
     }
-  } else if (isDragging.value) {
+  } else if (isDraggingTrack.value) {
     audioEl.value.currentTime = newTime
   }
 })
@@ -345,6 +604,26 @@ watch(() => props.activeTrackId, (newActive) => {
       audioEl.value.currentTime = props.sharedTime
     }
     audioEl.value.play().catch(() => {})
+  }
+})
+
+onMounted(() => {
+  if (trackRef.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect && entry.contentRect.width > 0) {
+          trackPixelWidth.value = Math.round(entry.contentRect.width)
+        }
+      }
+    })
+    resizeObserver.observe(trackRef.value)
+  }
+})
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
   }
 })
 
@@ -419,9 +698,33 @@ defineExpose({
   color: #6ee7b7;
 }
 
+/* Optical centering for play triangle inside circle */
+.play-pause-btn .icon-play {
+  transform: translateX(1.5px);
+}
+
 .is-playing .play-pause-btn {
   background: linear-gradient(135deg, #10b981, #06b6d4);
   color: #0f172a;
+}
+
+.repeat-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.repeat-btn.is-active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #34d399;
+}
+
+.repeat-btn:hover {
+  background: rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
 }
 
 .mute-btn {
@@ -435,8 +738,8 @@ defineExpose({
   position: relative;
   flex: 1;
   min-width: 0;
-  height: 48px;
-  background: rgba(2, 6, 23, 0.4);
+  height: 52px;
+  background: rgba(2, 6, 23, 0.5);
   border-radius: 8px;
   cursor: pointer;
   overflow: hidden;
@@ -457,19 +760,110 @@ defineExpose({
 }
 
 .waveform-bars-unplayed rect {
-  fill: rgba(148, 163, 184, 0.25);
+  fill: rgba(148, 163, 184, 0.28);
   transition: fill 0.2s;
 }
 
 .waveform-player:hover .waveform-bars-unplayed rect {
-  fill: rgba(148, 163, 184, 0.35);
+  fill: rgba(148, 163, 184, 0.38);
 }
 
 .waveform-bars-played rect {
-  fill: url(#waveform-gradient);
   fill: #34d399;
 }
 
+/* iOS Trimmer Dimming */
+.trimmer-dim {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(2, 6, 23, 0.72);
+  pointer-events: none;
+  z-index: 2;
+  transition: width 0.05s ease, left 0.05s ease;
+}
+
+.dimmer-left {
+  left: 0;
+}
+
+/* Active Trimmer Frame */
+.trimmer-frame {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-top: 2px solid #10b981;
+  border-bottom: 2px solid #10b981;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Trimmer Grab Handles */
+.trimmer-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  margin-left: -7px;
+  cursor: col-resize;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+
+.trimmer-handle .handle-bar {
+  width: 3px;
+  height: 100%;
+  background: #64748b;
+  border-radius: 2px;
+  transition: background-color 0.15s, transform 0.15s;
+}
+
+.trimmer-handle:hover .handle-bar,
+.trimmer-handle.is-dragging .handle-bar,
+.trimmer-handle.is-active .handle-bar {
+  background: #34d399;
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.6);
+}
+
+.trimmer-handle:focus-visible {
+  outline: none;
+}
+
+.trimmer-handle:focus-visible .handle-bar {
+  outline: 2px solid #34d399;
+  outline-offset: 2px;
+}
+
+/* Last started playback indicator (grey bar, visible on waveform hover) */
+.waveform-last-started-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(148, 163, 184, 0.85);
+  box-shadow: 0 0 4px rgba(148, 163, 184, 0.6);
+  pointer-events: none;
+  transform: translateX(-50%);
+  z-index: 4;
+}
+
+.last-started-pill {
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+/* Playhead Line */
 .waveform-playhead {
   position: absolute;
   top: 0;
@@ -479,19 +873,20 @@ defineExpose({
   box-shadow: 0 0 6px #38bdf8;
   pointer-events: none;
   transform: translateX(-50%);
-  z-index: 2;
+  z-index: 4;
   transition: left 0.05s linear;
 }
 
+/* Hover Guide Line */
 .waveform-hover-line {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 1px;
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.4);
   pointer-events: none;
   transform: translateX(-50%);
-  z-index: 1;
+  z-index: 3;
 }
 
 .player-time {
@@ -516,7 +911,7 @@ defineExpose({
 
 @media (max-width: 480px) {
   .waveform-player {
-    gap: 0.5rem;
+    gap: 0.45rem;
     padding: 0.4rem 0.5rem;
   }
   .mute-btn {
@@ -524,6 +919,10 @@ defineExpose({
   }
   .player-time {
     font-size: 0.75rem;
+  }
+  .trimmer-handle {
+    width: 22px;
+    margin-left: -11px;
   }
 }
 </style>
