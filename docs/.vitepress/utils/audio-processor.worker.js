@@ -20,13 +20,50 @@ self.onmessage = function (e) {
       const channels = channelData.length
       const isFloat = sampleFormat === 'float'
 
+      // Granular sample-based progress computation across 3 stages:
+      // Stage 1: Planar channel interleaving to PCM (0% - 35% of worker task)
+      // Stage 2: Waveform RMS peak analysis (35% - 70% of worker task)
+      // Stage 3: WAV preview buffer construction (70% - 100% of worker task)
+      const totalFrames = channelData[0].length
+
+      self.postMessage({
+        id,
+        type: 'progress',
+        progress: 0,
+        status: 'Converting audio channels to PCM...',
+      })
+
       const pcmData = isFloat ? planarToFloat32(channelData) : planarToPcm16(channelData)
+
+      self.postMessage({
+        id,
+        type: 'progress',
+        progress: 35,
+        status: 'Analyzing waveform peaks...',
+      })
+
       const { peaks, maxRms } = computeWaveformPeaksFromPcm(pcmData, channels, sampleFormat, sliceCount)
+
+      self.postMessage({
+        id,
+        type: 'progress',
+        progress: 70,
+        status: 'Building audio preview buffer...',
+      })
+
       const wavBuffer = buildWavBuffer(pcmData, sampleRate, channels, sampleFormat)
+
+      self.postMessage({
+        id,
+        type: 'progress',
+        progress: 100,
+        status: 'Audio processing complete.',
+      })
 
       self.postMessage(
         {
           id,
+          type: 'complete',
           success: true,
           pcmBuffer: pcmData.buffer,
           peaks,
@@ -41,6 +78,7 @@ self.onmessage = function (e) {
       const peaks = computeWaveformPeaksFromPlanar(channelData, refMaxRms, sliceCount)
       self.postMessage({
         id,
+        type: 'complete',
         success: true,
         peaks,
       })

@@ -271,6 +271,7 @@ const hoverPercent = ref(null)
 const activeDragHandle = ref(null) // 'start' | 'end' | null
 const trackPixelWidth = ref(600)
 let resizeObserver = null
+let transitionRafId = null
 
 const isTransitioning = ref(false)
 const targetProgressPercent = ref(0)
@@ -431,6 +432,7 @@ function handleLoadedMetadata() {
 }
 
 function startCssPlaybackTransition() {
+  stopCssPlaybackTransition()
   if (!audioEl.value || !totalDuration.value) return
   const curTime = audioEl.value.currentTime
   localPlayTime.value = curTime
@@ -438,23 +440,34 @@ function startCssPlaybackTransition() {
   const targetTime = isTrimmed.value ? loopEnd.value : totalDuration.value
   const remaining = Math.max(0, targetTime - curTime)
   if (remaining <= 0) {
-    stopCssPlaybackTransition()
     return
   }
 
+  const startPercent = Math.min(100, Math.max(0, (curTime / totalDuration.value) * 100))
+  const endPercent = Math.min(100, Math.max(0, (targetTime / totalDuration.value) * 100))
+
   isTransitioning.value = false
-  targetProgressPercent.value = currentProgressPercent.value
+  targetProgressPercent.value = startPercent
   transitionDurationSec.value = 0
 
-  nextTick(() => {
-    if (!isPlaying.value) return
-    isTransitioning.value = true
-    targetProgressPercent.value = Math.min(100, Math.max(0, (targetTime / totalDuration.value) * 100))
-    transitionDurationSec.value = remaining
+  // Use double requestAnimationFrame to ensure the DOM applies transition: none
+  // at the start position before initiating the CSS linear transition.
+  transitionRafId = requestAnimationFrame(() => {
+    transitionRafId = requestAnimationFrame(() => {
+      transitionRafId = null
+      if (!isPlaying.value) return
+      isTransitioning.value = true
+      targetProgressPercent.value = endPercent
+      transitionDurationSec.value = remaining
+    })
   })
 }
 
 function stopCssPlaybackTransition() {
+  if (transitionRafId !== null) {
+    cancelAnimationFrame(transitionRafId)
+    transitionRafId = null
+  }
   isTransitioning.value = false
   transitionDurationSec.value = 0
   if (audioEl.value) {
@@ -637,6 +650,9 @@ function handleTrackPointerUp(event) {
       trackRef.value?.releasePointerCapture?.(event.pointerId)
     } catch {}
     isDraggingTrack.value = false
+    if (isPlaying.value && isSelfActive.value) {
+      startCssPlaybackTransition()
+    }
   }
 }
 

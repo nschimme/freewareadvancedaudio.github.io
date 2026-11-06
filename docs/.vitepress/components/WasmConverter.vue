@@ -276,6 +276,7 @@ import { withBase } from 'vitepress'
 import WaveformPlayer from './WaveformPlayer.vue'
 import AudioProcessorWorker from '../utils/audio-processor.worker.js?worker'
 import { computeWaveformPeaksFromPcm, computeWaveformPeaksFromAudioBuffer } from '../utils/waveform.js'
+import { createSmoothProgress } from '../utils/progress.js'
 
 const fileInput = ref(null)
 const selectedFile = ref(null)
@@ -333,6 +334,9 @@ const customRates = computed(() => {
 const isProcessing = ref(false)
 const progress = ref(0)
 const statusMessage = ref('')
+const smoothProgress = createSmoothProgress((val) => {
+  progress.value = val
+})
 const results = ref([])
 const convertButton = ref(null)
 const discardButtons = ref([])
@@ -346,9 +350,13 @@ function getAudioProcessorWorker() {
   if (!audioProcessorWorker && typeof window !== 'undefined') {
     audioProcessorWorker = new AudioProcessorWorker()
     audioProcessorWorker.onmessage = (e) => {
-      const { id, success, error, ...payload } = e.data
+      const { id, type, progress: taskProgress, status: taskStatus, success, error, ...payload } = e.data
       const task = pendingWorkerTasks.get(id)
       if (task) {
+        if (type === 'progress') {
+          task.onProgress?.({ progress: taskProgress, status: taskStatus })
+          return
+        }
         pendingWorkerTasks.delete(id)
         if (success) {
           task.resolve(payload)
@@ -368,7 +376,7 @@ function getAudioProcessorWorker() {
   return audioProcessorWorker
 }
 
-function runAudioProcessorTask(type, payload, transfer = []) {
+function runAudioProcessorTask(type, payload, transfer = [], onProgress = null) {
   return new Promise((resolve, reject) => {
     try {
       const worker = getAudioProcessorWorker()
@@ -377,7 +385,7 @@ function runAudioProcessorTask(type, payload, transfer = []) {
         return
       }
       const id = ++nextWorkerTaskId
-      pendingWorkerTasks.set(id, { resolve, reject })
+      pendingWorkerTasks.set(id, { resolve, reject, onProgress })
       worker.postMessage({ id, type, payload }, transfer)
     } catch (err) {
       reject(err)
@@ -468,7 +476,24 @@ async function loadDemo() {
   try {
     const response = await fetch(withBase('/media/pipeline-tighter.m4a'))
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    const blob = await response.blob()
+
+    const contentLength = Number(response.headers.get('Content-Length')) || 0
+    let blob
+    if (response.body && contentLength > 0) {
+      const reader = response.body.getReader()
+      const chunks = []
+      let receivedBytes = 0
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        chunks.push(value)
+        receivedBytes += value.length
+      }
+      blob = new Blob(chunks, { type: 'audio/mp4' })
+    } else {
+      blob = await response.blob()
+    }
+
     // The user picked their own file while the demo was downloading.
     if (request !== demoRequest) return
     selectFile(new File([blob], 'pipeline-tighter.m4a', { type: 'audio/mp4' }))
@@ -549,6 +574,7 @@ onUnmounted(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('beforeunload', handleBeforeUnload)
   }
+  smoothProgress.destroy()
   if (activeWorker) {
     activeWorker.terminate()
     activeWorker = null
@@ -685,6 +711,20 @@ async function extractWaveformFromM4a(buffer, refMaxRms = 0.001, sliceCount = 36
   }
 }
 
+async function readFileWithProgress(file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onprogress = (e) => {
+      if (e.lengthComputable && e.total > 0) {
+        onProgress(e.loaded / e.total)
+      }
+    }
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(reader.error || new Error('Failed to read file'))
+    reader.readAsArrayBuffer(file)
+  })
+}
+
 async function decodeSelectedFile(file, request) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext
   if (!AudioContextClass) {
@@ -692,13 +732,19 @@ async function decodeSelectedFile(file, request) {
     return
   }
   isDecoding.value = true
-  progress.value = 10
+  smoothProgress.reset(0)
   statusMessage.value = 'Reading audio file...'
   let audioCtx
   try {
-    const fileBuffer = await file.arrayBuffer()
+    // Stage 1: Read file with real progress (0% -> 25% of overall decode pipeline)
+    const fileBuffer = await readFileWithProgress(file, (ratio) => {
+      if (request === decodeRequest) {
+        smoothProgress.set(Math.round(ratio * 25))
+      }
+    })
     if (request !== decodeRequest) return
-    progress.value = 35
+
+    smoothProgress.set(30)
     statusMessage.value = 'Decoding audio stream...'
 
     // decodeAudioData detaches fileBuffer, so keep a copy of M4A sources for tag carry-over.
@@ -717,10 +763,12 @@ async function decodeSelectedFile(file, request) {
       audioCtx = new AudioContextClass()
     }
 
+    // Stage 2: AudioContext.decodeAudioData (25% -> 55% of pipeline)
+    smoothProgress.set(45)
     const decodedBuffer = await audioCtx.decodeAudioData(fileBuffer)
     if (request !== decodeRequest) return
 
-    progress.value = 75
+    smoothProgress.set(55)
     statusMessage.value = 'Processing PCM and waveform in background...'
 
     const isHighPrecision = parsedBitDepth && parsedBitDepth > 16
@@ -740,6 +788,7 @@ async function decodeSelectedFile(file, request) {
     let maxRms
     let wavBlob
 
+    // Stage 3: Audio processor worker tasks (55% -> 100% of pipeline, driven by worker progress)
     try {
       const workerRes = await runAudioProcessorTask(
         'processDecodedAudio',
@@ -749,7 +798,17 @@ async function decodeSelectedFile(file, request) {
           sampleFormat,
           sliceCount: 360,
         },
-        channelBuffers
+        channelBuffers,
+        (progressInfo) => {
+          if (request === decodeRequest) {
+            // Map worker progress (0-100%) to pipeline (55-98%)
+            const pipelineProgress = Math.round(55 + (progressInfo.progress / 100) * 43)
+            smoothProgress.set(pipelineProgress)
+            if (progressInfo.status) {
+              statusMessage.value = progressInfo.status
+            }
+          }
+        }
       )
       if (request !== decodeRequest) return
       pcmData = sampleFormat === 'float'
@@ -785,7 +844,7 @@ async function decodeSelectedFile(file, request) {
     if (originalAudioUrl.value) URL.revokeObjectURL(originalAudioUrl.value)
     originalAudioUrl.value = wavBlob ? URL.createObjectURL(wavBlob) : ''
 
-    progress.value = 100
+    smoothProgress.set(100)
     statusMessage.value = 'Audio decoded and ready to encode.'
   } catch (err) {
     if (request === decodeRequest) statusMessage.value = 'Could not decode this audio: ' + err.message
@@ -805,7 +864,7 @@ async function startEncoding() {
   activeTrackId.value = ''
 
   isProcessing.value = true
-  progress.value = 5
+  smoothProgress.reset(5)
   statusMessage.value = 'Preparing Web Worker encoding task…'
 
   try {
@@ -817,11 +876,11 @@ async function startEncoding() {
     worker.onmessage = (e) => {
       const msg = e.data
       if (msg.type === 'progress') {
-        progress.value = msg.progress
+        smoothProgress.set(msg.progress)
         statusMessage.value = msg.status
       } else if (msg.type === 'complete') {
         activeWorker = null
-        progress.value = 100
+        smoothProgress.set(100)
         statusMessage.value = 'FAAC M4A encoding complete!'
         isProcessing.value = false
 
