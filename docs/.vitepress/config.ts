@@ -167,6 +167,22 @@ export default defineConfig({
       : null
     if (faq) head.push(['script', { type: 'application/ld+json' }, JSON.stringify(faq)])
 
+    if (path === 'playground' && !redirect) {
+      head.push(['script', { type: 'application/ld+json' }, JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: 'Free Online AAC Converter & Audio Encoder',
+        applicationCategory: 'MultimediaApplication',
+        operatingSystem: 'Any',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD'
+        },
+        description: 'Free, private, in-browser audio converter to encode WAV, MP3, FLAC, and OGG into ISO-compliant AAC (M4A) audio.'
+      })])
+    }
+
     if (path.startsWith('docs/') && !redirect) {
       const group = docsSidebar.find(g => g.items.some(i => i.link === `/${path}`))
       const crumbs = [{ name: 'Home', item: root }]
