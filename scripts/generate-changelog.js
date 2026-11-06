@@ -81,7 +81,6 @@ export function parseChangeLog(text) {
 
     // Check version header:
     // "Unreleased" or "2.2 (Sep 29, 2026)" or "1.29 (Jul 4, 2017)" or "v2.0 - 2026-07-20"
-    // Sturdy regex handling common formatting variations
     const verMatch = trimmed.match(/^(?:v\.?|version\s+)?([0-9]+(?:\.[0-9]+)+|[0-9]+|Unreleased)(?:[\s:–—-]+(?:\((.*?)\)|([0-9]{4}[^)]*)|([A-Za-z]{3}\s+[0-9]{1,2},?\s+[0-9]{4})))?$/i);
     const isIndented = /^\s{2,}|\t/.test(rawLine);
     const startsWithBullet = /^[\*\-\+]/.test(trimmed);
@@ -92,7 +91,6 @@ export function parseChangeLog(text) {
       const title = rawTitle.toLowerCase() === 'unreleased' ? 'Unreleased' : rawTitle;
       const rawDate = (verMatch[2] || verMatch[3] || verMatch[4] || '').trim();
 
-      // Extract 4-digit year if present
       const yearMatch = rawDate.match(/\b(19\d\d|20\d\d)\b/);
       const year = yearMatch ? yearMatch[1] : (title === 'Unreleased' ? 'Upcoming' : undefined);
 
@@ -171,24 +169,23 @@ export function renderMarkdown(versions) {
   lines.push('Review the complete version history, library ABI updates, feature additions, and bug fixes for **FAAC**, **FAAD**, **FAAM**, and **FAAR**.');
   lines.push('');
 
-  // UX Controls & Table of Contents Header
-  lines.push('<div class="changelog-controls">');
-  lines.push('  <div class="changelog-toc-label"><strong>Quick Navigation:</strong></div>');
-  lines.push('  <div class="changelog-actions">');
-  lines.push('    <button type="button" class="changelog-btn" onclick="document.querySelectorAll(\'.changelog-details\').forEach(d => d.open = true)">Expand All</button>');
-  lines.push('    <button type="button" class="changelog-btn" onclick="document.querySelectorAll(\'.changelog-details\').forEach(d => d.open = false)">Collapse All</button>');
+  // UX Controls Toolbar: Search filter + Expand / Collapse all
+  lines.push('<div class="changelog-toolbar">');
+  lines.push('  <div class="changelog-search-wrap">');
+  lines.push('    <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>');
+  lines.push('    <input type="text" class="changelog-search-input" placeholder="Filter changes (e.g. SBR, ABI, Win32, MP4)..." oninput="');
+  lines.push('      const q = this.value.toLowerCase().trim();');
+  lines.push('      document.querySelectorAll(\'.changelog-details\').forEach(d => {');
+  lines.push('        const match = !q || d.innerText.toLowerCase().includes(q);');
+  lines.push('        d.style.display = match ? \'\' : \'none\';');
+  lines.push('        if (q && match) d.open = true;');
+  lines.push('      });');
+  lines.push('    ">');
   lines.push('  </div>');
-  lines.push('</div>');
-  lines.push('');
-
-  // Quick-Jump TOC badges
-  lines.push('<div class="changelog-toc-grid">');
-  for (const ver of versions) {
-    const isUnreleased = ver.title.toLowerCase() === 'unreleased';
-    const badgeClass = isUnreleased ? 'changelog-badge unreleased' : 'changelog-badge';
-    const label = ver.date ? `${ver.title} <span class="badge-date">(${ver.date})</span>` : ver.title;
-    lines.push(`  <a href="#${ver.anchor}" class="${badgeClass}">${label}</a>`);
-  }
+  lines.push('  <div class="changelog-actions">');
+  lines.push('    <button type="button" class="changelog-btn" onclick="document.querySelectorAll(\'.changelog-details\').forEach(d => d.open = true)"><i class="fa-solid fa-angles-down" aria-hidden="true"></i> Expand All</button>');
+  lines.push('    <button type="button" class="changelog-btn" onclick="document.querySelectorAll(\'.changelog-details\').forEach(d => d.open = false)"><i class="fa-solid fa-angles-up" aria-hidden="true"></i> Collapse All</button>');
+  lines.push('  </div>');
   lines.push('</div>');
   lines.push('');
 
@@ -204,10 +201,16 @@ export function renderMarkdown(versions) {
     }
     previousYear = ver.year;
 
-    // Open by default for the first 2 releases (e.g. Unreleased + latest release)
+    // Count total changes in this release
+    let totalChanges = ver.items.length;
+    for (const a of ver.authors) totalChanges += a.items.length;
+
+    // Open by default for the first 2 releases (Unreleased + latest stable)
     const isOpen = idx < 2 ? ' open' : '';
     const isUnreleased = ver.title.toLowerCase() === 'unreleased';
-    const tag = isUnreleased ? '<span class="status-tag unreleased">Pending</span>' : '<span class="status-tag released">Released</span>';
+    const tag = isUnreleased
+      ? '<span class="status-tag unreleased"><i class="fa-solid fa-clock-rotate-left"></i> Pending</span>'
+      : '<span class="status-tag released"><i class="fa-solid fa-check"></i> Released</span>';
 
     // Section anchor for direct URL navigation & VitePress TOC
     lines.push(`## ${ver.title}${ver.date ? ` (${ver.date})` : ''} {#${ver.anchor}}`);
@@ -219,6 +222,7 @@ export function renderMarkdown(versions) {
     if (ver.date) {
       lines.push(`      <span class="version-date">${escapeVueHtml(ver.date)}</span>`);
     }
+    lines.push(`      <span class="version-count-pill">${totalChanges} change${totalChanges === 1 ? '' : 's'}</span>`);
     lines.push('    </span>');
     lines.push(`    <span class="changelog-summary-right">${tag}</span>`);
     lines.push('  </summary>');
@@ -242,7 +246,7 @@ export function renderMarkdown(versions) {
     // If there are contributors
     if (ver.authors.length > 0) {
       for (const author of ver.authors) {
-        lines.push(`<div class="changelog-author"><strong>${escapeVueHtml(author.name)}</strong></div>`);
+        lines.push(`<div class="changelog-author"><i class="fa-solid fa-user-pen" aria-hidden="true"></i> <strong>${escapeVueHtml(author.name)}</strong></div>`);
         lines.push('');
         for (const item of author.items) {
           lines.push(`- ${escapeVueHtml(item.text)}`);

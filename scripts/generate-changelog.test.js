@@ -83,7 +83,7 @@ v2.0 - 2026-07-20
     expect(versions[2].items).toHaveLength(1);
   });
 
-  it('renders markdown with TOC badges, details blocks, and HR between different years', () => {
+  it('renders markdown with details blocks and HR between different years', () => {
     const sample = `
 2.2 (Sep 29, 2026)
 
@@ -100,13 +100,13 @@ v2.0 - 2026-07-20
     const versions = parseChangeLog(sample);
     const md = renderMarkdown(versions);
 
-    // TOC buttons
+    // Expand / Collapse controls
     expect(md).toContain('Expand All');
     expect(md).toContain('Collapse All');
 
-    // TOC badges
-    expect(md).toContain('<a href="#2-2" class="changelog-badge">2.2 <span class="badge-date">(Sep 29, 2026)</span></a>');
-    expect(md).toContain('<a href="#1-31" class="changelog-badge">1.31 <span class="badge-date">(Feb 28, 2025)</span></a>');
+    // Outlines are handled by VitePress headers
+    expect(md).toContain('## 2.2 (Sep 29, 2026) {#2-2}');
+    expect(md).toContain('## 1.31 (Feb 28, 2025) {#1-31}');
 
     // Details blocks
     expect(md).toContain('<details class="changelog-details" open>');
