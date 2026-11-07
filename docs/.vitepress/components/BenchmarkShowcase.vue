@@ -3,26 +3,26 @@ import { computed, ref } from 'vue'
 
 const props = defineProps<{ view: 'resources' | 'decoder' | 'speed' | 'quality' }>()
 
-// Published snapshot: leaderboard gist, generated 2026-11-03. Do not mix with local runs.
+// Published snapshot: leaderboard gist, generated 2026-11-07. Do not mix with local runs.
 const encoders = [
-  { name: 'FAAC', speed: 784.1 },
-  { name: 'FDK-AAC', speed: 187.8 },
-  { name: 'Apple AAC', speed: 184.4 },
-  { name: 'FFmpeg AAC', speed: 57.7 }
+  { name: 'FAAC', speed: 753.5 },
+  { name: 'FDK-AAC', speed: 181.4 },
+  { name: 'Apple AAC', speed: 168.7 },
+  { name: 'FFmpeg AAC', speed: 56.4 }
 ]
 const encoderMetrics = [
-  { key: 'speed' as const, title: 'Encoding throughput', icon: 'gauge-high', value: '784×', unit: 'realtime', summary: '4.2× the measured FDK-AAC throughput', max: 784.1, format: (n: number) => `${Math.round(n).toLocaleString('en-US')}×`, note: 'Aggregate throughput · higher is better' }
+  { key: 'speed' as const, title: 'Encoding throughput', icon: 'gauge-high', value: '754×', unit: 'realtime', summary: '4.2× the measured FDK-AAC throughput', max: 753.5, format: (n: number) => `${Math.round(n).toLocaleString('en-US')}×`, note: 'Aggregate throughput · higher is better' }
 ]
 const decoders = [
   // Lead with FAAD3; then follow the encoder card order and append decoder-only implementations.
-  { name: 'FAAD3', speed: 2150.8 },
-  { name: 'FDK-AAC', speed: 887.9 },
-  { name: 'Apple AAC', speed: 1148.1 },
-  { name: 'FFmpeg AAC', speed: 583.3 },
-  { name: 'Helix AAC', speed: 985.8 }
+  { name: 'FAAD3', speed: 2232.9 },
+  { name: 'FDK-AAC', speed: 936.1 },
+  { name: 'Apple AAC', speed: 1145.8 },
+  { name: 'FFmpeg AAC', speed: 579.5 },
+  { name: 'Helix AAC', speed: 934.8 }
 ]
 const decoderMetrics = [
-  { key: 'speed' as const, title: 'Decoding throughput', icon: 'gauge-high', value: '2,151×', unit: 'realtime', summary: '2.4× the measured FDK-AAC throughput', max: 2150.8, format: (n: number) => `${Math.round(n).toLocaleString('en-US')}×`, note: 'Aggregate throughput · higher is better' }
+  { key: 'speed' as const, title: 'Decoding throughput', icon: 'gauge-high', value: '2,233×', unit: 'realtime', summary: '2.4× the measured FDK-AAC throughput', max: 2232.9, format: (n: number) => `${Math.round(n).toLocaleString('en-US')}×`, note: 'Aggregate throughput · higher is better' }
 ]
 const metrics = computed(() => props.view === 'decoder' ? decoderMetrics : encoderMetrics)
 const implementations = computed(() => props.view === 'decoder' ? decoders : encoders)
@@ -40,7 +40,7 @@ const rawQualitySeries = [
     dash: '',
     values: {
       lc: [2.083, 3.296, 3.773, 3.972, 4.177, 4.469, 4.613, 4.739, 4.867, 4.926, 4.955, 4.981, 4.991],
-      he: [2.978, 3.484, 3.822, 4.128, 4.297, 4.549, 4.678, 4.746, 4.807, 4.827, 4.832, 4.833, 4.833]
+      he: [2.978, 3.484, 3.851, 4.163, 4.347, 4.567, 4.691, 4.754, 4.810, 4.827, 4.832, 4.833, 4.833]
     }
   },
   {
